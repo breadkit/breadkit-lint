@@ -1,6 +1,6 @@
 # breadkit-lint
 
-`bklint` checks Breadkit DSL and IR files for layout, electrical, and wiring-intent problems. DSL files execute as Ruby code; inspect only trusted files. Use IR JSON for data-only input.
+`bklint` checks Breadkit DSL and IR files for layout, electrical, and wiring-intent problems. DSL files execute as Ruby code; inspect only trusted files. Use IR JSON for data-only input. Configuration `require` entries also execute Ruby code, so load only trusted configuration files.
 
 ```sh
 bklint examples/01_led_button.bk.rb

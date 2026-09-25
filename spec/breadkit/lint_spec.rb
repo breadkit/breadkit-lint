@@ -3,10 +3,10 @@
 require "tmpdir"
 
 RSpec.describe Breadkit::Lint::Engine do
-  let(:root) { File.expand_path("../../../breadkit", __dir__) }
+  let(:examples) { File.expand_path("../../../examples", __dir__) }
 
   it "leaves the valid LED and NE555 examples clean" do
-    files = %w[01_led_button.bk.rb 02_555_blinker.bk.rb 03_led_bar.bk.rb].map { |name| File.join(root, "examples", name) }
+    files = %w[01_led_button.bk.rb 02_555_blinker.bk.rb 03_arduino_blink.bk.rb 04_led_bar.bk.rb].map { |name| File.join(examples, name) }
     results = described_class.new.run(files)
     expect(results.map { |item| item[:offenses] }).to all(be_empty)
   end
@@ -19,13 +19,13 @@ RSpec.describe Breadkit::Lint::Engine do
       "ic_not_straddling.bk.rb" => "Layout/InvalidPlacement"
     }
     expected.each do |file, rule|
-      result = described_class.new.run([File.join(root, "examples", "bad", file)]).first
+      result = described_class.new.run([File.join(examples, "bad", file)]).first
       expect(result[:offenses].map(&:rule)).to include(rule)
     end
   end
 
   it "emits JSON in the format consumed by the renderer" do
-    files = described_class.new.run([File.join(root, "examples", "bad", "short_circuit.bk.rb")])
+    files = described_class.new.run([File.join(examples, "bad", "short_circuit.bk.rb")])
     parsed = JSON.parse(Breadkit::Lint::Formatter.new.json(files))
     expect(parsed.dig("schema_version")).to eq(1)
     expect(parsed.dig("files", 0, "offenses", 0, "targets")).to be_a(Hash)
@@ -33,7 +33,7 @@ RSpec.describe Breadkit::Lint::Engine do
   end
 
   it "respects the fail level and rule selection" do
-    path = File.join(root, "examples", "bad", "resistor_same_column.bk.rb")
+    path = File.join(examples, "bad", "resistor_same_column.bk.rb")
     config = Breadkit::Lint::Config.new
     engine = described_class.new(config: config)
     errors = engine.run([path], only: ["Layout/PinsInSameStrip"])
@@ -159,7 +159,7 @@ RSpec.describe Breadkit::Lint::Engine do
         end
       RUBY
       File.write(config, "require:\n  - ./custom_rule.rb\n")
-      results = described_class.new(config: Breadkit::Lint::Config.new(config)).run([File.join(root, "examples", "01_led_button.bk.rb")])
+      results = described_class.new(config: Breadkit::Lint::Config.new(config)).run([File.join(examples, "01_led_button.bk.rb")])
       expect(results.first[:offenses].map(&:rule)).to include("Custom/Marked")
     end
   end
