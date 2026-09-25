@@ -10,11 +10,11 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Check breadboard wiring designs for common layout and circuit errors."
   spec.description = "bklint analyzes Breadkit circuits and reports layout, electrical, and intent offenses."
-  spec.homepage = "https://github.com/ydah/breadkit"
+  spec.homepage = "https://github.com/breadkit/breadkit-lint"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.3"
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "#{spec.homepage}/tree/main/breadkit-lint"
+  spec.metadata["source_code_uri"] = "#{spec.homepage}/tree/main"
   spec.metadata["bug_tracker_uri"] = "#{spec.homepage}/issues"
   spec.metadata["documentation_uri"] = "#{spec.homepage}/tree/main/docs"
   spec.metadata["rubygems_mfa_required"] = "true"

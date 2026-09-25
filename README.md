@@ -2,8 +2,10 @@
 
 `bklint` checks Breadkit DSL and IR files for layout, electrical, and wiring-intent problems. DSL files execute as Ruby code; inspect only trusted files. Use IR JSON for data-only input. Configuration `require` entries also execute Ruby code, so load only trusted configuration files.
 
+Install `breadkit-lint` directly; RubyGems installs its compatible `breadkit` core dependency. Shared circuit examples are in the [breadkit repository](https://github.com/breadkit/breadkit/tree/main/examples).
+
 ```sh
-bklint examples/01_led_button.bk.rb
+bklint circuit.bk.rb
 bklint circuit.bk.rb --only Electrical/ShortCircuit
 bklint circuit.bk.rb --format json --out lint.json
 bklint circuit.bk.rb --format github
