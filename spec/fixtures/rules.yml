@@ -1,0 +1,246 @@
+Layout/InvalidHole:
+  offense: |
+    board :half
+    wire 'a999', 'a1'
+  no_offense: |
+    board :half
+    wire 'a2', 'a1'
+Layout/UnknownBoard:
+  offense: |
+    board :missing_board
+  no_offense: |
+    board :half
+Layout/UnknownPart:
+  offense: |
+    board :half
+    part :U1, :missing_part, pins: %w[a1 a2]
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+Layout/UnknownTransistorModel:
+  offense: |
+    board :mini
+    transistor :Q1, 'unknown_123', pins: %w[a1 a2 a3]
+  no_offense: |
+    board :mini
+    transistor :Q1, 'BC547', pins: %w[a1 a2 a3]
+Layout/UnknownPin:
+  offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    wire 'R1.BAD', 'a3'
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    wire 'R1.1', 'a3'
+Layout/UnknownOption:
+  offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2], not_a_real_option: true
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+Layout/UnplacedPin:
+  offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1]
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+Layout/DuplicateRef:
+  offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    resistor :R1, '220', pins: %w[a3 a4]
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    resistor :R2, '220', pins: %w[a3 a4]
+Layout/InvalidPlacement:
+  offense: |
+    board :half
+    ic :U1, 'NE555', at: 'a20'
+  no_offense: |
+    board :half
+    ic :U1, 'NE555', at: 'e20'
+Layout/HoleConflict:
+  offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    resistor :R2, '220', pins: %w[a1 a3]
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    resistor :R2, '220', pins: %w[a3 a4]
+Layout/NoFreeHole:
+  offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    wire 'b1', 'g3'
+    wire 'c1', 'g4'
+    wire 'd1', 'g5'
+    wire 'e1', 'g6'
+    wire 'R1.1', 'g7'
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    wire 'b1', 'g3'
+    wire 'c1', 'g4'
+    wire 'd1', 'g5'
+    wire 'R1.1', 'g7'
+Layout/SplitNetLabel:
+  offense: |
+    board :half
+    net :SIGNAL, at: 'a1'
+    net :SIGNAL, at: 'a2'
+  no_offense: |
+    board :half
+    net :SIGNAL, at: 'a1'
+    net :SIGNAL, at: 'b1'
+Layout/PinsInSameStrip:
+  offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 b1]
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+Electrical/ShortCircuit:
+  offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    wire 'B+2', 'B-2'
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+Electrical/ShortedComponent:
+  offense: |
+    board :mini
+    resistor :R1, '330', pins: %w[a1 a2]
+    wire 'b1', 'b2'
+  no_offense: |
+    board :mini
+    resistor :R1, '330', pins: %w[a1 a2]
+Electrical/FloatingPin:
+  offense: |
+    board :half
+    led :D1, anode: 'a10', cathode: 'a11'
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    led :D1, anode: 'a10', cathode: 'a11'
+    wire 'b10', 'B+2'
+    wire 'b11', 'B-2'
+Electrical/DanglingWire:
+  offense: |
+    board :half
+    wire 'a1', 'a2'
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    wire 'b1', 'b2'
+Electrical/SplitRail:
+  offense: |
+    board :full, split_rails: true
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    wire 'a10', 'B+30'
+  no_offense: |
+    board :full, split_rails: true
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    wire 'a10', 'B+30'
+    wire 'B+2', 'B+31'
+Electrical/MissingSeriesResistor:
+  offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    led :D1, anode: 'b10', cathode: 'g12'
+    wire 'a10', 'B+2'
+    wire 'h12', 'B-2'
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    led :D1, anode: 'b10', cathode: 'g12'
+    resistor :R1, '330', pins: %w[a9 a10]
+    wire 'b9', 'B+2'
+    wire 'h12', 'B-2'
+Electrical/ReversePolarity:
+  offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    led :D1, anode: 'b10', cathode: 'g12'
+    wire 'a10', 'B-2'
+    wire 'h12', 'B+2'
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    led :D1, anode: 'b10', cathode: 'g12'
+    wire 'a10', 'B+2'
+    wire 'h12', 'B-2'
+Electrical/PowerPinUnconnected:
+  offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    ic :U1, 'NE555', at: 'e20'
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    ic :U1, 'NE555', at: 'e20'
+    wire 'U1.8', 'B+2'
+    wire 'U1.1', 'B-2'
+Electrical/SupplyVoltageRange:
+  offense: |
+    board :half
+    supply :P, voltage: 3.3, plus: 'B+1', minus: 'B-1'
+    ic :U1, 'NE555', at: 'e20'
+    wire 'U1.8', 'B+2'
+    wire 'U1.1', 'B-2'
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    ic :U1, 'NE555', at: 'e20'
+    wire 'U1.8', 'B+2'
+    wire 'U1.1', 'B-2'
+Electrical/NoCommonGround:
+  offense: |
+    board :half
+    supply :P1, voltage: 5, plus: 'B+1', minus: 'B-1'
+    supply :P2, voltage: 3.3, plus: 'T+1', minus: 'T-1'
+  no_offense: |
+    board :half
+    supply :P1, voltage: 5, plus: 'B+1', minus: 'B-1'
+    supply :P2, voltage: 3.3, plus: 'T+1', minus: 'B-2'
+Electrical/NetLabelConflict:
+  offense: |
+    board :half
+    net :A, at: 'a1'
+    net :B, at: 'b1'
+  no_offense: |
+    board :half
+    net :A, at: 'a1'
+    net :B, at: 'a2'
+Intent/ConnectionMismatch:
+  offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    expect { connected 'R1.1', 'R1.2' }
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    wire 'b1', 'b2'
+    expect { connected 'R1.1', 'R1.2' }
+Intent/UnknownNet:
+  offense: |
+    board :half
+    expect { connected :MISSING, :ALSO_MISSING }
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+    expect { connected 'R1.1', 'R1.1' }
+Style/WireColor:
+  offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    wire 'a10', 'B+2', color: :blue
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    wire 'a10', 'B+2', color: :red

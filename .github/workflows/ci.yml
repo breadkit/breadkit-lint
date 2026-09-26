@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, ruby: "3.3" }
+          - { os: ubuntu-latest, ruby: "3.4" }
+          - { os: ubuntu-latest, ruby: "4.0" }
+          - { os: macos-latest, ruby: "4.0" }
+    defaults:
+      run:
+        working-directory: breadkit-lint
+    steps:
+      - name: Checkout breadkit examples
+        uses: actions/checkout@v6
+        with:
+          repository: breadkit/breadkit
+          ref: 7bccfcdefa8635f69ba32193dcab425582ea1cf8
+          path: breadkit
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          path: breadkit-lint
+          persist-credentials: false
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+          working-directory: breadkit-lint
+      - run: bundle exec rake
+      - name: Lint core examples
+        run: bundle exec bklint ../breadkit/examples/*.bk.rb
+      - name: Check expected offenses
+        run: bundle exec ruby scripts/check_bad_examples.rb

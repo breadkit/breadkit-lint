@@ -1,0 +1,68 @@
+module Breadkit
+  module Lint
+    VERSION: String
+
+    class Error < StandardError
+    end
+
+    class Offense
+      attr_reader rule: String
+      attr_reader severity: String
+      attr_reader message: String
+      attr_reader location: Breadkit::SourceLocation?
+      attr_reader targets: Hash[Symbol, untyped]
+      attr_reader state: String?
+    end
+
+    class Rule
+      attr_reader id: String
+      attr_reader severity: String
+      attr_reader description: String
+      attr_reader state_sensitive: bool
+      def check: (Context context) -> void
+    end
+
+    class Context
+      attr_reader circuit: Breadkit::Circuit
+      attr_reader state: Breadkit::State
+      attr_reader config: Config
+      attr_reader offenses: Array[Offense]
+    end
+
+    class Registry
+      def self.all: () -> Array[Rule | singleton(Rule)]
+      def self.register: (Rule | singleton(Rule) rule) -> void
+    end
+
+    class Config
+      attr_reader data: Hash[String, untyped]
+      def initialize: (?String? path) -> void
+      def severity: (Rule rule) -> String
+      def enabled?: (Rule rule) -> bool
+      def switch_states: () -> String
+      def fail_level: () -> String
+      def excludes: () -> Array[String]
+      def extra_parts: () -> Array[String]
+      def unknown_rules: () -> Array[String]
+      def excluded?: (String path) -> bool
+    end
+
+    class Engine
+      def initialize: (?config: Config) -> void
+      def run: (String | Array[String] paths, ?only: Array[String]?, ?except: Array[String]?) -> Array[Hash[Symbol, untyped]]
+      def fail?: (Array[Hash[Symbol, untyped]] files, ?String threshold) -> bool
+      def fatal?: (Array[Hash[Symbol, untyped]] files) -> bool
+    end
+
+    class Formatter
+      def text: (Array[Hash[Symbol, untyped]] files, ?locale: String) -> String
+      def json: (Array[Hash[Symbol, untyped]] files) -> String
+      def github: (Array[Hash[Symbol, untyped]] files) -> String
+      def sarif: (Array[Hash[Symbol, untyped]] files) -> String
+    end
+
+    class CLI
+      def run: (Array[String] argv) -> Integer
+    end
+  end
+end
