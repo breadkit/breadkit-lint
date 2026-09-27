@@ -62,6 +62,51 @@ module Breadkit
         end
       end
 
+      def body_overlap(circuit, rule, _state)
+        bodies = circuit.components.values.filter_map do |component|
+          body = physical_body(component, circuit.board)
+          [component, body] if body
+        end
+        bodies.combination(2).filter_map do |(first, a), (second, b)|
+          next unless bodies_overlap?(a, b)
+          offense(rule.id, translate("body_overlap", "#{first.ref} and #{second.ref} bodies overlap",
+                                     first: first.ref, second: second.ref), second.location,
+                  targets: { components: [first.ref, second.ref] })
+        end
+      end
+
+      def physical_body(component, board)
+        shape = component.part.data.dig("render", "shape")
+        if shape == "module" && component.respond_to?(:body_bounds)
+          bounds = component.body_bounds(board)
+          return [:rect, *bounds] if bounds
+        elsif %w[led_5mm rgb_led_5mm].include?(shape)
+          holes = component.pins.values.filter_map { |pin| board.hole(pin.hole_id) if pin.hole_id }
+          return unless holes.length == component.pins.length && !holes.empty?
+          return [:circle, holes.sum(&:x) / holes.length, holes.sum(&:y) / holes.length, 2.5 / 2.54]
+        end
+        nil
+      end
+
+      def bodies_overlap?(a, b)
+        if a.first == :rect && b.first == :rect
+          _kind, ax, ay, aw, ah = a
+          _kind, bx, by, bw, bh = b
+          return ax < bx + bw - 1e-6 && bx < ax + aw - 1e-6 &&
+                 ay < by + bh - 1e-6 && by < ay + ah - 1e-6
+        end
+        if a.first == :circle && b.first == :circle
+          dx, dy = a[1] - b[1], a[2] - b[2]
+          return dx * dx + dy * dy < (a[3] + b[3] - 1e-6)**2
+        end
+        circle, rect = a.first == :circle ? [a, b] : [b, a]
+        _kind, cx, cy, radius = circle
+        _kind, rx, ry, width, height = rect
+        dx = cx - cx.clamp(rx, rx + width)
+        dy = cy - cy.clamp(ry, ry + height)
+        dx * dx + dy * dy < (radius - 1e-6)**2
+      end
+
     end
   end
 end

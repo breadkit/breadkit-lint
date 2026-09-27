@@ -147,6 +147,12 @@ module Breadkit
           def check(context) = emit(context, :hole_covered)
         end
 
+        class BodyOverlap < BuiltinRule
+          rule "Layout/BodyOverlap", severity: :error, description: "Two component bodies overlap"
+
+          def check(context) = emit(context, :body_overlap)
+        end
+
         class NoFreeHole < DiagnosticRule
           rule "Layout/NoFreeHole", severity: :error, description: "No free hole is available"
 

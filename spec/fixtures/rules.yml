@@ -142,6 +142,15 @@ Layout/HoleCovered:
     board :half
     part :U1, :pico, at: 'd1'
     resistor :R1, '330', pins: %w[a25 a26]
+Layout/BodyOverlap:
+  offense: |
+    board :half
+    led :D1, anode: 'a10', cathode: 'a11'
+    led :D2, anode: 'b11', cathode: 'b12'
+  no_offense: |
+    board :half
+    led :D1, anode: 'a10', cathode: 'a11'
+    led :D2, anode: 'b13', cathode: 'b14'
 Layout/NoFreeHole:
   offense: |
     board :half
