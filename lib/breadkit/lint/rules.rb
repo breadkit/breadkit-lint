@@ -261,13 +261,13 @@ module Breadkit
 
       module Intent
         class ConnectionMismatch < BuiltinRule
-          rule "Intent/ConnectionMismatch", severity: :error, description: "Wiring differs from declared expectations"
+          rule "Intent/ConnectionMismatch", severity: :error, description: "Wiring differs from declared expectations", state_sensitive: true
 
           def check(context) = emit(context, :expectations)
         end
 
         class UnknownNet < BuiltinRule
-          rule "Intent/UnknownNet", severity: :error, description: "An expectation refers to an unknown net"
+          rule "Intent/UnknownNet", severity: :error, description: "An expectation refers to an unknown net", state_sensitive: true
 
           def check(context)
             emit_diagnostics(context)

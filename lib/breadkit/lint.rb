@@ -229,10 +229,16 @@ module Breadkit
         offenses = []
         broken_layout = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
         states = circuit.states(@config.switch_states)
+        scoped_expectations = circuit.expectations.any? { |item| item["when"] || item[:when] }
+        intent_states = scoped_expectations ? circuit.states("all") : states
         Registry.all.each do |rule|
           next unless @config.enabled?(rule) && selected?(rule.id, only, except)
           next if broken_layout && rule.id.start_with?("Electrical/", "Intent/")
-          relevant_states = rule.state_sensitive ? states : [states.first]
+          relevant_states = if rule.id.start_with?("Intent/") && scoped_expectations
+            intent_states
+          else
+            rule.state_sensitive ? states : [states.first]
+          end
           relevant_states.each do |state|
             context = Context.new(circuit, state, @config, @checks)
             checked = begin

@@ -13,6 +13,7 @@
 - Check declared resistor power and electrolytic voltage ratings.
 - Check an LED's declared current limit when a DC operating point can be calculated.
 - Add Markdown, JUnit, Checkstyle, and reviewdog JSON output formats.
+- Evaluate `expect(when: "SW1")` only in its selected switch state.
 
 ## 0.1.0 — 2026-09-27
 

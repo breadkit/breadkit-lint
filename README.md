@@ -89,6 +89,8 @@ a rule for a specific part, pin, or wire. Unknown rule IDs are errors; set
 `AllRules.NewRules` controls whether new rules start enabled or pending. Pair
 `bklint --format json` with `bkrender --annotations` to show offenses on a
 diagram.
+Use `expect(when: "SW1") { connected "SW1.1", "SW1.3" }` in a circuit to
+check a connection when that switch is closed.
 
 The [lint JSON schema](https://breadkit.github.io/breadkit-lint/schemas/lint-v1.json)
 describes the report format for integrations.

@@ -59,6 +59,10 @@ module Breadkit
       def json: (Array[Hash[Symbol, untyped]] files) -> String
       def github: (Array[Hash[Symbol, untyped]] files) -> String
       def sarif: (Array[Hash[Symbol, untyped]] files) -> String
+      def markdown: (Array[Hash[Symbol, untyped]] files) -> String
+      def junit: (Array[Hash[Symbol, untyped]] files) -> String
+      def checkstyle: (Array[Hash[Symbol, untyped]] files) -> String
+      def rdjson: (Array[Hash[Symbol, untyped]] files) -> String
     end
 
     class CLI

@@ -15,6 +15,17 @@ module Breadkit
       def expectations(circuit, rule, state)
         return [] if rule.id == "Intent/UnknownNet" && circuit.diagnostics.any? { |item| item.code == "unknown_net" }
         circuit.expectations.flat_map do |expectation|
+          at_state = expectation["when"] || expectation[:when]
+          if at_state
+            unless circuit.states("all").any? { |candidate| candidate.name == at_state }
+              next [] unless state.name.nil? && rule.id == "Intent/ConnectionMismatch"
+              next [offense(rule.id, translate("unknown_state", "unknown circuit state #{at_state}", state: at_state),
+                            location_from(expectation["location"] || expectation[:location]), targets: {})]
+            end
+            next [] unless state.name == at_state
+          else
+            next [] unless state.name.nil?
+          end
           strict = expectation["strict"] || expectation[:strict]
           entries = Array(expectation["entries"] || expectation[:entries])
           results = entries.filter_map do |item|

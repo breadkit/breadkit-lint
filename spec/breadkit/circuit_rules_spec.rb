@@ -69,6 +69,21 @@ RSpec.describe "circuit rules" do
     expect(inspect_source(wrong_name, only: ["Intent/ConnectionMismatch"]).first.message).to include("expected net WRONG")
   end
 
+  it "checks an expectation only in its named switch state" do
+    source = <<~RUBY
+      board :half
+      button :SW1, at: 'e10'
+      resistor :R1, '330', pins: %w[a20 a21]
+      expect(when: 'SW1') { connected 'SW1.1', 'SW1.3' }
+    RUBY
+    rule = ["Intent/ConnectionMismatch"]
+    expect(inspect_source(source, only: rule)).to be_empty
+    expect(inspect_source(source.sub("when: 'SW1'", "when: 'missing'"), only: rule).map(&:message))
+      .to include("unknown circuit state missing")
+    expect(inspect_source(source.sub("'SW1.3'", "'R1.1'"), only: rule).map(&:state))
+      .to include("SW1")
+  end
+
   it "finds LEDs in an unprotected series chain and on a GPIO output" do
     chain = <<~RUBY
       board :half

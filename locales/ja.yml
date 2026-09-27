@@ -118,6 +118,7 @@ messages:
   wire_color: "%{wire} の色 %{color} は想定色 %{expected} と異なります"
   label_conflict: "同じネットに異なるラベルがあります: %{labels}"
   unknown_expectation: "接続宣言に不明な参照があります: %{refs}"
+  unknown_state: "不明な回路状態です: %{state}"
   expected_connected: "%{refs} は接続されている必要があります"
   expected_isolated: "%{refs} は分離されている必要があります"
   undeclared_pins: "宣言したネットに未宣言のピンがあります: %{pins}"
