@@ -49,7 +49,7 @@ module Breadkit
 
     class Engine
       def initialize: (?config: Config) -> void
-      def run: (String | Array[String] paths, ?only: Array[String]?, ?except: Array[String]?, ?timeout: Numeric) -> Array[Hash[Symbol, untyped]]
+      def run: (String | Array[String] paths, ?only: Array[String]?, ?except: Array[String]?, ?timeout: Numeric, ?source: String?) -> Array[Hash[Symbol, untyped]]
       def fail?: (Array[Hash[Symbol, untyped]] files, ?String threshold) -> bool
       def fatal?: (Array[Hash[Symbol, untyped]] files) -> bool
     end

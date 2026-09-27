@@ -15,6 +15,7 @@
 - Add Markdown, JUnit, Checkstyle, and reviewdog JSON output formats.
 - Evaluate `expect(when: "SW1")` only in its selected switch state.
 - Provide `Breadkit::RakeTask` for circuit linting in Rake projects.
+- Add `--stdin PATH` for checking unsaved Ruby DSL content.
 
 ## 0.1.0 — 2026-09-27
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "tmpdir"
+require "stringio"
 
 RSpec.describe "circuit rules" do
   def inspect_source(source, only: nil, config: Breadkit::Lint::Config.new)
@@ -186,5 +187,14 @@ RSpec.describe "circuit rules" do
     rdjson = JSON.parse(formatter.rdjson(files))
     expect(rdjson.dig("diagnostics", 0, "location", "range", "start", "line")).to eq(12)
     expect(rdjson.dig("diagnostics", 0, "code", "value")).to eq("Layout/InvalidHole")
+  end
+
+  it "lints source from standard input using a virtual path" do
+    previous = $stdin
+    $stdin = StringIO.new("board :missing\n")
+    expect { expect(Breadkit::Lint::CLI.new.run(["--stdin", "virtual.bk.rb", "--only", "Layout/UnknownBoard"])).to eq(1) }
+      .to output(/virtual\.bk\.rb: E: \[Layout\/UnknownBoard\]/).to_stdout
+  ensure
+    $stdin = previous
   end
 end

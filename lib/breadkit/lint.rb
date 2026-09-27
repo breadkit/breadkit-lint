@@ -186,14 +186,14 @@ module Breadkit
         @checks = Checks.new(@config, messages)
       end
 
-      def run(paths, only: nil, except: nil, timeout: 10)
+      def run(paths, only: nil, except: nil, timeout: 10, source: nil)
         Array(paths).filter_map do |path|
           next if excluded?(path)
           begin
             circuit = if path.end_with?(".json")
               Breadkit.load(path)
             else
-              document = Breadkit::DSL.load_file(path, timeout: timeout)
+              document = Breadkit::DSL.load_file(path, timeout: timeout, source: source)
               document.part_paths.concat(@config.extra_parts)
               Breadkit::Resolver.new.call(document)
             end
@@ -437,6 +437,7 @@ module Breadkit
           opts.on("--except RULES") { |value| options[:except] = value.split(",") }
           opts.on("--switch-states MODE", %w[none single all]) { |value| options[:switch_states] = value }
           opts.on("--timeout SECONDS", Float) { |value| options[:timeout] = value }
+          opts.on("--stdin PATH") { |value| options[:stdin] = value }
           opts.on("--list-rules") { options[:list_rules] = true }
           opts.on("--explain RULE") { |value| options[:explain] = value }
           opts.on("--locale LOCALE", %w[ja en]) { |value| options[:locale] = value }
@@ -448,7 +449,10 @@ module Breadkit
         locale = options[:locale] || locale_from_environment
         return list_rules(locale) if options[:list_rules]
         return explain(options[:explain], locale) if options[:explain]
-        files = expand_inputs(argv)
+        raise Error, "--stdin accepts no additional file arguments" if options[:stdin] && !argv.empty?
+        raise Error, "--stdin PATH requires a .bk.rb path" if options[:stdin] && !options[:stdin].end_with?(".bk.rb")
+        files = options[:stdin] ? [options[:stdin]] : expand_inputs(argv)
+        source = $stdin.read if options[:stdin]
         configs = {}
         results = files.flat_map do |path|
           config_path = options[:config] || nearest_config(path)
@@ -462,7 +466,8 @@ module Breadkit
           config = configs[config_path]
           config.data["AllRules"] ||= {}
           config.data["AllRules"]["SwitchStates"] = options[:switch_states] if options[:switch_states]
-          Engine.new(config: config, locale: locale).run([path], only: options[:only], except: options[:except], timeout: options[:timeout] || 10)
+          Engine.new(config: config, locale: locale).run([path], only: options[:only], except: options[:except],
+                                                         timeout: options[:timeout] || 10, source: source)
         end
         formatter = Formatter.new
         output = case options[:format]

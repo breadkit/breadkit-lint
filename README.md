@@ -48,6 +48,7 @@ bklint circuit.bk.rb --format json --out lint.json
 bklint circuit.bk.rb --format sarif --out lint.sarif
 bklint circuit.bk.rb --format markdown --out lint.md
 bklint circuit.bk.rb --format rdjson --out lint.rdjson
+cat circuit.bk.rb | bklint --stdin circuit.bk.rb
 ```
 
 Try the [shared circuit examples](https://github.com/breadkit/breadkit/tree/main/examples)
@@ -118,6 +119,7 @@ the current directory and skips `node_modules`. Each file uses the nearest
 | `-f, --format FORMAT` | `text` (default), `json`, `github`, `sarif`, `markdown`, `junit`, `checkstyle`, or `rdjson`. |
 | `-o, --out PATH` | Write output to a file. |
 | `-c, --config PATH` | Load a specific configuration. |
+| `--stdin PATH` | Lint Ruby DSL from standard input using PATH for diagnostics and relative part files. |
 | `--fail-level LEVEL` | `error`, `warning` (default), or `info`. |
 | `--only RULES` / `--except RULES` | Select or skip comma-separated rule IDs. |
 | `--switch-states MODE` | Evaluate `none`, `single` (default), or `all` switch states. |
