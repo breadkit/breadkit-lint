@@ -246,11 +246,12 @@ module Breadkit
             circuit = if path.end_with?(".json")
               Breadkit.load(path)
             else
-              document = if source || !path.end_with?(".bk.yml", ".bk.yaml", ".bk.toml")
-                Breadkit::DSL.load_file(path, timeout: timeout, source: source)
-              else
+              document = if path.end_with?(".bk.yml", ".bk.yaml", ".bk.toml")
                 raise Error, "declarative YAML/TOML input requires a newer breadkit gem" unless defined?(Breadkit::StructuredInput)
-                Breadkit::StructuredInput.load_file(path)
+
+                source ? Breadkit::StructuredInput.load_source(path, source) : Breadkit::StructuredInput.load_file(path)
+              else
+                Breadkit::DSL.load_file(path, timeout: timeout, source: source)
               end
               document.part_paths.concat(@config.extra_parts)
               Breadkit::Resolver.new.call(document)
@@ -584,7 +585,9 @@ module Breadkit
         return list_rules(locale) if options[:list_rules]
         return explain(options[:explain], locale) if options[:explain]
         raise Error, "--stdin accepts no additional file arguments" if options[:stdin] && !argv.empty?
-        raise Error, "--stdin PATH requires a .bk.rb path" if options[:stdin] && !options[:stdin].end_with?(".bk.rb")
+        if options[:stdin] && !options[:stdin].end_with?(".bk.rb", ".bk.yml", ".bk.yaml", ".bk.toml")
+          raise Error, "--stdin PATH requires a .bk.rb, .bk.yml, .bk.yaml, or .bk.toml path"
+        end
         raise Error, "choose --baseline or --generate-baseline" if options[:baseline] && options[:generate_baseline]
         raise Error, "--diff cannot be combined with a baseline" if options[:diff] && (options[:baseline] || options[:generate_baseline])
         if options[:watch] && (options[:stdin] || options[:fix] || options[:fix_check] || options[:generate_baseline])

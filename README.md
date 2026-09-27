@@ -215,9 +215,9 @@ end
 
 For a local pre-commit check, copy [scripts/pre-commit](scripts/pre-commit) to
 your project's `.git/hooks/pre-commit` and make it executable. It lints the
-staged contents of changed `.bk.rb` files and blocks a commit when bklint
-fails. Declarative YAML and TOML files are not included because `--stdin`
-currently accepts Ruby DSL only.
+staged contents of changed `.bk.rb`, `.bk.yml`, `.bk.yaml`, and `.bk.toml`
+files and blocks a commit when bklint fails. It reads each file from Git's
+index, so unstaged working-copy changes do not affect the check.
 
 If your project already uses Guard, add the `guard` gem and this optional
 plugin to its `Guardfile`:
@@ -248,7 +248,7 @@ the current directory and skips `node_modules`. Each file uses the nearest
 | `-f, --format FORMAT` | `text` (default), `json`, `github`, `sarif`, `markdown`, `junit`, `checkstyle`, or `rdjson`. |
 | `-o, --out PATH` | Write output to a file. |
 | `-c, --config PATH` | Load a specific configuration. |
-| `--stdin PATH` | Lint Ruby DSL from standard input using PATH for diagnostics and relative part files. |
+| `--stdin PATH` | Lint Ruby DSL or declarative YAML/TOML from standard input using PATH for diagnostics and relative part files. |
 | `--generate-baseline PATH` | Save current nonfatal findings and exit successfully. |
 | `--baseline PATH` | Hide findings listed in a generated baseline. |
 | `--diff REF` | Report findings added since a local Git revision, using its archived circuit and part files. |

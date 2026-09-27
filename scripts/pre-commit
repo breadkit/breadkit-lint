@@ -8,7 +8,7 @@ abort error unless status.success?
 
 command = File.file?("Gemfile") ? %w[bundle exec bklint] : ["bklint"]
 failed = false
-paths.split("\0").grep(/\.bk\.rb\z/).each do |path|
+paths.split("\0").grep(/\.bk\.(?:rb|ya?ml|toml)\z/).each do |path|
   source, error, status = Open3.capture3("git", "show", ":#{path}")
   unless status.success?
     warn error
