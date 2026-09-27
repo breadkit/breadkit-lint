@@ -7,6 +7,9 @@ require "optparse"
 require "pathname"
 require "uri"
 require "find"
+require "open3"
+require "tmpdir"
+require "fileutils"
 require_relative "lint/version"
 
 module Breadkit
@@ -441,6 +444,7 @@ module Breadkit
           opts.on("--stdin PATH") { |value| options[:stdin] = value }
           opts.on("--baseline PATH") { |value| options[:baseline] = value }
           opts.on("--generate-baseline PATH") { |value| options[:generate_baseline] = value }
+          opts.on("--diff REF") { |value| options[:diff] = value }
           opts.on("--list-rules") { options[:list_rules] = true }
           opts.on("--explain RULE") { |value| options[:explain] = value }
           opts.on("--locale LOCALE", %w[ja en]) { |value| options[:locale] = value }
@@ -455,6 +459,7 @@ module Breadkit
         raise Error, "--stdin accepts no additional file arguments" if options[:stdin] && !argv.empty?
         raise Error, "--stdin PATH requires a .bk.rb path" if options[:stdin] && !options[:stdin].end_with?(".bk.rb")
         raise Error, "choose --baseline or --generate-baseline" if options[:baseline] && options[:generate_baseline]
+        raise Error, "--diff cannot be combined with a baseline" if options[:diff] && (options[:baseline] || options[:generate_baseline])
         files = options[:stdin] ? [options[:stdin]] : expand_inputs(argv)
         source = $stdin.read if options[:stdin]
         configs = {}
@@ -479,6 +484,7 @@ module Breadkit
           return 0
         end
         results = Baseline.new(options[:baseline]).filter(results) if options[:baseline]
+        results = filter_diff(results, files, options, locale: locale) if options[:diff]
         formatter = Formatter.new
         output = case options[:format]
         when "json" then formatter.json(results)
@@ -502,6 +508,48 @@ module Breadkit
       end
 
       private
+
+      def filter_diff(results, files, options, locale:)
+        root, error, status = Open3.capture3("git", "rev-parse", "--show-toplevel")
+        raise Error, "--diff requires a Git repository: #{error.strip}" unless status.success?
+
+        root = root.strip
+        Dir.mktmpdir("bklint-diff-") do |directory|
+          archive = File.join(directory, "base.tar")
+          base_root = File.join(directory, "base")
+          FileUtils.mkdir_p(base_root)
+          _out, error, status = Open3.capture3("git", "-C", root, "archive", "--format=tar", "-o", archive, options[:diff])
+          raise Error, "cannot read Git revision #{options[:diff]}: #{error.strip}" unless status.success?
+          _out, error, status = Open3.capture3("tar", "-xf", archive, "-C", base_root)
+          raise Error, "cannot unpack Git revision #{options[:diff]}: #{error.strip}" unless status.success?
+
+          baseline_files = files.flat_map do |file|
+            relative = Pathname.new(File.expand_path(file)).relative_path_from(Pathname.new(root)).to_s
+            raise Error, "--diff input is outside the Git repository: #{file}" if relative == ".." || relative.start_with?("../")
+
+            base_path = File.join(base_root, relative)
+            next [] unless File.file?(base_path)
+
+            config = Config.new(options[:config] || nearest_config(base_path))
+            config.data["AllRules"] ||= {}
+            config.data["AllRules"]["SwitchStates"] = options[:switch_states] if options[:switch_states]
+            Engine.new(config: config, locale: locale).run([base_path], only: options[:only], except: options[:except],
+                                                            timeout: options[:timeout] || 10).map do |result|
+              result[:path] = File.expand_path(file)
+              result[:offenses].each do |item|
+                if item.location&.path&.start_with?("#{base_root}/")
+                  item.location.path = File.join(root, item.location.path.delete_prefix("#{base_root}/"))
+                end
+                item.message = item.message.gsub(base_root, root)
+              end
+              result
+            end
+          end
+          baseline = Baseline.new(File.join(directory, "baseline.json"))
+          baseline.write(baseline_files)
+          baseline.filter(results)
+        end
+      end
 
       def locale_from_environment
         value = %w[LC_ALL LC_MESSAGES LANG].map { |key| ENV[key] }.find { |item| !item.to_s.empty? }

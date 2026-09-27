@@ -241,4 +241,26 @@ RSpec.describe "circuit rules" do
       expect { expect(cli.run(["--baseline", baseline, source])).to eq(0) }.to output(/0 offenses/).to_stdout
     end
   end
+
+  it "reports only findings added since a git revision" do
+    Dir.mktmpdir do |directory|
+      Dir.chdir(directory) do
+        previous = $stdout
+        expect(system("git", "init", "-q")).to be(true)
+        File.write("circuit.bk.rb", "board :missing\n")
+        expect(system("git", "add", "circuit.bk.rb")).to be(true)
+        expect(system("git", "-c", "user.name=Example", "-c", "user.email=example@example.com", "commit", "-qm", "Base"))
+          .to be(true)
+        File.write("circuit.bk.rb", "board :missing\nwire 'z99', 'a1'\n")
+        args = ["--diff", "HEAD", "--only", "Layout/UnknownBoard,Layout/InvalidHole", "circuit.bk.rb"]
+        output = StringIO.new
+        $stdout = output
+        expect(Breadkit::Lint::CLI.new.run(args)).to eq(1)
+        expect(output.string).to include("Layout/InvalidHole")
+        expect(output.string).not_to include("Layout/UnknownBoard")
+      ensure
+        $stdout = previous
+      end
+    end
+  end
 end

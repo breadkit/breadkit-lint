@@ -104,6 +104,7 @@ findings back. New findings still affect the exit status.
 ```sh
 bklint --generate-baseline .bklint-baseline.json
 bklint --baseline .bklint-baseline.json
+bklint --diff origin/main --format github
 ```
 
 The [lint JSON schema](https://breadkit.github.io/breadkit-lint/schemas/lint-v1.json)
@@ -135,6 +136,7 @@ the current directory and skips `node_modules`. Each file uses the nearest
 | `--stdin PATH` | Lint Ruby DSL from standard input using PATH for diagnostics and relative part files. |
 | `--generate-baseline PATH` | Save current nonfatal findings and exit successfully. |
 | `--baseline PATH` | Hide findings listed in a generated baseline. |
+| `--diff REF` | Report findings added since a local Git revision, using its archived circuit and part files. |
 | `--fail-level LEVEL` | `error`, `warning` (default), or `info`. |
 | `--only RULES` / `--except RULES` | Select or skip comma-separated rule IDs. |
 | `--switch-states MODE` | Evaluate `none`, `single` (default), or `all` switch states. |

@@ -20,7 +20,7 @@ module Breadkit
         raise Error, "invalid baseline: expected schema_version 1 and entries" unless data.is_a?(Hash) && data["schema_version"] == 1 && data["entries"].is_a?(Array) && data["entries"].all? { |item| item.is_a?(Hash) }
 
         known = data["entries"].to_set
-        files.map { |file| file.merge(offenses: file[:offenses].reject { |item| known.include?(entry(file, item)) }) }
+        files.map { |file| file.merge(offenses: file[:offenses].reject { |item| !item.rule.start_with?("Fatal/") && known.include?(entry(file, item)) }) }
       end
 
       private

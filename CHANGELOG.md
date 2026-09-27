@@ -18,6 +18,7 @@
 - Add `--stdin PATH` for checking unsaved Ruby DSL content.
 - Add a portable baseline file for existing lint findings.
 - Check expected DC voltage and current ranges, and warn when a value cannot be verified.
+- Add `--diff REF` to report findings introduced since a Git revision.
 
 ## 0.1.0 — 2026-09-27
 
