@@ -1,25 +1,30 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
-- Recognize shared supply domains and offboard voltage sources in electrical checks, and honor explicitly isolated supplies.
-- Reduce polarity false positives for intentionally reverse-biased parts and improve LED path detection.
-- Report invalid values, colors, routes, and part options as layout errors.
-- Show source lines and relative paths in text, JSON, GitHub, and SARIF output.
-- Report unused lint suppressions and check all pins in strict expectations.
-- Add Japanese rule explanations and publish the lint JSON schema.
-- Limit DSL evaluation with `--timeout`.
-- Detect signal voltage limit violations and duplicate I2C addresses on one bus when part metadata is available.
-- Check declared resistor power and electrolytic voltage ratings.
-- Check an LED's declared current limit when a DC operating point can be calculated.
-- Add Markdown, JUnit, Checkstyle, and reviewdog JSON output formats.
-- Evaluate `expect(when: "SW1")` only in its selected switch state.
-- Provide `Breadkit::RakeTask` for circuit linting in Rake projects.
-- Add `--stdin PATH` for checking unsaved Ruby DSL content.
-- Add a portable baseline file for existing lint findings.
-- Check expected DC voltage and current ranges, and warn when a value cannot be verified.
-- Add `--diff REF` to report findings introduced since a Git revision.
+### Compatibility
+
+- Require Breadkit core 0.2.x. Projects using core 0.1.x should remain on breadkit-lint 0.1.0 until they upgrade both gems.
+
+### Added
+
+- Lint declarative YAML and TOML circuits, named multi-board circuits, and version 2 circuit IR.
+- Check I2C pull-ups and address conflicts, supply overloads, voltage domains, GPIO current limits, missing input pull resistors, missing IC decoupling capacitors, direct transistor base drive, and missing flyback diodes when the circuit supplies enough metadata.
+- Check resistor power, capacitor voltage, LED current, zero-ohm potentiometer paths, component lead spans, covered holes, overlapping bodies, and wires crossing DIP bodies.
+- Evaluate connection expectations in named switch states and check declared voltage and current ranges. An explicit switch-state budget reports incomplete exhaustive analysis instead of silently skipping states.
+- Add Markdown, JUnit, Checkstyle, and reviewdog JSON reports; portable baselines; `--diff`; `--watch`; `--stdin`; and short explanations with `--teach`.
+- Add Prism-based source columns and safe `--fix` edits for unambiguous wire-color typos and unused standalone suppressions.
+- Publish the lint JSON schema and rule reference, including English, Japanese, Chinese, and Korean messages and guidance.
+- Provide a GitHub Action, Rake task, Guard plugin, and pre-commit hook. The hook checks staged Ruby DSL, YAML, and TOML circuits.
+
+### Fixed
+
+- Avoid false common-ground and reverse-polarity findings for shared or isolated supplies and intentionally reverse-biased parts.
+- Recognize offboard power outputs and GPIO pin roles from part definitions when checking shorts, current paths, and voltage limits.
+- Preserve useful source paths and locations in terminal, GitHub, JSON, and SARIF reports, including evaluation errors.
+- Report invalid circuit values, colors, routes, and part options as layout errors before electrical checks run.
+- Reduce redundant findings from switch states, unused suppressions, unplaced pins, and missing pull resistors.
 
 ## 0.1.0 — 2026-09-27
 
-- Initial release
+- Initial release.

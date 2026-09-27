@@ -35,17 +35,17 @@ See the [multi-board guide](docs/MULTI_BOARD.md).
 
 ## Quick start
 
-RubyGems currently provides breadkit-lint 0.1.0 and Breadkit core 0.1.0. To
-use those published versions with Ruby 3.3 or newer:
+Install the published gems with Ruby 3.3 or newer:
 
 ```sh
 gem install breadkit-lint
 bklint circuit.bk.rb
 ```
 
-The features documented below track this main branch. It requires Breadkit
-core 0.2.x, which is not yet on RubyGems; `gem install breadkit-lint` does not
-install these main-branch features. Check out both repositories as siblings:
+The features documented below track this repository's main branch. A published
+gem may lag behind main; check its version and Breadkit core dependency before
+using these examples. To run the latest source, check out both repositories as
+siblings:
 
 ```sh
 git clone https://github.com/breadkit/breadkit.git
@@ -145,8 +145,7 @@ describes the report format for integrations.
 ## GitHub Action
 
 The repository root is a composite Action. It installs the current lint source
-and a pinned Breadkit core source checkout, so it works while the required
-Breadkit 0.2 gem is unpublished. The pinned core revision lives in
+and a pinned Breadkit core source checkout. The pinned core revision lives in
 `scripts/action-run.sh`; update it alongside compatibility checks. Pass one
 circuit file or a directory of circuits. A push workflow can upload SARIF to
 GitHub code scanning:
