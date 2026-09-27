@@ -102,6 +102,18 @@ RSpec.describe "circuit rules" do
     expect(inspect_source(wrong, only: rules).map(&:rule)).to eq(["Intent/ConnectionMismatch", "Intent/ConnectionMismatch"])
   end
 
+  it "reports when a modeled load exceeds its supply current limit" do
+    source = <<~RUBY
+      board :mini
+      supply :BAT, voltage: 5, plus: 'b1', minus: 'b5', current_limit: 0.003
+      resistor :R1, '1k', pins: %w[a1 a5]
+    RUBY
+    findings = inspect_source(source, only: ["Electrical/SupplyOverload"])
+    expect(findings.map(&:rule)).to include("Electrical/SupplyOverload")
+    expect(findings.first.message).to include("5.0 mA", "3.0 mA")
+    expect(inspect_source(source.sub("0.003", "0.01"), only: ["Electrical/SupplyOverload"])).to be_empty
+  end
+
   it "finds LEDs in an unprotected series chain and on a GPIO output" do
     chain = <<~RUBY
       board :half

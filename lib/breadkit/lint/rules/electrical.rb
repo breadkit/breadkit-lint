@@ -464,6 +464,24 @@ module Breadkit
         end
       end
 
+      def supply_overloads(circuit, rule, state)
+        analysis = circuit.dc_analysis(state)
+        return [] unless analysis.success?
+
+        circuit.supplies.filter_map do |supply|
+          limit = supply.current_limit
+          next unless limit
+          delivered = -analysis.currents.fetch(supply.name, 0.0)
+          next unless delivered > limit * (1 + 1e-9)
+
+          actual_ma, limit_ma = [delivered, limit].map { |value| (value * 1000).round(2) }
+          message = translate("supply_overload", "#{supply.name} supplies #{actual_ma} mA; limit is #{limit_ma} mA",
+                              supply: supply.name, current: actual_ma, limit: limit_ma)
+          nets = [supply.plus, supply.minus].filter_map { |terminal| circuit.net_of(terminal, state)&.name }
+          offense(rule.id, message, supply.location, targets: { nets: nets, holes: [supply.plus, supply.minus] }, state: state.name)
+        end
+      end
+
       def rated_voltage(circuit, component, state, ranges, domains)
         pins = component.pins.values
         return unless pins.length == 2

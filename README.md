@@ -96,6 +96,8 @@ Use `expect_voltage "VCC", 3.0..3.6` and `expect_current "R1", 0.001..0.02`
 to check calculated DC ranges. Current uses amperes and is compared by
 magnitude. Add a ground label for absolute voltage checks; unsupported DC
 models report `Intent/MeasurementUnavailable`.
+Set `current_limit: 0.02` on a `supply` to check a 20 mA supply against
+modeled DC loads with `Electrical/SupplyOverload`.
 
 To adopt lint in a project with existing findings, generate a baseline once.
 The saved entries omit line numbers, so moving code does not bring known

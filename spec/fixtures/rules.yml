@@ -377,6 +377,15 @@ Electrical/I2CAddressConflict:
     offboard :B, :sensor, address: '0x45'
     wire 'A.SDA', 'B.SDA'
     wire 'A.SCL', 'B.SCL'
+Electrical/SupplyOverload:
+  offense: |
+    board :mini
+    supply :BAT, voltage: 5, plus: 'b1', minus: 'b5', current_limit: 0.003
+    resistor :R1, '1k', pins: %w[a1 a5]
+  no_offense: |
+    board :mini
+    supply :BAT, voltage: 5, plus: 'b1', minus: 'b5', current_limit: 0.01
+    resistor :R1, '1k', pins: %w[a1 a5]
 Intent/ConnectionMismatch:
   offense: |
     board :half

@@ -32,6 +32,7 @@ rules:
   Electrical/NoCommonGround: Power supplies do not share a ground.
   Electrical/VoltageDomainMismatch: A signal exceeds a pin's voltage limit.
   Electrical/I2CAddressConflict: I2C devices on one bus use the same address.
+  Electrical/SupplyOverload: A modeled load exceeds its supply current limit.
   Electrical/NetLabelConflict: Different labels name one net.
   Intent/ConnectionMismatch: Wiring differs from declared expectations.
   Intent/UnknownNet: An expectation refers to an unknown net.

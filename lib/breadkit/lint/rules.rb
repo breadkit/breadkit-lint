@@ -256,6 +256,13 @@ module Breadkit
           def check(context) = emit(context, :led_overcurrent)
         end
 
+        class SupplyOverload < BuiltinRule
+          rule "Electrical/SupplyOverload", severity: :error,
+            description: "A modeled load exceeds its supply current limit", state_sensitive: true
+
+          def check(context) = emit(context, :supply_overloads)
+        end
+
         class I2CAddressConflict < BuiltinRule
           rule "Electrical/I2CAddressConflict", severity: :error,
             description: "I2C devices on one bus use the same address", state_sensitive: true

@@ -33,6 +33,7 @@ rules:
   Electrical/NoCommonGround: 複数の電源で GND が共通化されていません。
   Electrical/VoltageDomainMismatch: 信号の電圧がピンの許容範囲を超えています。
   Electrical/I2CAddressConflict: 同じ I2C バス上でアドレスが重複しています。
+  Electrical/SupplyOverload: 電源の供給電流が指定した上限を超えています。
   Electrical/NetLabelConflict: 同じネットに異なる名前が付いています。
   Intent/ConnectionMismatch: 宣言した接続と実際の配線が異なります。
   Intent/UnknownNet: 宣言で参照したネットが見つかりません。
@@ -73,6 +74,7 @@ guidance:
   Electrical/NoCommonGround: 電源の基準が必要な回路では GND を共有してください。
   Electrical/VoltageDomainMismatch: ピンの最大許容電圧を確認し、レベルシフタや分圧で信号を下げてください。
   Electrical/I2CAddressConflict: 一方のモジュールの ADR 設定を変更するか、別の I2C バスにつないでください。
+  Electrical/SupplyOverload: 電源の許容電流を確認し、負荷を減らすか適切な電源を使用してください。
   Electrical/NetLabelConflict: 同じネットに付いた異なるラベルを確認してください。
   Intent/ConnectionMismatch: expect の接続宣言と実際のワイヤ、ネットラベルを一致させてください。
   Intent/UnknownNet: expect で参照したネット名またはピン名を確認してください。
@@ -118,6 +120,7 @@ messages:
   common_ground: "複数の電源で GND が共通化されていません"
   voltage_domain: "%{pin} に %{voltage} V がかかっています（最大 %{maximum} V）"
   i2c_address: "%{refs} が同じ I2C バスでアドレス %{address} を使用しています"
+  supply_overload: "%{supply} の供給電流は %{current} mA です（上限 %{limit} mA）"
   wire_color: "%{wire} の色 %{color} は想定色 %{expected} と異なります"
   label_conflict: "同じネットに異なるラベルがあります: %{labels}"
   unknown_expectation: "接続宣言に不明な参照があります: %{refs}"
