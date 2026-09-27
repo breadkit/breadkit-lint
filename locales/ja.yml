@@ -13,6 +13,7 @@ rules:
   Layout/UnmatchedParts: 部品定義の指定に一致するファイルがありません。
   Layout/PartOverride: カスタム部品が組み込み部品を上書きしました。
   Lint/RedundantDisable: lint_disable が指摘を抑制していません。
+  Lint/UnknownRuleInDisable: lint_disable に不明なルール名があります。
   Layout/UnplacedPin: 部品ピンがボードの穴に配置されていません。
   Layout/DuplicateRef: 部品記号またはワイヤ ID が重複しています。
   Layout/InvalidPlacement: 部品の配置がボードに収まりません。
@@ -39,6 +40,7 @@ rules:
   Style/WireColor: 電源レールの慣例とワイヤ色が異なります。
 guidance:
   Lint/RedundantDisable: lint_disable の対象とルール名を確認し、使われていない指定を削除してください。
+  Lint/UnknownRuleInDisable: bklint --list-rules でルール名を確認してください。不明な名前では指摘を抑制できません。
   Layout/InvalidHole: 指定したボードに存在する穴 ID を使用してください。
   Layout/UnknownBoard: board で使用可能なボード名を指定するか、use_boards で定義を読み込んでください。
   Layout/UnknownPart: 部品名を確認するか、use_parts で定義を読み込んでください。

@@ -86,6 +86,11 @@ RSpec.describe "lint reporting regressions" do
     end.to output(/橋渡ししてください/).to_stdout
   end
 
+  it "explains unknown suppression rules in Japanese" do
+    expect { expect(Breadkit::Lint::CLI.new.run(["--explain", "Lint/UnknownRuleInDisable", "--locale", "ja"])).to eq(0) }
+      .to output(/不明なルール/).to_stdout
+  end
+
   it "locates and suggests the bridge for a used split rail" do
     Dir.mktmpdir do |directory|
       path = File.join(directory, "circuit.bk.rb")
