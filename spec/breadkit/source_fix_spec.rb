@@ -100,4 +100,28 @@ RSpec.describe "Ruby source fixes" do
       expect(region).to include("startLine" => 2, "startColumn" => expected)
     end
   end
+
+  it "points to and fixes a color value on the second line of a wire call" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "circuit.bk.rb")
+      color_line = "       color: :blu"
+      File.write(path, "board :half\nwire 'B-1', 'B-2',\n#{color_line}\n")
+
+      json, _stderr, _status = run_lint("--format", "json", "--only", "Layout/InvalidColor", path)
+      location = JSON.parse(json).dig("files", 0, "offenses", 0, "location")
+      column = color_line.index(":blu") + 1
+      expect(location).to include("line" => 3, "column" => column)
+
+      github, _stderr, _status = run_lint("--format", "github", "--only", "Layout/InvalidColor", path)
+      expect(github).to include("line=3,col=#{column}")
+
+      sarif, _stderr, _status = run_lint("--format", "sarif", "--only", "Layout/InvalidColor", path)
+      region = JSON.parse(sarif).dig("runs", 0, "results", 0, "locations", 0, "physicalLocation", "region")
+      expect(region).to include("startLine" => 3, "startColumn" => column)
+
+      _stdout, stderr, status = run_lint("--fix", "--only", "Layout/InvalidColor", path)
+      expect(status.exitstatus).to eq(0), stderr
+      expect(File.read(path)).to include("color: :blue")
+    end
+  end
 end

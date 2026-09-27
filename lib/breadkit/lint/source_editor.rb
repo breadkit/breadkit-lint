@@ -27,6 +27,9 @@ module Breadkit
           next unless call
           node = offense.rule == "Layout/InvalidColor" && wire_color_node(call) || call
           offense.column = node.location.start_character_column + 1
+          if node != call && node.location.start_line != offense.location.line
+            offense.location = Breadkit::SourceLocation.new(path: offense.location.path, line: node.location.start_line)
+          end
         end
       end
 
@@ -73,7 +76,9 @@ module Breadkit
         location = offense.location
         return unless location&.line && location.path && File.expand_path(location.path) == File.expand_path(@path)
 
-        calls = @calls_by_line[location.line] || []
+        calls = @calls_by_line[location.line] || @calls.select do |call|
+          call.location.start_line < location.line && location.line <= call.location.end_line
+        end
         return unless calls.one?
         return if name && calls.first.name != name
 
