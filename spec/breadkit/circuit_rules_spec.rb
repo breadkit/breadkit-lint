@@ -85,6 +85,23 @@ RSpec.describe "circuit rules" do
       .to include("SW1")
   end
 
+  it "checks declared DC voltage and current ranges" do
+    source = <<~RUBY
+      board :half
+      supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+      net :GND, at: 'B-1'
+      resistor :R1, '330', pins: %w[a10 a11]
+      wire 'b10', 'B+2'
+      wire 'b11', 'B-2'
+      expect_voltage 'P.+', 4.5..5.5
+      expect_current 'R1', 0.01..0.02
+    RUBY
+    rules = %w[Intent/ConnectionMismatch Intent/MeasurementUnavailable]
+    expect(inspect_source(source, only: rules)).to be_empty
+    wrong = source.sub("4.5..5.5", "2.0..3.0").sub("0.01..0.02", "0.02..0.03")
+    expect(inspect_source(wrong, only: rules).map(&:rule)).to eq(["Intent/ConnectionMismatch", "Intent/ConnectionMismatch"])
+  end
+
   it "finds LEDs in an unprotected series chain and on a GPIO output" do
     chain = <<~RUBY
       board :half

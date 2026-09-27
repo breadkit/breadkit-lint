@@ -33,6 +33,7 @@ module Breadkit
             refs = item["refs"] || item[:refs] || []
             expected_name = item["name"] || item[:name]
             loc = item["location"] || item[:location]
+            next measured_expectation(circuit, rule, state, item) if %w[voltage current].include?(kind)
             names = refs.map(&:to_s)
             nets = names.empty? && kind == "net" ? [circuit.net_of(expected_name, state)] : names.map { |reference| circuit.net_of(reference, state) }
             if nets.any?(&:nil?)
@@ -82,6 +83,37 @@ module Breadkit
           end
           results
         end
+      end
+
+      def measured_expectation(circuit, rule, state, item)
+        return unless %w[Intent/ConnectionMismatch Intent/MeasurementUnavailable].include?(rule.id)
+
+        kind = item["kind"] || item[:kind]
+        reference = Array(item["refs"] || item[:refs]).first.to_s
+        range = item["range"] || item[:range]
+        location = location_from(item["location"] || item[:location])
+        analysis = circuit.dc_analysis(state)
+        if analysis.success?
+          net = circuit.net_of(reference, state) if kind == "voltage"
+          value = kind == "voltage" ? analysis.voltages[net&.name] : analysis.currents[reference]&.abs
+          floating = kind == "voltage" && analysis.floating.any? { |group| group.include?(net&.name) }
+          reason = "no grounded DC value" if value.nil? || floating
+        else
+          reason = analysis.errors.join("; ")
+        end
+        if reason
+          return unless rule.id == "Intent/MeasurementUnavailable"
+
+          message = translate("measurement_unavailable", "cannot verify #{kind} at #{reference}: #{reason}",
+                              kind: kind, ref: reference, reason: reason)
+          return offense(rule.id, message, location, state: state.name)
+        end
+        return unless rule.id == "Intent/ConnectionMismatch" && (value < range[0] - 1e-9 || value > range[1] + 1e-9)
+
+        unit = kind == "voltage" ? "V" : "A"
+        message = translate("measurement_mismatch", "expected #{reference} #{kind} #{range.join('..')} #{unit}, found #{format('%.6g', value)} #{unit}",
+                            ref: reference, kind: kind, range: range.join(".."), value: format("%.6g", value), unit: unit)
+        offense(rule.id, message, location, state: state.name)
       end
 
     end

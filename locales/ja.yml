@@ -35,6 +35,7 @@ rules:
   Electrical/NetLabelConflict: 同じネットに異なる名前が付いています。
   Intent/ConnectionMismatch: 宣言した接続と実際の配線が異なります。
   Intent/UnknownNet: 宣言で参照したネットが見つかりません。
+  Intent/MeasurementUnavailable: 指定した直流電圧または電流を計算できません。
   Style/WireColor: 電源レールの慣例とワイヤ色が異なります。
 guidance:
   Lint/RedundantDisable: lint_disable の対象とルール名を確認し、使われていない指定を削除してください。
@@ -119,6 +120,8 @@ messages:
   label_conflict: "同じネットに異なるラベルがあります: %{labels}"
   unknown_expectation: "接続宣言に不明な参照があります: %{refs}"
   unknown_state: "不明な回路状態です: %{state}"
+  measurement_unavailable: "%{ref} の%{kind}を検証できません: %{reason}"
+  measurement_mismatch: "%{ref} の%{kind}は %{range} %{unit} を期待しましたが、%{value} %{unit} です"
   expected_connected: "%{refs} は接続されている必要があります"
   expected_isolated: "%{refs} は分離されている必要があります"
   undeclared_pins: "宣言したネットに未宣言のピンがあります: %{pins}"

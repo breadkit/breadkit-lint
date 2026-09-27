@@ -388,6 +388,20 @@ Intent/UnknownNet:
     board :half
     resistor :R1, '330', pins: %w[a1 a2]
     expect { connected 'R1.1', 'R1.1' }
+Intent/MeasurementUnavailable:
+  offense: |
+    board :half
+    offboard :UNO, :arduino_uno
+    resistor :R1, '330', pins: %w[a10 a11]
+    wire 'UNO.D13', 'b10'
+    expect_current 'R1', 0.0..0.02
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    resistor :R1, '330', pins: %w[a10 a11]
+    wire 'b10', 'B+2'
+    wire 'b11', 'B-2'
+    expect_current 'R1', 0.01..0.02
 Style/WireColor:
   offense: |
     board :half

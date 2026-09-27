@@ -92,6 +92,10 @@ a rule for a specific part, pin, or wire. Unknown rule IDs are errors; set
 diagram.
 Use `expect(when: "SW1") { connected "SW1.1", "SW1.3" }` in a circuit to
 check a connection when that switch is closed.
+Use `expect_voltage "VCC", 3.0..3.6` and `expect_current "R1", 0.001..0.02`
+to check calculated DC ranges. Current uses amperes and is compared by
+magnitude. Add a ground label for absolute voltage checks; unsupported DC
+models report `Intent/MeasurementUnavailable`.
 
 To adopt lint in a project with existing findings, generate a baseline once.
 The saved entries omit line numbers, so moving code does not bring known

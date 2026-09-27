@@ -275,6 +275,12 @@ module Breadkit
           end
         end
 
+        class MeasurementUnavailable < BuiltinRule
+          rule "Intent/MeasurementUnavailable", severity: :warning, description: "A requested DC value cannot be calculated", state_sensitive: true
+
+          def check(context) = emit(context, :expectations)
+        end
+
       end
 
       module Style

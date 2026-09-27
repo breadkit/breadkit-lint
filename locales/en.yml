@@ -35,4 +35,5 @@ rules:
   Electrical/NetLabelConflict: Different labels name one net.
   Intent/ConnectionMismatch: Wiring differs from declared expectations.
   Intent/UnknownNet: An expectation refers to an unknown net.
+  Intent/MeasurementUnavailable: A requested DC value cannot be calculated.
   Style/WireColor: A wire color differs from the supply color convention.

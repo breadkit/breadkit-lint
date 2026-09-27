@@ -1,6 +1,8 @@
 # Intent/ConnectionMismatch
 
 Actual connectivity differs from a declared `connected`, `isolated`, or `net` expectation.
+The rule also reports calculated DC voltage or current outside a declared
+`expect_voltage` or `expect_current` range.
 
 ```ruby
 expect { connected "R1.1", "D1.anode" }
