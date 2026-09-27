@@ -125,6 +125,61 @@ bklint --diff origin/main --format github
 The [lint JSON schema](https://breadkit.github.io/breadkit-lint/schemas/lint-v1.json)
 describes the report format for integrations.
 
+## GitHub Action
+
+The repository root is a composite Action. It installs the current lint source
+and a pinned Breadkit core source checkout, so it works while the required
+Breadkit 0.2 gem is unpublished. Pass one circuit file or a directory of
+circuits. A push workflow can upload SARIF to GitHub code scanning:
+
+```yaml
+name: Circuit lint
+on: push
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: breadkit/breadkit-lint@main
+        with:
+          path: circuits
+```
+
+`upload-sarif` defaults to `true`. The Action uploads the report even when a
+lint finding fails the job. Set `fail-level` to `error`, `warning` (default), or
+`info`. Pin the Action to a commit SHA when you need a reproducible workflow.
+
+For pull request annotations, use a separate read-only workflow. Set
+`upload-sarif: "false"` to emit GitHub Check annotations without a write token:
+
+```yaml
+name: Circuit PR lint
+on: pull_request
+permissions:
+  contents: read
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: breadkit/breadkit-lint@main
+        with:
+          path: circuits
+          upload-sarif: "false"
+```
+
+Ruby DSL circuits and `.bklint.yml` `require` entries can execute code. Keep
+the PR workflow on `pull_request` with read-only permissions and no secrets;
+do not use `pull_request_target` to run proposed circuit files. The Action
+does not post PR comments.
+
 In a Rakefile, define a lint task with selected files and CLI options:
 
 ```ruby

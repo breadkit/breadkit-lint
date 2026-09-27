@@ -1,0 +1,42 @@
+name: Breadkit Lint
+description: Check breadboard circuits and publish SARIF or pull request annotations
+inputs:
+  path:
+    description: Circuit file or directory to inspect
+    required: true
+  upload-sarif:
+    description: Upload results to GitHub code scanning (requires security-events write)
+    default: "true"
+  fail-level:
+    description: Lowest finding severity that fails the job (error, warning, or info)
+    default: warning
+outputs:
+  sarif-file:
+    description: Generated SARIF file path when upload-sarif is true
+    value: ${{ steps.lint.outputs['sarif-file'] }}
+runs:
+  using: composite
+  steps:
+    - uses: ruby/setup-ruby@a0102e0972be65f351c307e2d64b9314a57c8073 # v1.324.0
+      with:
+        ruby-version: "3.4"
+    - id: lint
+      name: Check circuits
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_UPLOAD_SARIF: ${{ inputs['upload-sarif'] }}
+        INPUT_FAIL_LEVEL: ${{ inputs['fail-level'] }}
+      run: bash "$GITHUB_ACTION_PATH/scripts/action-run.sh"
+    - name: Upload SARIF
+      if: ${{ inputs['upload-sarif'] == 'true' && steps.lint.outputs['sarif-file'] != '' }}
+      uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+      with:
+        sarif_file: ${{ steps.lint.outputs['sarif-file'] }}
+        category: breadkit-lint
+    - name: Fail on findings
+      if: ${{ steps.lint.outputs['exit-code'] != '0' }}
+      shell: bash
+      env:
+        BKLINT_EXIT_CODE: ${{ steps.lint.outputs['exit-code'] }}
+      run: exit "$BKLINT_EXIT_CODE"
