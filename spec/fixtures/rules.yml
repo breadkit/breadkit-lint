@@ -507,6 +507,19 @@ Electrical/MissingDecouplingCapacitor:
     capacitor :C1, '100n', pins: %w[a10 a12]
     wire 'b10', 'T+3'
     wire 'b12', 'T-3'
+Electrical/MissingBaseResistor:
+  offense: |
+    board :half
+    ic :U1, '74hc14', at: 'e10'
+    transistor :Q1, 'BC547', pins: %w[a25 a26 a27]
+    wire 'U1.1Y', 'Q1.base'
+  no_offense: |
+    board :half
+    ic :U1, '74hc14', at: 'e10'
+    transistor :Q1, 'BC547', pins: %w[a25 a26 a27]
+    resistor :R1, '1k', pins: %w[a21 a22]
+    wire 'U1.1Y', 'b21'
+    wire 'Q1.base', 'b22'
 Electrical/SupplyOverload:
   offense: |
     board :mini

@@ -714,6 +714,33 @@ module Breadkit
         end
       end
 
+      def missing_base_resistors(circuit, rule, state)
+        outputs = Hash.new { |hash, key| hash[key] = [] }
+        circuit.components.each_value do |component|
+          component.pins.each_value do |pin|
+            next unless pin.role == "output"
+            next if component.unused.include?(pin.name) || component.unused.include?(pin.number)
+            net = circuit.net_of("#{component.ref}.#{pin.name}", state)
+            outputs[net.name] << [component, pin] if net
+          end
+        end
+
+        circuit.components.values.filter_map do |transistor|
+          next unless transistor.part.data["category"] == "transistor"
+          base = transistor.pin("base")
+          next unless base && !transistor.unused.include?(base.name) && !transistor.unused.include?(base.number)
+          net = circuit.net_of("#{transistor.ref}.#{base.name}", state)
+          next unless net
+          driver, output = outputs[net.name].find { |component, _pin| component.ref != transistor.ref }
+          next unless driver
+          message = translate("missing_base_resistor", "#{driver.ref}.#{output.name} drives #{transistor.ref}.#{base.name} without a series resistor",
+                              driver: "#{driver.ref}.#{output.name}", base: "#{transistor.ref}.#{base.name}")
+          offense(rule.id, message, transistor.location,
+                  targets: { components: [transistor.ref, driver.ref], pins: ["#{transistor.ref}.#{base.name}", "#{driver.ref}.#{output.name}"],
+                             nets: [net.name] }, state: state.name)
+        end
+      end
+
       def direct_source_range(circuit, state, high_name, low_name)
         sources = circuit.voltage_sources.select do |source|
           circuit.net_of(source.plus, state)&.name == high_name && circuit.net_of(source.minus, state)&.name == low_name

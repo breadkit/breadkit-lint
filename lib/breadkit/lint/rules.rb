@@ -341,6 +341,13 @@ module Breadkit
           def check(context) = emit(context, :missing_decoupling_capacitors)
         end
 
+        class MissingBaseResistor < BuiltinRule
+          rule "Electrical/MissingBaseResistor", severity: :info,
+            description: "A declared output drives a transistor base without a series resistor", state_sensitive: true
+
+          def check(context) = emit(context, :missing_base_resistors)
+        end
+
       end
 
       module Intent
