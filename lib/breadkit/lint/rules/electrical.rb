@@ -4,6 +4,8 @@ module Breadkit
   module Lint
     class Checks
       def short_circuit(circuit, rule, state)
+        return [] if circuit.voltage_sources.empty?
+
         baseline = if state.closed_switches.empty?
           []
         else
@@ -62,14 +64,16 @@ module Breadkit
       end
 
       def floating_inputs(circuit, rule, state)
-        anchored = anchored_input_nets(circuit, state)
+        anchored = nil
         circuit.components.values.flat_map do |component|
           component.pins.values.filter_map do |pin|
             next unless pin.role == "input" && pin.hole_id
             next if component.unused.include?(pin.name) || component.unused.include?(pin.number)
             reference = "#{component.ref}.#{pin.name}"
             net = circuit.net_of(reference, state)
-            next unless net && !anchored[net.name]
+            next unless net
+            anchored ||= anchored_input_nets(circuit, state)
+            next if anchored[net.name]
             connected = net.members.any? do |member|
               member != reference && (!member.include?(".") || member.split(".", 2).first != component.ref)
             end
@@ -401,6 +405,8 @@ module Breadkit
 
       def potential_ranges(circuit, state)
         # ponytail: resistor-only DC leaves active-device voltages unknown; add device models when those cases matter.
+        return [{}, {}] if circuit.voltage_sources.empty?
+
         known = circuit.potentials(state).values
         ranges = known.transform_values { |value| [value, value] }
         domains = supply_domains(circuit, state)
@@ -494,9 +500,12 @@ module Breadkit
       end
 
       def power_pins(circuit, rule, state)
+        components = circuit.components.values.reject { |component| component.part.placement == "offboard" }
+        return [] unless components.any? { |component| component.pins.values.any? { |pin| %w[power ground].include?(pin.role) } }
+
         grounds = circuit.voltage_sources.filter_map { |supply| circuit.net_of(supply.minus, state)&.name }
         values = circuit.potentials(state).values
-        circuit.components.values.reject { |component| component.part.placement == "offboard" }.flat_map do |component|
+        components.flat_map do |component|
           component.pins.values.filter_map do |pin|
             next unless %w[power ground].include?(pin.role)
             next if component.unused.include?(pin.number) || component.unused.include?(pin.name)
@@ -518,9 +527,12 @@ module Breadkit
       end
 
       def supply_ranges(circuit, rule, state)
+        components = circuit.components.values.select { |component| component.part.data["supply_range"] }
+        return [] if components.empty?
+
         values = circuit.potentials(state).values
         domains = supply_domains(circuit, state)
-        circuit.components.values.flat_map do |component|
+        components.flat_map do |component|
           rated = component.part.data["supply_range"]
           next [] unless rated
           powers = component.pins.values.select { |pin| pin.role == "power" }
@@ -608,12 +620,14 @@ module Breadkit
       end
 
       def led_overcurrent(circuit, rule, state)
+        rated = circuit.components.values.select { |component| component.part.id == "led" && component.part.data["max_forward_current"] }
+        return [] if rated.empty?
+
         analysis = circuit.dc_analysis(state)
         return [] unless analysis.success?
 
-        circuit.components.values.filter_map do |component|
+        rated.filter_map do |component|
           limit = component.part.data["max_forward_current"]
-          next unless limit && component.part.id == "led"
           current = analysis.currents[component.ref]
           next unless current && current > limit
           offense(rule.id, "#{component.ref} may carry #{(current * 1000).round(2)} mA; maximum is #{(limit * 1000).round(2)} mA",
@@ -622,38 +636,43 @@ module Breadkit
       end
 
       def gpio_overcurrent(circuit, rule, state)
-        analysis = circuit.dc_analysis(state)
-        return [] unless analysis.success?
-
-        circuit.components.values.flat_map do |component|
+        rated = circuit.components.values.flat_map do |component|
           Array(component.part.data["provides"]).flat_map do |source|
-            name = "#{component.ref}.#{source.fetch('positive')}"
-            current = analysis.currents[name]
-            next [] unless current
             %w[positive negative].filter_map do |terminal|
               pin = component.pin(source.fetch(terminal))
               next unless pin && %w[gpio output].include?(pin.role)
               limit = component.part.pin(pin.number)&.fetch("max_current", nil)
-              next unless limit && current.abs > limit * (1 + 1e-9)
-              actual_ma, limit_ma = [current.abs, limit].map { |value| (value * 1000).round(2) }
-              reference = "#{component.ref}.#{pin.name}"
-              message = translate("gpio_overcurrent", "#{reference} carries #{actual_ma} mA; maximum is #{limit_ma} mA",
-                                  pin: reference, current: actual_ma, limit: limit_ma)
-              net = circuit.net_of(reference, state)
-              offense(rule.id, message, component.location,
-                      targets: { components: [component.ref], pins: [reference], nets: [net&.name].compact }, state: state.name)
+              [component, source, pin, limit] if limit
             end
           end
+        end
+        return [] if rated.empty?
+
+        analysis = circuit.dc_analysis(state)
+        return [] unless analysis.success?
+
+        rated.filter_map do |component, source, pin, limit|
+          current = analysis.currents["#{component.ref}.#{source.fetch('positive')}"]
+          next unless current && current.abs > limit * (1 + 1e-9)
+          actual_ma, limit_ma = [current.abs, limit].map { |value| (value * 1000).round(2) }
+          reference = "#{component.ref}.#{pin.name}"
+          message = translate("gpio_overcurrent", "#{reference} carries #{actual_ma} mA; maximum is #{limit_ma} mA",
+                              pin: reference, current: actual_ma, limit: limit_ma)
+          net = circuit.net_of(reference, state)
+          offense(rule.id, message, component.location,
+                  targets: { components: [component.ref], pins: [reference], nets: [net&.name].compact }, state: state.name)
         end
       end
 
       def supply_overloads(circuit, rule, state)
+        rated = circuit.supplies.select(&:current_limit)
+        return [] if rated.empty?
+
         analysis = circuit.dc_analysis(state)
         return [] unless analysis.success?
 
-        circuit.supplies.filter_map do |supply|
+        rated.filter_map do |supply|
           limit = supply.current_limit
-          next unless limit
           delivered = -analysis.currents.fetch(supply.name, 0.0)
           next unless delivered > limit * (1 + 1e-9)
 
