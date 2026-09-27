@@ -52,7 +52,7 @@ module Breadkit
                 circuit.components.keys.any? { |ref| member.start_with?("#{ref}.") }
               end.uniq
               declared_pins = names.map { |name| canonical_pin(circuit, name) }
-              extra_pins = strict ? actual_pins - declared_pins : []
+              extra_pins = strict ? (actual_pins - declared_pins).sort : []
               name_matches = nets.first.name == expected_name.to_s
               next if nets.map(&:name).uniq.length == 1 && extra_pins.empty? && name_matches
               detail = if !extra_pins.empty?
@@ -69,10 +69,13 @@ module Breadkit
             declared_names = entries.select { |item| (item["kind"] || item[:kind]) == "net" }.flat_map do |item|
               Array(item["refs"] || item[:refs]).filter_map { |ref| circuit.net_of(ref, state)&.name }
             end.uniq
-            circuit.nets(state).each do |net|
+            outside_nets = circuit.nets(state).filter_map do |net|
               next if declared_names.include?(net.name)
-              pins = net.members.select { |member| circuit.components.key?(member.split(".", 2).first) }
+              pins = net.members.select { |member| circuit.components.key?(member.split(".", 2).first) }.sort
               next if pins.empty?
+              [net, pins]
+            end
+            outside_nets.sort_by { |_net, pins| pins.first }.each do |net, pins|
               message = translate("undeclared_pins", "undeclared pins outside expected nets: #{pins.join(', ')}", pins: pins.join(", "))
               first_net_entry = entries.find { |item| (item["kind"] || item[:kind]) == "net" }
               location = first_net_entry && (first_net_entry["location"] || first_net_entry[:location])

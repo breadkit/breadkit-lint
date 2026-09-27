@@ -103,7 +103,7 @@ module Breadkit
           offense("Lint/RedundantDisable", translate("redundant_disable", "lint_disable for #{rule_id} suppresses no offense", rule: rule_id),
                   location_from(disable[:location] || disable["location"]))
         end
-        (kept + invalid + redundant).sort_by { |item| [item.location&.path.to_s, item.location&.line.to_i, item.rule] }
+        (kept + invalid + redundant).sort_by { |item| [item.location&.path.to_s, item.location&.line.to_i, item.rule, item.message] }
       end
 
       def canonical_pin(circuit, reference)

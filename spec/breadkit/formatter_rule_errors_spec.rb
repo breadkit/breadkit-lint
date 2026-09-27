@@ -18,6 +18,11 @@ RSpec.describe "formatter and rule errors" do
     end
   end
 
+  it "builds a SARIF source root from a Windows drive path" do
+    uri = Breadkit::Lint::Formatter.new.send(:source_root_uri, "D:/a/lint space Δ")
+    expect(uri).to eq("file:///D:/a/lint%20space%20%CE%94/")
+  end
+
   it "turns a missing custom check method into a per-rule fatal offense" do
     missing_check = Class.new(Breadkit::Lint::Rule) do
       rule "Custom/MissingCheck", severity: :error, description: "Missing check implementation"

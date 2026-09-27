@@ -194,6 +194,28 @@ RSpec.describe Breadkit::Lint::Engine do
     end
   end
 
+  it "lists undeclared pins in a stable order" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "strict.bk.rb")
+      File.write(path, <<~RUBY)
+        board :mini
+        resistor :R1, '330', pins: %w[a1 a3]
+        resistor :R3, '220', pins: %w[c1 c5]
+        resistor :R2, '220', pins: %w[b1 b6]
+        expect strict: true do
+          net :SIGNAL, 'R1.1'
+        end
+      RUBY
+      found = described_class.new.run([path], only: ["Intent/ConnectionMismatch"]).first[:offenses]
+      expect(found.map(&:message).join("\n")).to include("R2.1, R3.1")
+      expect(found.map(&:message).grep(/outside expected nets/)).to eq([
+        "undeclared pins outside expected nets: R1.2",
+        "undeclared pins outside expected nets: R2.2",
+        "undeclared pins outside expected nets: R3.2"
+      ])
+    end
+  end
+
   it "returns a fatal status for DSL evaluation errors and localizes rule descriptions" do
     Dir.mktmpdir do |directory|
       path = File.join(directory, "broken.bk.rb")

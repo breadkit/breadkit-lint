@@ -275,7 +275,7 @@ module Breadkit
         baseline = offenses.select { |item| item.state.nil? }.map { |item| [item.rule, item.message, item.location&.line] }
         offenses.reject { |item| item.state && baseline.include?([item.rule, item.message, item.location&.line]) }
                 .uniq { |item| [item.rule, item.message, item.location&.line, item.state] }
-                .sort_by { |item| [item.location&.path.to_s, item.location&.line.to_i, item.rule] }
+                .sort_by { |item| [item.location&.path.to_s, item.location&.line.to_i, item.rule, item.message] }
       end
 
       def selected?(id, only, except)
@@ -409,7 +409,7 @@ module Breadkit
             result = { ruleId: item.rule, level: { "error" => "error", "warning" => "warning", "info" => "note" }.fetch(item.severity, "error"),
                        message: { text: item.message }, properties: { targets: item.targets, state: item.state } }
             path = item.location&.path || file[:path]
-            relative = Pathname.new(File.expand_path(path)).relative_path_from(Pathname.new(Dir.pwd)).to_s.tr("\\", "/")
+            relative = display_path(path)
             uri = URI::DEFAULT_PARSER.escape(relative, /[^A-Za-z0-9\-._~\/]/)
             physical = { artifactLocation: { uri: uri, uriBaseId: "%SRCROOT%" } }
             physical[:region] = { startLine: item.location.line } if item.location&.line.to_i.positive?
@@ -417,14 +417,21 @@ module Breadkit
             result
           end
         end
-        root_path = URI::DEFAULT_PARSER.escape("#{File.expand_path(Dir.pwd)}/", /[^A-Za-z0-9\-._~\/]/)
-        root_uri = URI::File.build(path: root_path).to_s
+        root_uri = source_root_uri(Dir.pwd)
         JSON.pretty_generate(version: "2.1.0", "$schema" => "https://json.schemastore.org/sarif-2.1.0.json",
                              runs: [{ tool: { driver: { name: "bklint", version: VERSION, rules: rules } },
                                       originalUriBaseIds: { "%SRCROOT%" => { uri: root_uri } }, results: results }])
       end
 
       private
+
+      def source_root_uri(root)
+        path = root.tr("\\", "/")
+        path = File.expand_path(path) unless path.match?(/\A[A-Za-z]:\//)
+        path = "/#{path}" if path.match?(/\A[A-Za-z]:\//)
+        escaped = URI::DEFAULT_PARSER.escape("#{path}/", /[^A-Za-z0-9\-._~\/:]/)
+        URI::File.build(path: escaped).to_s
+      end
 
       def teach_guidance(rule_id, locale)
         @teach_guidance ||= {}
@@ -438,6 +445,7 @@ module Breadkit
       end
 
       def display_path(path)
+        return path.tr("\\", "/").delete_prefix("./") unless Pathname.new(path).absolute?
         absolute = File.expand_path(path)
         Pathname.new(absolute).relative_path_from(Pathname.new(Dir.pwd)).to_s.tr("\\", "/")
       end
@@ -550,7 +558,7 @@ module Breadkit
           FileUtils.mkdir_p(base_root)
           _out, error, status = Open3.capture3("git", "-C", root, "archive", "--format=tar", "-o", archive, options[:diff])
           raise Error, "cannot read Git revision #{options[:diff]}: #{error.strip}" unless status.success?
-          _out, error, status = Open3.capture3("tar", "-xf", archive, "-C", base_root)
+          _out, error, status = Open3.capture3("tar", "-xf", "base.tar", "-C", "base", chdir: directory)
           raise Error, "cannot unpack Git revision #{options[:diff]}: #{error.strip}" unless status.success?
 
           baseline_files = files.flat_map do |file|
