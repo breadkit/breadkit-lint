@@ -198,6 +198,13 @@ module Breadkit
           def check(context) = emit(context, :missing_series_resistors)
         end
 
+        class MinimumResistance < BuiltinRule
+          rule "Electrical/MinimumResistance", severity: :warning,
+            description: "A potentiometer can reach zero resistance in an LED current path", state_sensitive: true
+
+          def check(context) = emit(context, :minimum_resistances)
+        end
+
         class ReversePolarity < BuiltinRule
           rule "Electrical/ReversePolarity", severity: :error, description: "A polarized part is connected backwards", state_sensitive: true
 

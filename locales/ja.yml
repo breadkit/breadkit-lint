@@ -27,6 +27,7 @@ rules:
   Electrical/DanglingWire: ワイヤの端が他の要素に接続されていません。
   Electrical/SplitRail: 分断された電源レールの一部に電源がありません。
   Electrical/MissingSeriesResistor: LED に電流制限抵抗がありません。
+  Electrical/MinimumResistance: LED の電流制限に使う可変抵抗が 0 Ω になり得ます。
   Electrical/ReversePolarity: 有極性部品が逆向きに接続されています。
   Electrical/PowerPinUnconnected: IC の電源ピンまたは GND ピンが電源につながっていません。
   Electrical/SupplyVoltageRange: IC の電源電圧が定格範囲外です。
@@ -68,6 +69,7 @@ guidance:
   Electrical/DanglingWire: ワイヤの両端を部品、電源、または別のワイヤにつないでください。
   Electrical/SplitRail: 表示された2つの穴をワイヤで橋渡ししてください。
   Electrical/MissingSeriesResistor: LED と電源または GPIO の間に電流制限抵抗を直列に入れてください。
+  Electrical/MinimumResistance: LED と可変抵抗をつなぐ経路に固定抵抗を直列に入れてください。
   Electrical/ReversePolarity: "部品の極性と電位を確認してください。意図的な逆バイアスは bias: :reverse と明示できます。"
   Electrical/PowerPinUnconnected: 電源ピンと GND ピンを対応する電源ネットに接続してください。
   Electrical/SupplyVoltageRange: IC の電源電圧を部品定義の定格範囲内にしてください。
@@ -114,6 +116,7 @@ messages:
   dangling_wire: "%{wire} の端が接続されていません"
   split_rail: "%{rail} の使用中の区間に電源がありません。%{bridge} を橋渡ししてください"
   missing_series_resistor: "%{ref} に直列の電流制限抵抗がありません"
+  minimum_resistance: "%{led} は可変抵抗 %{pot} だけで電流を制限しています。ワイパーが端に達すると 0 Ω になり得ます"
   reverse_polarity: "%{ref} の正極の電位が負極より低くなっています"
   power_pin: "%{pin} が有効な電源に接続されていません"
   supply_range: "%{ref} の %{power}/%{ground} 間は %{voltage} V です（定格 %{minimum}〜%{maximum} V）"

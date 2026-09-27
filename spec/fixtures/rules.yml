@@ -223,6 +223,25 @@ Electrical/MissingSeriesResistor:
     resistor :R1, '330', pins: %w[a9 a10]
     wire 'b9', 'B+2'
     wire 'h12', 'B-2'
+Electrical/MinimumResistance:
+  offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    pot :VR1, '10k', at: 'a5'
+    led :D1, anode: 'a10', cathode: 'a11'
+    wire 'b5', 'B+'
+    wire 'b6', 'b10'
+    wire 'b11', 'B-'
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    pot :VR1, '10k', at: 'a5'
+    resistor :R1, '330', pins: %w[a8 a9]
+    led :D1, anode: 'a10', cathode: 'a11'
+    wire 'b5', 'B+'
+    wire 'b6', 'b8'
+    wire 'b9', 'b10'
+    wire 'b11', 'B-'
 Electrical/ReversePolarity:
   offense: |
     board :half

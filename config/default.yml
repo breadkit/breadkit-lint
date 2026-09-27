@@ -32,6 +32,7 @@ Electrical/FloatingPin: {Enabled: true, Severity: warning}
 Electrical/DanglingWire: {Enabled: true, Severity: warning}
 Electrical/SplitRail: {Enabled: true, Severity: warning}
 Electrical/MissingSeriesResistor: {Enabled: true, Severity: error}
+Electrical/MinimumResistance: {Enabled: true, Severity: warning}
 Electrical/ReversePolarity: {Enabled: true, Severity: error}
 Electrical/PowerPinUnconnected: {Enabled: true, Severity: warning}
 Electrical/SupplyVoltageRange: {Enabled: true, Severity: error}

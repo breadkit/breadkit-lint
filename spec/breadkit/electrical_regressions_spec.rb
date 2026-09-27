@@ -172,4 +172,93 @@ RSpec.describe "electrical regressions" do
     tolerance_case = source.sub("voltage: 5", "voltage: 4.9").sub("10 1/4W", "100 5% 1/4W")
     expect(offenses(tolerance_case, only: "Electrical/ResistorPowerRating").map(&:rule)).to include("Electrical/ResistorPowerRating")
   end
+
+  it "warns when an LED relies on a potentiometer wiper for current limiting" do
+    source = <<~RUBY
+      board :half
+      supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+      pot :VR1, '10k', at: 'a5'
+      led :D1, anode: 'a10', cathode: 'a11'
+      wire 'b5', 'B+'
+      wire 'b6', 'b10'
+      wire 'b11', 'B-'
+    RUBY
+    found = offenses(source, only: "Electrical/MinimumResistance")
+    expect(found.map(&:rule)).to include("Electrical/MinimumResistance")
+    expect(found.first.targets[:components]).to contain_exactly("D1", "VR1")
+    expect(offenses(source.sub("wire 'b5', 'B+'", "wire 'b7', 'B+'"), only: "Electrical/MinimumResistance").map(&:rule))
+      .to include("Electrical/MinimumResistance")
+  end
+
+  it "does not warn when a fixed resistor protects the LED or only the pot ends are used" do
+    protected = <<~RUBY
+      board :half
+      supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+      pot :VR1, '10k', at: 'a5'
+      resistor :R1, '330', pins: %w[a8 a9]
+      led :D1, anode: 'a10', cathode: 'a11'
+      wire 'b5', 'B+'
+      wire 'b6', 'b8'
+      wire 'b9', 'b10'
+      wire 'b11', 'B-'
+    RUBY
+    expect(offenses(protected, only: "Electrical/MinimumResistance")).to be_empty
+
+    ends_only = <<~RUBY
+      board :half
+      supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+      pot :VR1, '10k', at: 'a5'
+      led :D1, anode: 'a10', cathode: 'a11'
+      wire 'b5', 'B+'
+      wire 'b7', 'b10'
+      wire 'b11', 'B-'
+    RUBY
+    expect(offenses(ends_only, only: "Electrical/MinimumResistance")).to be_empty
+  end
+
+  it "explains the potentiometer warning in Japanese" do
+    source = <<~RUBY
+      board :half
+      supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+      pot :VR1, '10k', at: 'a5'
+      led :D1, anode: 'a10', cathode: 'a11'
+      wire 'b5', 'B+'
+      wire 'b6', 'b10'
+      wire 'b11', 'B-'
+    RUBY
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "circuit.bk.rb")
+      File.write(path, source)
+      found = Breadkit::Lint::Engine.new(locale: "ja").run([path], only: ["Electrical/MinimumResistance"]).first[:offenses]
+      expect(found.first.message).to include("可変抵抗")
+    end
+  end
+
+  it "uses LED polarity metadata when checking a custom LED part" do
+    Dir.mktmpdir do |directory|
+      definition = File.join(directory, "led.yml")
+      File.write(definition, <<~YAML)
+        id: led
+        override: true
+        category: diode
+        placement: leads
+        pins:
+          - {num: 1, name: plus}
+          - {num: 2, name: minus}
+        polarity: {positive: plus, negative: minus}
+        flags: [needs_series_resistor]
+      YAML
+      source = <<~RUBY
+        board :half
+        use_parts #{definition.inspect}
+        supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+        pot :VR1, '10k', at: 'a5'
+        led :D1, plus: 'a10', minus: 'a11'
+        wire 'b5', 'B+'
+        wire 'b6', 'b10'
+        wire 'b11', 'B-'
+      RUBY
+      expect(offenses(source, only: "Electrical/MinimumResistance").map(&:rule)).to include("Electrical/MinimumResistance")
+    end
+  end
 end

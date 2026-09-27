@@ -26,6 +26,7 @@ rules:
   Electrical/DanglingWire: A wire end has no other connection.
   Electrical/SplitRail: A used segment of a split rail has no supply.
   Electrical/MissingSeriesResistor: An LED has an unprotected path across a supply.
+  Electrical/MinimumResistance: A potentiometer can reach zero resistance in an LED current path.
   Electrical/ReversePolarity: A polarized part is connected backwards.
   Electrical/PowerPinUnconnected: An IC power or ground pin is not connected to a supply.
   Electrical/SupplyVoltageRange: An IC supply voltage is outside its rated range.

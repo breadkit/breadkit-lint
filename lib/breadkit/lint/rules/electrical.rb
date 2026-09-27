@@ -146,11 +146,33 @@ module Breadkit
         end
       end
 
-      def unprotected_path?(circuit, start, finish, excluded_component, state)
+      def minimum_resistances(circuit, rule, state)
+        pots = circuit.components.values.select { |component| component.part.id == "pot" }
+        circuit.components.values.filter_map do |led|
+          next unless led.part.id == "led" && pots.any?
+          polarity = led.part.data["polarity"] || {}
+          high = circuit.net_of("#{led.ref}.#{polarity['positive']}", state)&.name
+          low = circuit.net_of("#{led.ref}.#{polarity['negative']}", state)&.name
+          next unless high && low
+          next if unprotected_path?(circuit, high, low, led, state)
+
+          pot = pots.find do |candidate|
+            %w[left right].any? { |end_pin| unprotected_path?(circuit, high, low, led, state, zero_pot: [candidate, end_pin]) }
+          end
+          next unless pot
+          offense(rule.id, translate("minimum_resistance", "#{led.ref} relies on #{pot.ref} for current limiting; its wiper can reach 0 Ω",
+                                     led: led.ref, pot: pot.ref), led.location,
+                  targets: { components: [led.ref, pot.ref] }, state: state.name)
+        end
+      end
+
+      def unprotected_path?(circuit, start, finish, excluded_component, state, zero_pot: nil)
         adjacency = Hash.new { |hash, key| hash[key] = [] }
         circuit.components.each_value do |component|
           next if component == excluded_component
-          pins = if component.part.data["category"] == "transistor"
+          pins = if component == zero_pot&.first
+            [component.pin("wiper"), component.pin(zero_pot.last)].compact
+          elsif component.part.data["category"] == "transistor"
             [component.pin("collector"), component.pin("emitter")].compact
           elsif component.pins.length == 2 &&
                 (component.part.data["category"] == "diode" || (component.part.id == "resistor" && !current_limiter?(component)))
