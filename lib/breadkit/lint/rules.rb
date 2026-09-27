@@ -159,6 +159,12 @@ module Breadkit
           def check(context) = emit(context, :wire_over_ic)
         end
 
+        class LeadSpan < BuiltinRule
+          rule "Layout/LeadSpan", severity: :error, description: "A component's leads cannot span the placed holes"
+
+          def check(context) = emit(context, :lead_span)
+        end
+
         class NoFreeHole < DiagnosticRule
           rule "Layout/NoFreeHole", severity: :error, description: "No free hole is available"
 

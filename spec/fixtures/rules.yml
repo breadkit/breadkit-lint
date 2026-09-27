@@ -160,6 +160,15 @@ Layout/WireOverIC:
     board :half
     ic :U1, :ne555, at: 'e10'
     wire 'a9', 'j9'
+Layout/LeadSpan:
+  offense: |
+    board :half
+    File.write(File.join(__dir__, 'limited.yml'), "id: limited_resistor\ncategory: passive\nplacement: leads\npins:\n  - {num: 1, name: '1'}\n  - {num: 2, name: '2'}\nmax_lead_span_mm: 7.62\n")
+    use_parts File.join(__dir__, 'limited.yml')
+    part :R1, :limited_resistor, pins: %w[a10 a14]
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a10 a30]
 Layout/NoFreeHole:
   offense: |
     board :half

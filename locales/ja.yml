@@ -112,6 +112,7 @@ messages:
   hole_covered_wire: "%{wire} の端が %{module} の本体下にある %{hole} に挿されています"
   body_overlap: "%{first} と %{second} の本体が重なっています"
   wire_over_ic: "%{wire} が %{ic} の本体上を通っています"
+  lead_span: "%{ref} の端子間は %{actual} mm で、上限 %{limit} mm を超えています"
   diagnostic_no_free_hole: "空き穴がありません: %{target}"
   diagnostic_split_net_label: "同じラベルが切断されたネットにあります: %{target}"
   diagnostic_unknown_net: "ネットが見つかりません: %{target}"

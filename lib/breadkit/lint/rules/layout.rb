@@ -92,6 +92,26 @@ module Breadkit
         end
       end
 
+      def lead_span(circuit, rule, _state)
+        circuit.components.values.filter_map do |component|
+          part = component.part
+          next unless part.respond_to?(:max_lead_span_mm)
+          limit = part.max_lead_span_mm
+          next unless limit
+          pins = component.pins.values
+          next unless pins.length == 2
+          holes = pins.map { |pin| pin.hole_id && circuit.board.hole(pin.hole_id) }
+          next unless holes.all?
+          actual = Math.hypot(holes[0].x - holes[1].x, holes[0].y - holes[1].y) * 2.54
+          next unless actual > limit + 1e-6
+          actual_text, limit_text = format("%.3f", actual), format("%.3f", limit)
+          offense(rule.id, translate("lead_span", "#{component.ref} spans #{actual_text} mm; limit is #{limit_text} mm",
+                                     ref: component.ref, actual: actual_text, limit: limit_text),
+                  component.location,
+                  targets: { components: [component.ref], pins: pins.map { |pin| "#{component.ref}.#{pin.name}" }, holes: holes.map(&:id) })
+        end
+      end
+
       def dip_body_bounds(component, board)
         return unless component.part.placement == "dip" && component.part.data.dig("render", "shape") == "dip"
         holes = component.pins.values.filter_map { |pin| board.hole(pin.hole_id) if pin.hole_id }
