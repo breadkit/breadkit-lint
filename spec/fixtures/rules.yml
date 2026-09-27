@@ -317,7 +317,17 @@ Electrical/CapacitorVoltageRating:
 Electrical/LedOvercurrent:
   offense: |
     board :half
-    File.write(File.join(__dir__, 'rated_led.yml'), "id: led\noverride: true\ncategory: diode\nplacement: leads\nmax_forward_current: 0.02\npins:\n  - {num: 1, name: anode}\n  - {num: 2, name: cathode}\npolarity: {positive: anode, negative: cathode}\n")
+    File.write(File.join(__dir__, 'rated_led.yml'), <<~YAML)
+      id: led
+      override: true
+      category: diode
+      placement: leads
+      max_forward_current: 0.02
+      pins:
+        - {num: 1, name: anode}
+        - {num: 2, name: cathode}
+      polarity: {positive: anode, negative: cathode}
+    YAML
     use_parts File.join(__dir__, 'rated_led.yml')
     supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
     resistor :R1, '10', pins: %w[a10 a12]
@@ -326,7 +336,17 @@ Electrical/LedOvercurrent:
     wire 'b14', 'B-'
   no_offense: |
     board :half
-    File.write(File.join(__dir__, 'rated_led.yml'), "id: led\noverride: true\ncategory: diode\nplacement: leads\nmax_forward_current: 0.02\npins:\n  - {num: 1, name: anode}\n  - {num: 2, name: cathode}\npolarity: {positive: anode, negative: cathode}\n")
+    File.write(File.join(__dir__, 'rated_led.yml'), <<~YAML)
+      id: led
+      override: true
+      category: diode
+      placement: leads
+      max_forward_current: 0.02
+      pins:
+        - {num: 1, name: anode}
+        - {num: 2, name: cathode}
+      polarity: {positive: anode, negative: cathode}
+    YAML
     use_parts File.join(__dir__, 'rated_led.yml')
     supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
     resistor :R1, '330', pins: %w[a10 a12]
