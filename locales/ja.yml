@@ -160,6 +160,7 @@ messages:
   dangling_wire: "%{wire} の端が接続されていません"
   split_rail: "%{rail} の使用中の区間に電源がありません。%{bridge} を橋渡ししてください"
   missing_series_resistor: "%{ref} に直列の電流制限抵抗がありません"
+  series_resistor_recommendation: "E12 系列の %{resistance} 以上の抵抗を直列に追加してください。電源上限 %{voltage} V、宣言された順方向電圧 %{forward_voltage} V、最大電流 %{current} mA からの概算です。公差を確認してください。"
   minimum_resistance: "%{led} は可変抵抗 %{pot} だけで電流を制限しています。ワイパーが端に達すると 0 Ω になり得ます"
   rail_polarity_mismatch: "%{source} の正極が %{positive_rail}、負極が %{negative_rail} に接続され、レールの極性表示と逆です"
   reverse_polarity: "%{ref} の正極の電位が負極より低くなっています"

@@ -281,8 +281,42 @@ module Breadkit
           offense(rule.id, translate("missing_series_resistor", "#{component.ref} has no current-limiting resistor in series",
                                      ref: component.ref), component.location,
                   targets: { components: [component.ref], pins: ["#{component.ref}.#{positive.name}", "#{component.ref}.#{negative.name}"],
-                             nets: [high.name, low.name] }, state: state.name)
+                             nets: [high.name, low.name] }, state: state.name,
+                  suggestion: series_resistor_recommendation(circuit, component, high.name, low.name, state))
         end
+      end
+
+      E12 = [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2].freeze
+
+      def series_resistor_recommendation(circuit, component, high, low, state)
+        forward_voltage = component.part.data["forward_voltage"]
+        current_limit = component.part.data["max_forward_current"]
+        return unless forward_voltage && current_limit && high != low
+
+        sources = circuit.voltage_sources.filter_map do |source|
+          positive = circuit.net_of(source.plus, state)&.name
+          negative = circuit.net_of(source.minus, state)&.name
+          [source, positive, negative] if positive && negative && [positive, negative].sort == [high, low].sort
+        end
+        return unless sources.one?
+
+        source, positive, negative = sources.first
+        return unless positive == high && negative == low
+
+        voltage = source.voltage_range ? source.voltage_range.last : source.voltage
+        minimum = (voltage - forward_voltage) / current_limit
+        return unless minimum.positive? && minimum.finite?
+
+        decade = 10.0**Math.log10(minimum).floor
+        recommended = (E12.map { |ratio| ratio * decade } + [10 * decade]).find { |value| value >= minimum * (1 - 1e-12) }
+        resistance = Breadkit::Value.new(recommended, category: :resistor).to_s
+        voltage_text = format("%.3g", voltage)
+        forward_text = format("%.3g", forward_voltage)
+        current_text = format("%.3g", current_limit * 1000)
+        translate("series_resistor_recommendation",
+                  "Add an E12 resistor of at least #{resistance} in series. Estimate uses #{voltage_text} V maximum supply, " \
+                  "#{forward_text} V declared forward voltage, and #{current_text} mA declared maximum current; verify tolerances.",
+                  resistance: resistance, voltage: voltage_text, forward_voltage: forward_text, current: current_text)
       end
 
       def minimum_resistances(circuit, rule, state)

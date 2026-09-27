@@ -160,6 +160,7 @@ messages:
   dangling_wire: "%{wire} 的端点未连接"
   split_rail: "%{rail} 的使用区段没有供电；请桥接 %{bridge}"
   missing_series_resistor: "%{ref} 缺少串联限流电阻"
+  series_resistor_recommendation: "请串联至少 %{resistance} 的 E12 系列电阻。这是根据最高电源电压 %{voltage} V、声明的正向电压 %{forward_voltage} V 和最大电流 %{current} mA 估算的；请核对公差。"
   minimum_resistance: "%{led} 仅靠可变电阻 %{pot} 限流；滑动端到达端点时可能降至 0 Ω"
   rail_polarity_mismatch: "%{source} 的正极接到 %{positive_rail}，负极接到 %{negative_rail}，与电源轨标记相反"
   reverse_polarity: "%{ref} 的正极电位低于负极"

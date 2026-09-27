@@ -71,6 +71,9 @@ cat circuit.bk.rb | bundle exec bklint --stdin circuit.bk.rb
 
 JSON and SARIF findings include a short fix suggestion and link to the
 [published rule reference](https://breadkit.github.io/breadkit-lint/rules/).
+For an LED directly across a supply, the missing series resistor rule also
+suggests an E12 value when the LED definition declares its forward voltage and
+maximum current. The value is an estimate; verify component tolerances.
 
 Try the [shared circuit examples](https://github.com/breadkit/breadkit/tree/main/examples)
 or browse the [project site](https://breadkit.github.io/breadkit-lint/).
@@ -194,7 +197,10 @@ jobs:
 Ruby DSL circuits and `.bklint.yml` `require` entries can execute code. Keep
 the PR workflow on `pull_request` with read-only permissions and no secrets;
 do not use `pull_request_target` to run proposed circuit files. The Action
-does not post PR comments.
+does not post PR comments. To attach an annotated render to the PR review,
+follow the [split workflow guide](docs/ACTION_PR_REVIEW.md). It keeps the
+renderer in the read-only job and posts an artifact link from a separate,
+trusted job. GitHub artifacts are not stable inline image URLs.
 
 In a Rakefile, define a lint task with selected files and CLI options:
 

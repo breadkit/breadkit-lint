@@ -160,6 +160,7 @@ messages:
   dangling_wire: "%{wire} 끝이 연결되지 않았습니다"
   split_rail: "%{rail}의 사용 구간에 전원이 없습니다. %{bridge}를 이어 주세요"
   missing_series_resistor: "%{ref}에 직렬 전류 제한 저항이 없습니다"
+  series_resistor_recommendation: "E12 계열 %{resistance} 이상의 저항을 직렬로 추가하세요. 전원 최대 %{voltage} V, 선언된 순방향 전압 %{forward_voltage} V, 최대 전류 %{current} mA를 바탕으로 한 추정치입니다. 허용 오차를 확인하세요."
   minimum_resistance: "%{led}은(는) 가변 저항 %{pot}만으로 전류를 제한합니다. 와이퍼가 끝에 닿으면 0 Ω이 될 수 있습니다"
   rail_polarity_mismatch: "%{source}의 양극은 %{positive_rail}, 음극은 %{negative_rail}에 연결되어 레일 표시와 반대입니다"
   reverse_polarity: "%{ref}의 양극 전위가 음극보다 낮습니다"

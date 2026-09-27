@@ -53,10 +53,10 @@ module Breadkit
         template ? format(template, **values) : english
       end
 
-      def offense(rule_id, message, location, targets: {}, state: nil)
+      def offense(rule_id, message, location, targets: {}, state: nil, suggestion: nil)
         rule = Registry.all.find { |item| item.id == rule_id }
         Offense.new(rule: rule_id, severity: rule ? @config.severity(rule) : "error", message: message,
-                    location: location, targets: targets, state: state)
+                    location: location, targets: targets, state: state, suggestion: suggestion)
       end
 
       def suppress(offenses, disables, circuit, path:, only: nil, except: nil, skipped: false)

@@ -17,7 +17,7 @@ module Breadkit
     class Error < StandardError; end
     require_relative "lint/baseline"
 
-    Offense = Struct.new(:rule, :severity, :message, :location, :targets, :state, :column, keyword_init: true)
+    Offense = Struct.new(:rule, :severity, :message, :location, :targets, :state, :column, :suggestion, keyword_init: true)
     require_relative "lint/source_editor"
 
     class Rule
@@ -351,7 +351,8 @@ module Breadkit
             path = display_path(item.location&.path || file[:path])
             line = item.location&.line ? ":#{item.location.line}#{item.column ? ":#{item.column}" : ""}" : ""
             heading = "#{path}#{line}: #{level}: [#{item.rule}] #{item.message}#{state}"
-            guidance = teach && teach_guidance(item.rule, locale)
+            guidance = teach && [teach_guidance(item.rule, locale), item.suggestion].compact.join(" ")
+            guidance = nil if guidance == ""
             guidance ? [heading, "  #{labels ? labels[:why] : (locale == 'ja' ? '説明' : 'Why')}: #{guidance}"] : [heading]
           end
           if file[:skipped]
@@ -386,7 +387,7 @@ module Breadkit
           files: files.map do |file|
             { path: display_path(file[:path]), analysis_skipped: !!file[:skipped], offenses: file[:offenses].map do |item|
               { rule: item.rule, severity: item.severity, message: item.message, docs_url: rule_help_url(item.rule),
-                suggestion: suggestion_for_rule(item.rule, locale),
+                suggestion: item.suggestion || suggestion_for_rule(item.rule, locale),
                 location: { path: display_path(item.location&.path || file[:path]), line: item.location&.line }
                   .merge(item.column ? { column: item.column } : {}),
                 state: item.state, targets: item.targets }
@@ -473,7 +474,7 @@ module Breadkit
           file[:offenses].map do |item|
             result = { ruleId: item.rule, level: { "error" => "error", "warning" => "warning", "info" => "note" }.fetch(item.severity, "error"),
                        message: { text: item.message }, properties: { targets: item.targets, state: item.state,
-                                                                       suggestion: suggestion_for_rule(item.rule, locale) } }
+                                                                       suggestion: item.suggestion || suggestion_for_rule(item.rule, locale) } }
             path = item.location&.path || file[:path]
             relative = display_path(path)
             uri = URI::DEFAULT_PARSER.escape(relative, /[^A-Za-z0-9\-._~\/]/)
