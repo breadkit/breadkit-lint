@@ -523,7 +523,16 @@ Electrical/MissingBaseResistor:
 Electrical/MissingFlybackDiode:
   offense: |
     board :half
-    File.write(File.join(__dir__, 'relay.yml'), "id: relay_coil\ncategory: relay\nplacement: leads\npins:\n  - {num: 1, name: POS}\n  - {num: 2, name: NEG}\npolarity: {positive: POS, negative: NEG}\nflags: [needs_flyback_diode]\n")
+    File.write(File.join(__dir__, 'relay.yml'), <<~YAML)
+      id: relay_coil
+      category: relay
+      placement: leads
+      pins:
+        - {num: 1, name: POS}
+        - {num: 2, name: NEG}
+      polarity: {positive: POS, negative: NEG}
+      flags: [needs_flyback_diode]
+    YAML
     use_parts File.join(__dir__, 'relay.yml')
     supply :V, voltage: 5, plus: 'T+1', minus: 'T-1'
     part :K1, :relay_coil, pins: %w[a10 a12]
@@ -531,7 +540,16 @@ Electrical/MissingFlybackDiode:
     wire 'K1.NEG', 'T-2'
   no_offense: |
     board :half
-    File.write(File.join(__dir__, 'relay.yml'), "id: relay_coil\ncategory: relay\nplacement: leads\npins:\n  - {num: 1, name: POS}\n  - {num: 2, name: NEG}\npolarity: {positive: POS, negative: NEG}\nflags: [needs_flyback_diode]\n")
+    File.write(File.join(__dir__, 'relay.yml'), <<~YAML)
+      id: relay_coil
+      category: relay
+      placement: leads
+      pins:
+        - {num: 1, name: POS}
+        - {num: 2, name: NEG}
+      polarity: {positive: POS, negative: NEG}
+      flags: [needs_flyback_diode]
+    YAML
     use_parts File.join(__dir__, 'relay.yml')
     supply :V, voltage: 5, plus: 'T+1', minus: 'T-1'
     part :K1, :relay_coil, pins: %w[a10 a12]
