@@ -17,6 +17,7 @@ rules:
   Layout/DuplicateRef: A component or wire identifier is repeated.
   Layout/InvalidPlacement: A component footprint does not fit the board.
   Layout/HoleConflict: More than one lead occupies the same hole.
+  Layout/HoleCovered: A module body covers another lead or wire endpoint.
   Layout/NoFreeHole: Automatic placement could not find a free hole.
   Layout/SplitNetLabel: A label names disconnected nets.
   Layout/PinsInSameStrip: Two pins of one component share a conductive strip.

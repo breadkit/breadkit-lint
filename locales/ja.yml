@@ -18,6 +18,7 @@ rules:
   Layout/DuplicateRef: 部品記号またはワイヤ ID が重複しています。
   Layout/InvalidPlacement: 部品の配置がボードに収まりません。
   Layout/HoleConflict: 同じ穴に複数のリードが挿されています。
+  Layout/HoleCovered: モジュール本体の下に別の端子やワイヤがあります。
   Layout/NoFreeHole: 自動配置できる空き穴がありません。
   Layout/SplitNetLabel: 同じラベルが接続されていない複数のネットに付いています。
   Layout/PinsInSameStrip: 同じ部品の複数ピンが同一ストリップに接続しています。
@@ -60,6 +61,7 @@ guidance:
   Layout/DuplicateRef: 部品、ワイヤ、電源に固有の ID を指定してください。
   Layout/InvalidPlacement: 部品のフットプリントと中央の溝を確認してください。
   Layout/HoleConflict: 1つの穴に挿すリードを1本にしてください。
+  Layout/HoleCovered: モジュールの外側にある穴へ端子やワイヤを移してください。
   Layout/NoFreeHole: 同じストリップまたはレールの空き穴を使用してください。
   Layout/SplitNetLabel: 同じラベルを付けたネットをワイヤで接続してください。
   Layout/PinsInSameStrip: 同じ部品のピンを別の導通ストリップに配置してください。
@@ -104,6 +106,8 @@ messages:
   placement_footprint: "ピン位置がフットプリントと一致しません"
   placement_anchor: "端子穴を基準点に指定してください"
   diagnostic_hole_conflict: "同じ穴に複数の端子があります: %{target}"
+  hole_covered_lead: "%{pin} は %{module} の本体下にある %{hole} に挿されています"
+  hole_covered_wire: "%{wire} の端が %{module} の本体下にある %{hole} に挿されています"
   diagnostic_no_free_hole: "空き穴がありません: %{target}"
   diagnostic_split_net_label: "同じラベルが切断されたネットにあります: %{target}"
   diagnostic_unknown_net: "ネットが見つかりません: %{target}"

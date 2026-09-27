@@ -28,6 +28,40 @@ module Breadkit
         end
       end
 
+      def hole_covered(circuit, rule, _state)
+        circuit.components.values.flat_map do |owner|
+          next [] unless owner.part.data.dig("render", "shape") == "module" && owner.respond_to?(:body_bounds)
+          bounds = owner.body_bounds(circuit.board)
+          next [] unless bounds
+          left, top, width, height = bounds
+          inside = lambda do |hole|
+            hole && hole.x > left + 1e-6 && hole.x < left + width - 1e-6 &&
+              hole.y > top + 1e-6 && hole.y < top + height - 1e-6
+          end
+          leads = circuit.components.values.reject { |component| component.equal?(owner) }.flat_map do |component|
+            component.pins.values.filter_map do |pin|
+              hole = pin.hole_id && circuit.board.hole(pin.hole_id)
+              next unless inside.call(hole)
+              reference = "#{component.ref}.#{pin.name}"
+              offense(rule.id, translate("hole_covered_lead", "#{reference} is under #{owner.ref} at #{hole.id}",
+                                         pin: reference, module: owner.ref, hole: hole.id), component.location,
+                      targets: { components: [owner.ref, component.ref], pins: [reference], holes: [hole.id] })
+            end
+          end
+          wires = circuit.wires.flat_map do |wire|
+            next [] if wire.electrical == false
+            [wire.from, wire.to].uniq.filter_map do |endpoint|
+              hole = circuit.board.hole(endpoint)
+              next unless inside.call(hole)
+              offense(rule.id, translate("hole_covered_wire", "#{wire.id} ends under #{owner.ref} at #{hole.id}",
+                                         wire: wire.id, module: owner.ref, hole: hole.id), wire.location,
+                      targets: { components: [owner.ref], wires: [wire.id], holes: [hole.id] })
+            end
+          end
+          leads + wires
+        end
+      end
+
     end
   end
 end

@@ -133,6 +133,15 @@ Layout/HoleConflict:
     board :half
     resistor :R1, '330', pins: %w[a1 a2]
     resistor :R2, '220', pins: %w[a3 a4]
+Layout/HoleCovered:
+  offense: |
+    board :half
+    part :U1, :pico, at: 'd1'
+    resistor :R1, '330', pins: %w[e10 a25]
+  no_offense: |
+    board :half
+    part :U1, :pico, at: 'd1'
+    resistor :R1, '330', pins: %w[a25 a26]
 Layout/NoFreeHole:
   offense: |
     board :half

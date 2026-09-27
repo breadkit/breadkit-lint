@@ -141,6 +141,12 @@ module Breadkit
           def check(context) = emit_diagnostics(context)
         end
 
+        class HoleCovered < BuiltinRule
+          rule "Layout/HoleCovered", severity: :error, description: "A module body covers another lead or wire endpoint"
+
+          def check(context) = emit(context, :hole_covered)
+        end
+
         class NoFreeHole < DiagnosticRule
           rule "Layout/NoFreeHole", severity: :error, description: "No free hole is available"
 
