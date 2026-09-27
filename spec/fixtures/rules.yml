@@ -470,6 +470,27 @@ Electrical/I2CAddressConflict:
     offboard :B, :sensor, address: '0x45'
     wire 'A.SDA', 'B.SDA'
     wire 'A.SCL', 'B.SCL'
+Electrical/I2CPullupMissing:
+  offense: |
+    board :half
+    File.write(File.join(__dir__, 'sensor.yml'), "id: sensor\nplacement: offboard\npins:\n  - {num: 1, name: SDA, role: data}\n  - {num: 2, name: SCL, role: clock}\n")
+    use_parts File.join(__dir__, 'sensor.yml')
+    offboard :S, :sensor, address: '0x44'
+    supply :V, voltage: 3.3, plus: 'T+1', minus: 'T-1'
+    wire 'S.SDA', 'a10'
+    wire 'S.SCL', 'a12'
+  no_offense: |
+    board :half
+    File.write(File.join(__dir__, 'sensor.yml'), "id: sensor\nplacement: offboard\npins:\n  - {num: 1, name: SDA, role: data}\n  - {num: 2, name: SCL, role: clock}\n")
+    use_parts File.join(__dir__, 'sensor.yml')
+    offboard :S, :sensor, address: '0x44'
+    supply :V, voltage: 3.3, plus: 'T+1', minus: 'T-1'
+    wire 'S.SDA', 'a10'
+    wire 'S.SCL', 'a12'
+    resistor :R1, '4.7k', pins: %w[b10 b11]
+    wire 'c11', 'T+2'
+    resistor :R2, '4.7k', pins: %w[b12 b13]
+    wire 'c13', 'T+3'
 Electrical/SupplyOverload:
   offense: |
     board :mini

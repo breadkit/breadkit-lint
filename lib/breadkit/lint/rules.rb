@@ -327,6 +327,13 @@ module Breadkit
           def check(context) = emit(context, :i2c_address_conflicts)
         end
 
+        class I2CPullupMissing < BuiltinRule
+          rule "Electrical/I2CPullupMissing", severity: :info,
+            description: "An I2C bus has no modeled pull-up resistor", state_sensitive: true
+
+          def check(context) = emit(context, :i2c_pullup_missing)
+        end
+
       end
 
       module Intent

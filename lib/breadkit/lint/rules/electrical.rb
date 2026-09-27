@@ -632,6 +632,51 @@ module Breadkit
         end
       end
 
+      def i2c_pullup_missing(circuit, rule, state)
+        board_id = lambda do |hole|
+          circuit.board.respond_to?(:board_id_for) ? circuit.board.board_id_for(hole) : nil
+        end
+        positive_nets = circuit.voltage_sources.filter_map do |source|
+          net = circuit.net_of(source.plus, state)
+          [net.name, net.holes.map(&board_id).uniq] if net
+        end
+        return [] if positive_nets.empty?
+
+        devices = circuit.components.values.select do |component|
+          address = component.attrs[:address] || component.attrs["address"]
+          address && component.pin("SDA") && component.pin("SCL") && (Integer(address.to_s, 0) rescue nil)
+        end
+        devices.group_by do |component|
+          %w[SDA SCL].map { |pin| circuit.net_of("#{component.ref}.#{pin}", state)&.name }
+        end.flat_map do |(sda, scl), components|
+          next [] unless sda && scl && sda != scl
+
+          { "SDA" => sda, "SCL" => scl }.filter_map do |pin, net_name|
+            net = circuit.net_of("#{components.first.ref}.#{pin}", state)
+            next unless net && components.any? { |component| net.members.any? { |member| member != "#{component.ref}.#{pin}" } }
+            boards = net.holes.map(&board_id).uniq
+            sources = positive_nets.filter_map { |name, ids| name unless (boards & ids).empty? }
+            next if sources.empty? || i2c_pullup_resistor?(circuit, state, net_name, sources)
+
+            refs = components.map(&:ref)
+            message = translate("i2c_pullup_missing", "I2C #{pin} on #{refs.join(', ')} has no modeled pull-up resistor",
+                                line: pin, refs: refs.join(", "))
+            offense(rule.id, message, components.first.location,
+                    targets: { components: refs, pins: refs.map { |ref| "#{ref}.#{pin}" }, nets: [net_name] }, state: state.name)
+          end
+        end
+      end
+
+      def i2c_pullup_resistor?(circuit, state, bus_net, positive_nets)
+        circuit.components.values.any? do |component|
+          next false unless component.part.id == "resistor"
+          resistance = Breadkit::Value.parse(component.value) rescue nil
+          next false unless resistance&.positive?
+          nets = component.pins.values.map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
+          nets.length == 2 && nets.include?(bus_net) && nets.uniq.length == 2 && positive_nets.include?((nets - [bus_net]).first)
+        end
+      end
+
       def direct_source_range(circuit, state, high_name, low_name)
         sources = circuit.voltage_sources.select do |source|
           circuit.net_of(source.plus, state)&.name == high_name && circuit.net_of(source.minus, state)&.name == low_name

@@ -38,6 +38,7 @@ rules:
   Electrical/NoCommonGround: 複数の電源で GND が共通化されていません。
   Electrical/VoltageDomainMismatch: 信号の電圧がピンの許容範囲を超えています。
   Electrical/I2CAddressConflict: 同じ I2C バス上でアドレスが重複しています。
+  Electrical/I2CPullupMissing: I2C バスの信号線にプルアップ抵抗がありません。
   Electrical/SupplyOverload: 電源の供給電流が指定した上限を超えています。
   Electrical/NetLabelConflict: 同じネットに異なる名前が付いています。
   Intent/ConnectionMismatch: 宣言した接続と実際の配線が異なります。
@@ -138,6 +139,7 @@ messages:
   common_ground: "複数の電源で GND が共通化されていません"
   voltage_domain: "%{pin} に %{voltage} V がかかっています（最大 %{maximum} V）"
   i2c_address: "%{refs} が同じ I2C バスでアドレス %{address} を使用しています"
+  i2c_pullup_missing: "%{refs} の I2C %{line} 信号線にプルアップ抵抗がありません"
   supply_overload: "%{supply} の供給電流は %{current} mA です（上限 %{limit} mA）"
   wire_color: "%{wire} の色 %{color} は想定色 %{expected} と異なります"
   label_conflict: "同じネットに異なるラベルがあります: %{labels}"

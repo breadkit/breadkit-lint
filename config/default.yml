@@ -52,6 +52,7 @@ Electrical/CapacitorVoltageRating: {Enabled: true, Severity: error}
 Electrical/LedOvercurrent: {Enabled: true, Severity: error}
 Electrical/SupplyOverload: {Enabled: true, Severity: error}
 Electrical/I2CAddressConflict: {Enabled: true, Severity: error}
+Electrical/I2CPullupMissing: {Enabled: true, Severity: info}
 Intent/ConnectionMismatch: {Enabled: true, Severity: error}
 Intent/UnknownNet: {Enabled: true, Severity: error}
 Intent/MeasurementUnavailable: {Enabled: true, Severity: warning}
