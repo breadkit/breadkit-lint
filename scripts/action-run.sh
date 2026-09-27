@@ -14,7 +14,7 @@ esac
 
 # Pin core source until the 0.2 gem is published. The action's own checkout is
 # the lint source, so both gems resolve without relying on an unpublished gem.
-core_sha=e79f2e4cf6d4d16fc57d2e85ec93f37babf592e3
+core_sha=210347f5a095adbe7814911f501395d8717dd027
 core_dir="${BREADKIT_ACTION_CORE_DIR:-$(mktemp -d "$RUNNER_TEMP/breadkit-core.XXXXXX")}"
 if [[ -z "${BREADKIT_ACTION_CORE_DIR:-}" ]]; then
   git init --quiet "$core_dir"

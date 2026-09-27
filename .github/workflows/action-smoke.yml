@@ -11,6 +11,7 @@ on:
       - Gemfile.lock
       - lib/**
       - spec/fixtures/action/basic.bk.rb
+      - spec/fixtures/action/rated_output.bk.rb
       - .github/workflows/action-smoke.yml
   workflow_dispatch:
 
@@ -29,3 +30,13 @@ jobs:
       - uses: ./ # zizmor: ignore[self-repository] actionlint rejects $/ for root actions
         with:
           path: spec/fixtures/action/basic.bk.rb
+      - id: rated_output
+        uses: ./ # zizmor: ignore[self-repository] actionlint rejects $/ for root actions
+        continue-on-error: true
+        with:
+          path: spec/fixtures/action/rated_output.bk.rb
+          upload-sarif: "false"
+      - name: Check rated output finding
+        env:
+          RESULT: ${{ steps.rated_output.outcome }}
+        run: test "$RESULT" = failure
