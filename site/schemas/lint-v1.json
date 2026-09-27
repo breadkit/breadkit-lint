@@ -29,6 +29,7 @@
                 "severity": {"enum": ["error", "warning", "info"]},
                 "message": {"type": "string"},
                 "docs_url": {"type": ["string", "null"], "format": "uri"},
+                "suggestion": {"type": ["string", "null"]},
                 "location": {
                   "type": "object",
                   "required": ["path", "line"],

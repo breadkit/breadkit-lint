@@ -69,6 +69,9 @@ bundle exec bklint circuit.bk.rb --fix
 cat circuit.bk.rb | bundle exec bklint --stdin circuit.bk.rb
 ```
 
+JSON and SARIF findings include a short fix suggestion and link to the
+[published rule reference](https://breadkit.github.io/breadkit-lint/rules/).
+
 Try the [shared circuit examples](https://github.com/breadkit/breadkit/tree/main/examples)
 or browse the [project site](https://breadkit.github.io/breadkit-lint/).
 

@@ -16,8 +16,16 @@ RSpec.describe "lint JSON schema" do
     expect(schemer.valid?(result)).to be(true)
     expect(result.dig("files", 0, "offenses", 0, "docs_url"))
       .to eq("https://breadkit.github.io/breadkit-lint/rules/Layout/HoleConflict/")
+    expect(result.dig("files", 0, "offenses", 0, "suggestion")).to include("one lead")
+    expect(JSON.parse(Breadkit::Lint::Formatter.new.json(files, locale: "ja"))
+      .dig("files", 0, "offenses", 0, "suggestion")).to include("1つの穴")
     result["summary"]["errors"] = -1
     expect(schemer.valid?(result)).to be(false)
+  end
+
+  it "has an actionable English suggestion for every registered rule" do
+    data = YAML.safe_load(File.read(File.expand_path("../../locales/en.yml", __dir__), encoding: "UTF-8"))
+    expect(data.fetch("guidance").keys).to match_array(Breadkit::Lint::Registry.all.map(&:id))
   end
 
   it "links SARIF rules to the same published reference pages" do

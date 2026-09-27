@@ -49,3 +49,62 @@ rules:
   Intent/UnknownNet: An expectation refers to an unknown net.
   Intent/MeasurementUnavailable: A requested DC value cannot be calculated.
   Style/WireColor: A wire color differs from the supply color convention.
+guidance:
+  Lint/RedundantDisable: Remove the unused lint_disable or correct its rule and target.
+  Lint/UnknownRuleInDisable: Check the rule ID with bklint --list-rules.
+  Layout/InvalidHole: Use a hole ID present on the selected board.
+  Layout/UnknownBoard: Choose an available board or load a definition with use_boards.
+  Layout/UnknownPart: Check the part ID or load its definition with use_parts.
+  Layout/UnknownTransistorModel: Confirm the physical pinout and define the exact model.
+  Layout/UnknownPin: Use a pin name or number from the part definition.
+  Layout/UnknownSupplySource: Select a pin declared as a power output in the part definition.
+  Layout/AmbiguousSupplySource: Give each power output in the part definition a unique positive pin.
+  Layout/UnknownOption: Use an attribute declared by the part definition.
+  Layout/InvalidOption: Choose a permitted value for the part attribute.
+  Layout/InvalidValue: Check the digits and units of the component value.
+  Layout/InvalidColor: Use a CSS color name, hex color, rgb(), or hsl().
+  Layout/InvalidRoute: Choose a supported wire route.
+  Layout/InvalidWireId: Choose a wire ID that cannot be mistaken for a hole ID.
+  Layout/UnmatchedParts: Check the use_parts path and file pattern.
+  Layout/PartOverride: Verify the pinout and attributes of the overridden part.
+  Layout/UnplacedPin: Place each required pin in a board hole.
+  Layout/DuplicateRef: Give each component, wire, and supply a unique ID.
+  Layout/InvalidPlacement: Check the footprint, board edges, and center gap.
+  Layout/HoleConflict: Place only one lead in each hole.
+  Layout/HoleCovered: Move the lead or wire endpoint to a hole outside the module body.
+  Layout/BodyOverlap: Move the parts so their physical bodies do not overlap.
+  Layout/WireOverIC: Route the wire around the IC body if it must remain visible.
+  Layout/LeadSpan: Move the leads closer or choose a part with sufficient lead length.
+  Layout/NoFreeHole: Use an unoccupied hole on the intended strip or rail.
+  Layout/SplitNetLabel: Connect nets sharing the same label with a wire.
+  Layout/PinsInSameStrip: Place the component pins on different conductive strips.
+  Electrical/ShortCircuit: Inspect the reported path and supply terminals for the short.
+  Electrical/ShortedComponent: Connect the two terminals of the part to separate nets.
+  Electrical/FloatingPin: Connect the pin or mark it unused when intentionally left open.
+  Electrical/FloatingInput: Add a pull resistor or connect the input to a modeled output.
+  Electrical/MissingPullResistor: Add a fixed pull resistor so the input has a defined open-switch state.
+  Electrical/DanglingWire: Connect both wire ends to a component, supply, or another wire.
+  Electrical/SplitRail: Bridge the two reported holes with a wire.
+  Electrical/MissingSeriesResistor: Add a current-limiting resistor in series with the LED.
+  Electrical/MinimumResistance: Add a fixed resistor in series with the LED and potentiometer.
+  Electrical/RailPolarityMismatch: Check the supply terminals against the rail polarity marks.
+  Electrical/ReversePolarity: "Check part polarity and voltage; declare intentional reverse bias with bias: :reverse."
+  Electrical/PowerPinUnconnected: Connect power and ground pins to the appropriate supply nets.
+  Electrical/SupplyVoltageRange: Keep the IC supply voltage within its declared rating.
+  Electrical/NoCommonGround: Share a ground reference where the circuit requires one.
+  Electrical/VoltageDomainMismatch: Use a level shifter or divider to keep the signal within the pin rating.
+  Electrical/ResistorPowerRating: Choose a higher-rated resistor or reduce its dissipation.
+  Electrical/CapacitorVoltageRating: Choose a capacitor rated above the applied voltage.
+  Electrical/LedOvercurrent: Add or increase a series resistor to stay below the LED current limit.
+  Electrical/GpioOvercurrent: Reduce the load to stay below the output pin current limit.
+  Electrical/I2CAddressConflict: Change one device address or use a separate I2C bus.
+  Electrical/I2CPullupMissing: Add fixed pull-up resistors from SDA and SCL to the appropriate supply.
+  Electrical/MissingDecouplingCapacitor: Place a decoupling capacitor across the IC power and ground pins.
+  Electrical/MissingBaseResistor: Add a series resistor between the output and transistor base.
+  Electrical/MissingFlybackDiode: Connect a reverse-biased diode across the inductive load.
+  Electrical/SupplyOverload: Reduce the load or use a supply with sufficient current capacity.
+  Electrical/NetLabelConflict: Resolve the conflicting labels on the same net.
+  Intent/ConnectionMismatch: Align the expect declaration with actual wires and net labels.
+  Intent/UnknownNet: Check the net or pin name used by the expect declaration.
+  Intent/MeasurementUnavailable: Connect a grounded source and supported passive parts, or use a circuit simulator.
+  Style/WireColor: Use red or orange for positive voltage and black or blue for ground, or configure the convention.

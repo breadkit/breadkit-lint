@@ -340,7 +340,7 @@ module Breadkit
         (lines + [summary]).join("\n")
       end
 
-      def json(files)
+      def json(files, locale: "en")
         offenses = files.flat_map { |file| file[:offenses] }
         JSON.pretty_generate(
           schema_version: 1,
@@ -348,6 +348,7 @@ module Breadkit
           files: files.map do |file|
             { path: display_path(file[:path]), analysis_skipped: !!file[:skipped], offenses: file[:offenses].map do |item|
               { rule: item.rule, severity: item.severity, message: item.message, docs_url: rule_help_url(item.rule),
+                suggestion: suggestion_for_rule(item.rule, locale),
                 location: { path: display_path(item.location&.path || file[:path]), line: item.location&.line }
                   .merge(item.column ? { column: item.column } : {}),
                 state: item.state, targets: item.targets }
@@ -421,7 +422,7 @@ module Breadkit
         JSON.pretty_generate(source: { name: "bklint", url: "https://github.com/breadkit/breadkit-lint" }, diagnostics: diagnostics)
       end
 
-      def sarif(files)
+      def sarif(files, locale: "en")
         rules = (Registry.all.map do |rule|
           level = { "error" => "error", "warning" => "warning", "info" => "note" }.fetch(rule.severity, "error")
           definition = { id: rule.id, shortDescription: { text: rule.description }, defaultConfiguration: { level: level } }
@@ -433,7 +434,8 @@ module Breadkit
         results = files.flat_map do |file|
           file[:offenses].map do |item|
             result = { ruleId: item.rule, level: { "error" => "error", "warning" => "warning", "info" => "note" }.fetch(item.severity, "error"),
-                       message: { text: item.message }, properties: { targets: item.targets, state: item.state } }
+                       message: { text: item.message }, properties: { targets: item.targets, state: item.state,
+                                                                       suggestion: suggestion_for_rule(item.rule, locale) } }
             path = item.location&.path || file[:path]
             relative = display_path(path)
             uri = URI::DEFAULT_PARSER.escape(relative, /[^A-Za-z0-9\-._~\/]/)
@@ -457,6 +459,15 @@ module Breadkit
       def rule_help_url(id)
         path = File.expand_path("../../docs/rules/#{id}.md", __dir__)
         "https://breadkit.github.io/breadkit-lint/rules/#{id}/" if File.file?(path)
+      end
+
+      def suggestion_for_rule(id, locale)
+        @guidance ||= {}
+        @guidance[locale] ||= begin
+          path = File.expand_path("../../locales/#{locale}.yml", __dir__)
+          YAML.safe_load(File.read(path, encoding: "UTF-8"), aliases: false).fetch("guidance", {})
+        end
+        @guidance[locale][id]
       end
 
       def source_root_uri(root)
@@ -608,9 +619,9 @@ module Breadkit
         results = filter_diff(results, files, options, locale: locale) if options[:diff]
         formatter = Formatter.new
         output = case options[:format]
-        when "json" then formatter.json(results)
+        when "json" then formatter.json(results, locale: locale)
         when "github" then formatter.github(results)
-        when "sarif" then formatter.sarif(results)
+        when "sarif" then formatter.sarif(results, locale: locale)
         when "markdown" then formatter.markdown(results)
         when "junit" then formatter.junit(results)
         when "checkstyle" then formatter.checkstyle(results)
