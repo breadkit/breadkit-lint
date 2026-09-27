@@ -35,29 +35,36 @@ See the [multi-board guide](docs/MULTI_BOARD.md).
 
 ## Quick start
 
-Install the gem with Ruby 3.3 or newer. The compatible Breadkit core gem is
-installed automatically.
+RubyGems currently provides breadkit-lint 0.1.0 and Breadkit core 0.1.0. To
+use those published versions with Ruby 3.3 or newer:
 
 ```sh
 gem install breadkit-lint
 bklint circuit.bk.rb
 ```
 
-The published gems are currently at version 0.1.0. This main branch requires
-Breadkit core 0.2.x, which is not yet published on RubyGems. To use the features
-on main, check out `breadkit` and `breadkit-lint` as sibling directories, then
-run `bundle install` in `breadkit-lint`.
-
-Focus on one rule, or write a machine-readable report:
+The features documented below track this main branch. It requires Breadkit
+core 0.2.x, which is not yet on RubyGems; `gem install breadkit-lint` does not
+install these main-branch features. Check out both repositories as siblings:
 
 ```sh
-bklint circuit.bk.rb --only Electrical/ShortCircuit
-bklint circuit.bk.rb --format json --out lint.json
-bklint circuit.bk.rb --format sarif --out lint.sarif
-bklint circuit.bk.rb --format markdown --out lint.md
-bklint circuit.bk.rb --format rdjson --out lint.rdjson
-bklint circuit.bk.rb --teach
-cat circuit.bk.rb | bklint --stdin circuit.bk.rb
+git clone https://github.com/breadkit/breadkit.git
+git clone https://github.com/breadkit/breadkit-lint.git
+cd breadkit-lint
+bundle install
+bundle exec bklint ../breadkit/examples/01_led_button.bk.rb
+```
+
+From the source checkout, focus on one rule or write a machine-readable report:
+
+```sh
+bundle exec bklint circuit.bk.rb --only Electrical/ShortCircuit
+bundle exec bklint circuit.bk.rb --format json --out lint.json
+bundle exec bklint circuit.bk.rb --format sarif --out lint.sarif
+bundle exec bklint circuit.bk.rb --format markdown --out lint.md
+bundle exec bklint circuit.bk.rb --format rdjson --out lint.rdjson
+bundle exec bklint circuit.bk.rb --teach
+cat circuit.bk.rb | bundle exec bklint --stdin circuit.bk.rb
 ```
 
 Try the [shared circuit examples](https://github.com/breadkit/breadkit/tree/main/examples)
@@ -129,8 +136,10 @@ describes the report format for integrations.
 
 The repository root is a composite Action. It installs the current lint source
 and a pinned Breadkit core source checkout, so it works while the required
-Breadkit 0.2 gem is unpublished. Pass one circuit file or a directory of
-circuits. A push workflow can upload SARIF to GitHub code scanning:
+Breadkit 0.2 gem is unpublished. The pinned core revision lives in
+`scripts/action-run.sh`; update it alongside compatibility checks. Pass one
+circuit file or a directory of circuits. A push workflow can upload SARIF to
+GitHub code scanning:
 
 ```yaml
 name: Circuit lint

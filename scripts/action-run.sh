@@ -14,11 +14,12 @@ esac
 
 # Pin core source until the 0.2 gem is published. The action's own checkout is
 # the lint source, so both gems resolve without relying on an unpublished gem.
+core_sha=e79f2e4cf6d4d16fc57d2e85ec93f37babf592e3
 core_dir="${BREADKIT_ACTION_CORE_DIR:-$(mktemp -d "$RUNNER_TEMP/breadkit-core.XXXXXX")}"
 if [[ -z "${BREADKIT_ACTION_CORE_DIR:-}" ]]; then
   git init --quiet "$core_dir"
   git -C "$core_dir" remote add origin https://github.com/breadkit/breadkit.git
-  git -C "$core_dir" fetch --quiet --depth 1 origin 37423f7035a032ec5c7700f8634959eb3b225a4a
+  git -C "$core_dir" fetch --quiet --depth 1 origin "$core_sha"
   git -C "$core_dir" checkout --quiet --detach FETCH_HEAD
 fi
 
@@ -31,6 +32,7 @@ bundle install --quiet
 cd "$GITHUB_WORKSPACE"
 set +e
 if [[ "${INPUT_UPLOAD_SARIF:-true}" == "true" ]]; then
+  # Keep the upload path inside the workspace, as required by upload-sarif.
   report_dir="$(mktemp -d "$GITHUB_WORKSPACE/.breadkit-lint.XXXXXX")"
   report="$report_dir/bklint.sarif"
   bundle exec ruby "$GITHUB_ACTION_PATH/exe/bklint" --format sarif --out "$report" --fail-level "${INPUT_FAIL_LEVEL:-warning}" -- "$INPUT_PATH"
