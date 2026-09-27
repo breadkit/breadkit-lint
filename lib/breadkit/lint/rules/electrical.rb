@@ -190,7 +190,6 @@ module Breadkit
       end
 
       def rail_polarity_mismatch(circuit, rule, _state)
-        return [] if circuit.board.respond_to?(:boards)
         circuit.voltage_sources.filter_map do |source|
           next if source.isolated
           positive_net = circuit.net_of(source.plus)
@@ -199,7 +198,16 @@ module Breadkit
           positive_rails = polarized_rails(circuit, positive_net)
           negative_rails = polarized_rails(circuit, negative_net)
           next unless positive_rails.map(&:first).uniq == ["-"] && negative_rails.map(&:first).uniq == ["+"]
-          wrong_positive, wrong_negative = positive_rails.first.last, negative_rails.first.last
+          board_id = lambda do |hole|
+            circuit.board.respond_to?(:board_id_for) ? circuit.board.board_id_for(hole.id) : nil
+          end
+          positive_by_board = positive_rails.group_by { |_polarity, hole| board_id.call(hole) }
+          negative_by_board = negative_rails.group_by { |_polarity, hole| board_id.call(hole) }
+          common_boards = positive_by_board.keys & negative_by_board.keys
+          next if common_boards.empty?
+          common_board = common_boards.first
+          wrong_positive = positive_by_board.fetch(common_board).first.last
+          wrong_negative = negative_by_board.fetch(common_board).first.last
           offense(rule.id, translate("rail_polarity_mismatch",
                                      "#{source.name} positive terminal is on #{wrong_positive.rail} and negative terminal is on #{wrong_negative.rail}",
                                      source: source.name, positive_rail: wrong_positive.rail, negative_rail: wrong_negative.rail),

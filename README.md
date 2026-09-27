@@ -30,8 +30,8 @@ placement errors, electrical problems, and connections that differ from your
 intent. It accepts Ruby DSL files or resolved JSON IR and can report results to
 a terminal, CI log, or SARIF viewer.
 
-Multi-board circuits currently return `Fatal/UnsupportedMultiBoard` instead of
-an incomplete lint result. See the [multi-board status](docs/MULTI_BOARD.md).
+Named multi-board circuits are supported in Ruby DSL and IR schema version 2.
+See the [multi-board guide](docs/MULTI_BOARD.md).
 
 ## Quick start
 

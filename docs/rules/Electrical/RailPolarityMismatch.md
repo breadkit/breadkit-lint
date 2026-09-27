@@ -7,4 +7,4 @@ board :half
 supply :USB, voltage: 5, plus: "B-1", minus: "B+1"
 ```
 
-This warning reports the reversed pair once for the source. It skips isolated sources, a source tied to only one marked rail, nets that touch both `+` and `−` rails, and rails without declared polarity. Those cases can be valid in bipolar or custom power layouts. Multi-board circuits are outside this check until rail domains can be evaluated per board.
+This warning reports the reversed pair once for the source. It skips isolated sources, a source tied to only one marked rail, nets that touch both `+` and `−` rails, and rails without declared polarity. Those cases can be valid in bipolar or custom power layouts. In multi-board circuits, the reversed pair must be on the same named board.

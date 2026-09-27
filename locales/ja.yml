@@ -117,7 +117,6 @@ messages:
   diagnostic_split_net_label: "同じラベルが切断されたネットにあります: %{target}"
   diagnostic_unknown_net: "ネットが見つかりません: %{target}"
   rule_error: "%{rule} の検査中にエラーが発生しました: %{error}"
-  unsupported_multi_board: "このバージョンの bklint は複数ボードの回路に対応していません"
   same_strip: "%{ref} のピン %{left} と %{right} は同じストリップ %{strip} にあります"
   short_circuit: "%{first}（%{first_voltage} V）と %{second}（%{second_voltage} V）の電位がネット %{net} で矛盾します（経路: %{path}）"
   shorted_component: "%{ref} の両端が同じネットに接続されています"
