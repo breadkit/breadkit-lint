@@ -491,6 +491,22 @@ Electrical/I2CPullupMissing:
     wire 'c11', 'T+2'
     resistor :R2, '4.7k', pins: %w[b12 b13]
     wire 'c13', 'T+3'
+Electrical/MissingDecouplingCapacitor:
+  offense: |
+    board :half
+    supply :V, voltage: 5, plus: 'T+1', minus: 'T-1'
+    ic :U1, :ne555, at: 'e20'
+    wire 'U1.VCC', 'T+2'
+    wire 'U1.GND', 'T-2'
+  no_offense: |
+    board :half
+    supply :V, voltage: 5, plus: 'T+1', minus: 'T-1'
+    ic :U1, :ne555, at: 'e20'
+    wire 'U1.VCC', 'T+2'
+    wire 'U1.GND', 'T-2'
+    capacitor :C1, '100n', pins: %w[a10 a12]
+    wire 'b10', 'T+3'
+    wire 'b12', 'T-3'
 Electrical/SupplyOverload:
   offense: |
     board :mini

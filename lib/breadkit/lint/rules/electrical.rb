@@ -677,6 +677,43 @@ module Breadkit
         end
       end
 
+      def missing_decoupling_capacitors(circuit, rule, state)
+        source_pairs = circuit.voltage_sources.filter_map do |source|
+          high = circuit.net_of(source.plus, state)&.name
+          low = circuit.net_of(source.minus, state)&.name
+          [high, low] if high && low && high != low
+        end
+        return [] if source_pairs.empty?
+
+        circuit.components.values.flat_map do |component|
+          next [] unless component.part.data["category"] == "ic" && component.part.placement != "offboard"
+          powers = component.pins.values.select { |pin| pin.role == "power" && !component.unused.include?(pin.name) && !component.unused.include?(pin.number) }
+          grounds = component.pins.values.select { |pin| pin.role == "ground" && !component.unused.include?(pin.name) && !component.unused.include?(pin.number) }
+          pairs = {}
+          powers.product(grounds).each do |power, ground|
+            high = circuit.net_of("#{component.ref}.#{power.name}", state)&.name
+            low = circuit.net_of("#{component.ref}.#{ground.name}", state)&.name
+            pairs[[high, low]] ||= [power, ground] if source_pairs.include?([high, low])
+          end
+          pairs.filter_map do |(high, low), (power, ground)|
+            next if decoupling_capacitor?(circuit, state, high, low)
+            message = translate("missing_decoupling_capacitor", "#{component.ref} has no modeled capacitor across #{power.name} and #{ground.name}",
+                                ref: component.ref, power: power.name, ground: ground.name)
+            offense(rule.id, message, component.location,
+                    targets: { components: [component.ref], pins: ["#{component.ref}.#{power.name}", "#{component.ref}.#{ground.name}"],
+                               nets: [high, low] }, state: state.name)
+          end
+        end
+      end
+
+      def decoupling_capacitor?(circuit, state, high, low)
+        circuit.components.values.any? do |component|
+          next false unless %w[capacitor electrolytic].include?(component.part.id)
+          nets = component.pins.values.map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
+          nets.length == 2 && nets.all? && nets.sort == [high, low].sort
+        end
+      end
+
       def direct_source_range(circuit, state, high_name, low_name)
         sources = circuit.voltage_sources.select do |source|
           circuit.net_of(source.plus, state)&.name == high_name && circuit.net_of(source.minus, state)&.name == low_name

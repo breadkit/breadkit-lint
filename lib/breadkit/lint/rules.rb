@@ -334,6 +334,13 @@ module Breadkit
           def check(context) = emit(context, :i2c_pullup_missing)
         end
 
+        class MissingDecouplingCapacitor < BuiltinRule
+          rule "Electrical/MissingDecouplingCapacitor", severity: :info,
+            description: "A powered IC has no modeled capacitor across its supply pins", state_sensitive: true
+
+          def check(context) = emit(context, :missing_decoupling_capacitors)
+        end
+
       end
 
       module Intent
