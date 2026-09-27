@@ -275,14 +275,16 @@ module Breadkit
     end
 
     class Formatter
-      def text(files, locale: "en")
+      def text(files, locale: "en", teach: false)
         lines = files.flat_map do |file|
-          entries = file[:offenses].map do |item|
+          entries = file[:offenses].flat_map do |item|
             level = { "error" => "E", "warning" => "W", "info" => "I" }.fetch(item.severity, "E")
             state = item.state ? (locale == "ja" ? " (#{item.state} の状態)" : " (#{item.state} state)") : ""
             path = display_path(item.location&.path || file[:path])
             line = item.location&.line ? ":#{item.location.line}" : ""
-            "#{path}#{line}: #{level}: [#{item.rule}] #{item.message}#{state}"
+            heading = "#{path}#{line}: #{level}: [#{item.rule}] #{item.message}#{state}"
+            guidance = teach && teach_guidance(item.rule, locale)
+            guidance ? [heading, "  #{locale == 'ja' ? '説明' : 'Why'}: #{guidance}"] : [heading]
           end
           entries << (locale == "ja" ? "#{display_path(file[:path])}: 配置エラーのため電気・意図の検査を省略しました" :
                                            "#{display_path(file[:path])}: electrical and intent checks skipped because of layout errors") if file[:skipped]
@@ -409,6 +411,17 @@ module Breadkit
 
       private
 
+      def teach_guidance(rule_id, locale)
+        @teach_guidance ||= {}
+        @teach_guidance[[rule_id, locale]] ||= if locale == "ja"
+          translations = YAML.safe_load(File.read(File.expand_path("../../locales/ja.yml", __dir__), encoding: "UTF-8"), aliases: false)
+          translations.dig("guidance", rule_id) || translations.dig("rules", rule_id)
+        else
+          path = File.expand_path("../../docs/rules/#{rule_id}.md", __dir__)
+          File.read(path, encoding: "UTF-8").split(/\n\s*\n/)[1]&.gsub(/\s+/, " ")&.strip if File.file?(path)
+        end
+      end
+
       def display_path(path)
         absolute = File.expand_path(path)
         Pathname.new(absolute).relative_path_from(Pathname.new(Dir.pwd)).to_s.tr("\\", "/")
@@ -445,6 +458,7 @@ module Breadkit
           opts.on("--baseline PATH") { |value| options[:baseline] = value }
           opts.on("--generate-baseline PATH") { |value| options[:generate_baseline] = value }
           opts.on("--diff REF") { |value| options[:diff] = value }
+          opts.on("--teach") { options[:teach] = true }
           opts.on("--list-rules") { options[:list_rules] = true }
           opts.on("--explain RULE") { |value| options[:explain] = value }
           opts.on("--locale LOCALE", %w[ja en]) { |value| options[:locale] = value }
@@ -453,6 +467,7 @@ module Breadkit
         end
         parser.parse!(argv)
         raise Error, "timeout must be positive" if options[:timeout] && !options[:timeout].positive?
+        raise Error, "--teach requires --format text" if options[:teach] && options[:format] != "text"
         locale = options[:locale] || locale_from_environment
         return list_rules(locale) if options[:list_rules]
         return explain(options[:explain], locale) if options[:explain]
@@ -494,7 +509,7 @@ module Breadkit
         when "junit" then formatter.junit(results)
         when "checkstyle" then formatter.checkstyle(results)
         when "rdjson" then formatter.rdjson(results)
-        else formatter.text(results, locale: locale)
+        else formatter.text(results, locale: locale, teach: options[:teach])
         end
         options[:out] ? File.write(options[:out], output + "\n") : puts(output)
         return 2 if results.any? { |file| file[:offenses].any? { |item| item.rule.start_with?("Fatal/") } }

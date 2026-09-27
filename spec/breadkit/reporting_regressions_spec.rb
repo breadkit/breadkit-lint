@@ -91,6 +91,20 @@ RSpec.describe "lint reporting regressions" do
       .to output(/不明なルール/).to_stdout
   end
 
+  it "adds rule guidance to text findings in teach mode" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "short.bk.rb")
+      File.write(path, "board :half\nsupply :P, voltage: 5, plus: 'B+1', minus: 'B-1'\nwire 'B+', 'B-'\n")
+      expect do
+        expect(Breadkit::Lint::CLI.new.run(["--teach", "--only", "Electrical/ShortCircuit", path])).to eq(1)
+      end.to output(/Why: Power constraints assign incompatible voltages/).to_stdout
+      expect do
+        expect(Breadkit::Lint::CLI.new.run(["--teach", "--locale", "ja", "--only", "Electrical/ShortCircuit", path])).to eq(1)
+      end.to output(/説明: 短絡経路/).to_stdout
+      expect(Breadkit::Lint::CLI.new.run(["--teach", "--format", "json", path])).to eq(2)
+    end
+  end
+
   it "locates and suggests the bridge for a used split rail" do
     Dir.mktmpdir do |directory|
       path = File.join(directory, "circuit.bk.rb")

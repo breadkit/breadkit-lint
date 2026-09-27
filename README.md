@@ -48,6 +48,7 @@ bklint circuit.bk.rb --format json --out lint.json
 bklint circuit.bk.rb --format sarif --out lint.sarif
 bklint circuit.bk.rb --format markdown --out lint.md
 bklint circuit.bk.rb --format rdjson --out lint.rdjson
+bklint circuit.bk.rb --teach
 cat circuit.bk.rb | bklint --stdin circuit.bk.rb
 ```
 
@@ -139,6 +140,7 @@ the current directory and skips `node_modules`. Each file uses the nearest
 | `--generate-baseline PATH` | Save current nonfatal findings and exit successfully. |
 | `--baseline PATH` | Hide findings listed in a generated baseline. |
 | `--diff REF` | Report findings added since a local Git revision, using its archived circuit and part files. |
+| `--teach` | Add short rule explanations to text output. |
 | `--fail-level LEVEL` | `error`, `warning` (default), or `info`. |
 | `--only RULES` / `--except RULES` | Select or skip comma-separated rule IDs. |
 | `--switch-states MODE` | Evaluate `none`, `single` (default), or `all` switch states. |
