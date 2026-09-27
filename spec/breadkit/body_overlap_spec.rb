@@ -3,7 +3,7 @@
 require "tmpdir"
 
 RSpec.describe "Layout/BodyOverlap" do
-  def check(source)
+  def check(source, size_mm: [5.08, 5.08])
     Dir.mktmpdir do |directory|
       definition = File.join(directory, "module.yml")
       File.write(definition, <<~YAML)
@@ -16,7 +16,7 @@ RSpec.describe "Layout/BodyOverlap" do
         footprint:
           "1": [0, 0]
           "2": [0, 2]
-        render: {shape: module, size_mm: [5.08, 5.08]}
+        render: {shape: module, size_mm: #{size_mm.inspect}}
       YAML
       path = File.join(directory, "circuit.bk.rb")
       File.write(path, "board :half\nuse_parts #{definition.inspect}\n#{source}")
@@ -54,5 +54,14 @@ RSpec.describe "Layout/BodyOverlap" do
     expect(check("part :A, :test_module, at: 'a10'\npart :B, :test_module, at: 'a11'\n")).to be_empty
     expect(check("led :D1, anode: 'a10', cathode: 'a11'\nled :D2, anode: 'b11', cathode: 'b12'\n").map(&:rule))
       .to eq(["Layout/BodyOverlap"])
+  end
+
+  it "reports a module crossing a DIP body and ignores a clear gap" do
+    overlapping = check("ic :U1, :ne555, at: 'e10'\npart :M, :test_module, at: 'e14'\n", size_mm: [10.16, 7.62])
+    expect(overlapping.map(&:rule)).to eq(["Layout/BodyOverlap"])
+    expect(overlapping.first.targets[:components]).to contain_exactly("U1", "M")
+
+    clear = check("ic :U1, :ne555, at: 'e10'\npart :M, :test_module, at: 'e20'\n", size_mm: [10.16, 7.62])
+    expect(clear).to be_empty
   end
 end

@@ -20,7 +20,7 @@ rules:
   Layout/DuplicateRef: 部品記号またはワイヤ ID が重複しています。
   Layout/InvalidPlacement: 部品の配置がボードに収まりません。
   Layout/HoleConflict: 同じ穴に複数のリードが挿されています。
-  Layout/HoleCovered: モジュール本体の下に別の端子やワイヤがあります。
+  Layout/HoleCovered: モジュールやDIP本体の下に別の端子やワイヤがあります。
   Layout/BodyOverlap: 部品の本体同士が重なっています。
   Layout/WireOverIC: 直線のジャンパー線が DIP IC の本体上を通っています。
   Layout/LeadSpan: 配置した穴の間隔が部品のリード長の上限を超えています。

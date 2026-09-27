@@ -30,8 +30,7 @@ module Breadkit
 
       def hole_covered(circuit, rule, _state)
         circuit.components.values.flat_map do |owner|
-          next [] unless owner.part.data.dig("render", "shape") == "module" && owner.respond_to?(:body_bounds)
-          bounds = owner.body_bounds(circuit.board)
+          bounds = body_rectangle(owner, circuit.board)
           next [] unless bounds
           left, top, width, height = bounds
           inside = lambda do |hole|
@@ -120,7 +119,7 @@ module Breadkit
         return unless ys.length == 2 && (ys.last - ys.first - 3).abs < 1e-6
         rows = holes.group_by(&:y).values.map { |row| row.map(&:x).sort }
         return unless rows[0] == rows[1] && rows[0].length * 2 == holes.length
-        [xs.min - 0.4, ys.first + 0.25, xs.max - xs.min + 0.8, ys.last - ys.first - 0.5]
+        [xs.min - 0.4, (ys.first + ys.last) / 2.0 - 0.4, xs.max - xs.min + 0.8, 0.8]
       end
 
       def segment_crosses_rect?(from, to, bounds)
@@ -141,8 +140,8 @@ module Breadkit
 
       def physical_body(component, board)
         shape = component.part.data.dig("render", "shape")
-        if shape == "module" && component.respond_to?(:body_bounds)
-          bounds = component.body_bounds(board)
+        if %w[module dip].include?(shape)
+          bounds = body_rectangle(component, board)
           return [:rect, *bounds] if bounds
         elsif %w[led_5mm rgb_led_5mm].include?(shape)
           holes = component.pins.values.filter_map { |pin| board.hole(pin.hole_id) if pin.hole_id }
@@ -150,6 +149,12 @@ module Breadkit
           return [:circle, holes.sum(&:x) / holes.length, holes.sum(&:y) / holes.length, 2.5 / 2.54]
         end
         nil
+      end
+
+      def body_rectangle(component, board)
+        shape = component.part.data.dig("render", "shape")
+        return component.body_bounds(board) if shape == "module" && component.respond_to?(:body_bounds)
+        dip_body_bounds(component, board) if shape == "dip"
       end
 
       def bodies_overlap?(a, b)

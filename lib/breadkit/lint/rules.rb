@@ -154,7 +154,7 @@ module Breadkit
         end
 
         class HoleCovered < BuiltinRule
-          rule "Layout/HoleCovered", severity: :error, description: "A module body covers another lead or wire endpoint"
+          rule "Layout/HoleCovered", severity: :error, description: "A module or DIP body covers another lead or wire endpoint"
 
           def check(context) = emit(context, :hole_covered)
         end
