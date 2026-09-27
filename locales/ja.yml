@@ -122,6 +122,7 @@ messages:
   shorted_component: "%{ref} の両端が同じネットに接続されています"
   unplaced_pin: "%{pin} がボードの穴に配置されていません"
   floating_pin: "%{pin} が外部に接続されていません"
+  floating_input: "%{pin} にモデル化された駆動源またはプル抵抗がありません"
   dangling_wire: "%{wire} の端が接続されていません"
   split_rail: "%{rail} の使用中の区間に電源がありません。%{bridge} を橋渡ししてください"
   missing_series_resistor: "%{ref} に直列の電流制限抵抗がありません"

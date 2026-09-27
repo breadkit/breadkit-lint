@@ -227,6 +227,16 @@ Electrical/FloatingPin:
     led :D1, anode: 'a10', cathode: 'a11'
     wire 'b10', 'B+2'
     wire 'b11', 'B-2'
+Electrical/FloatingInput:
+  offense: |
+    board :half
+    ic :U1, '74hc08', at: 'e10'
+    wire 'a10', 'a11'
+  no_offense: |
+    board :half
+    supply :USB, voltage: 5, plus: 'B+1', minus: 'B-1'
+    ic :U1, '74hc08', at: 'e10'
+    wire 'a10', 'B+2'
 Electrical/DanglingWire:
   offense: |
     board :half

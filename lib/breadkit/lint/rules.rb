@@ -204,6 +204,13 @@ module Breadkit
           def check(context) = emit(context, :floating_pins)
         end
 
+        class FloatingInput < BuiltinRule
+          rule "Electrical/FloatingInput", severity: :info,
+            description: "An input net has no modeled drive or pull resistor", state_sensitive: true
+
+          def check(context) = emit(context, :floating_inputs)
+        end
+
         class DanglingWire < BuiltinRule
           rule "Electrical/DanglingWire", severity: :warning, description: "A wire end has no other connection"
 

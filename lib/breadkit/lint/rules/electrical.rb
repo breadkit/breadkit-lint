@@ -61,6 +61,67 @@ module Breadkit
         end
       end
 
+      def floating_inputs(circuit, rule, state)
+        anchored = anchored_input_nets(circuit, state)
+        circuit.components.values.flat_map do |component|
+          component.pins.values.filter_map do |pin|
+            next unless pin.role == "input" && pin.hole_id
+            next if component.unused.include?(pin.name) || component.unused.include?(pin.number)
+            reference = "#{component.ref}.#{pin.name}"
+            net = circuit.net_of(reference, state)
+            next unless net && !anchored[net.name]
+            connected = net.members.any? do |member|
+              member != reference && (!member.include?(".") || member.split(".", 2).first != component.ref)
+            end
+            next unless connected
+            offense(rule.id, translate("floating_input", "#{reference} has no modeled source or pull resistor", pin: reference),
+                    component.location, targets: { components: [component.ref], pins: [reference], holes: [pin.hole_id], nets: [net.name] },
+                    state: state.name)
+          end
+        end
+      end
+
+      def anchored_input_nets(circuit, state)
+        anchored = {}
+        circuit.voltage_sources.each do |source|
+          [source.plus, source.minus].each do |terminal|
+            net = circuit.net_of(terminal, state)
+            anchored[net.name] = true if net
+          end
+        end
+        circuit.components.each_value do |component|
+          component.pins.each_value do |pin|
+            output = %w[output gpio open_drain].include?(pin.role) || component.part.pin(pin.number)&.fetch("output_capable", false)
+            next unless output
+            net = circuit.net_of("#{component.ref}.#{pin.name}", state)
+            anchored[net.name] = true if net
+          end
+        end
+        neighbors = Hash.new { |hash, key| hash[key] = [] }
+        circuit.components.each_value do |component|
+          next unless conductive_resistor?(component)
+          nets = component.pins.values.map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
+          next unless nets.length == 2 && nets.all? && nets[0] != nets[1]
+          neighbors[nets[0]] << nets[1]
+          neighbors[nets[1]] << nets[0]
+        end
+        queue = anchored.keys
+        until queue.empty?
+          neighbors[queue.shift].each do |name|
+            next if anchored[name]
+            anchored[name] = true
+            queue << name
+          end
+        end
+        anchored
+      end
+
+      def conductive_resistor?(component)
+        component.part.id == "resistor" && Breadkit::Value.parse(component.value) >= 0
+      rescue ArgumentError, TypeError
+        false
+      end
+
       def dangling_wires(circuit, rule, state)
         attachments = Hash.new { |hash, key| hash[key] = [] }
         circuit.components.each_value do |component|
