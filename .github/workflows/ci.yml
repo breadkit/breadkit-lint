@@ -27,6 +27,8 @@ jobs:
             ruby: "4.0"
           - os: macos-latest
             ruby: "4.0"
+          - os: windows-2025
+            ruby: "4.0"
     defaults:
       run:
         working-directory: breadkit-lint
