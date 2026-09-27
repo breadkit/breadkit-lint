@@ -216,6 +216,12 @@ module Breadkit
               document.part_paths.concat(@config.extra_parts)
               Breadkit::Resolver.new.call(document)
             end
+            if circuit.respond_to?(:multi_board?) && circuit.multi_board?
+              message = @checks.translate("unsupported_multi_board", "multi-board circuits are not supported by this bklint version")
+              offense = Offense.new(rule: "Fatal/UnsupportedMultiBoard", severity: "error", message: message,
+                                    location: Breadkit::SourceLocation.new(path: path), targets: {}, state: nil)
+              next({ path: path, offenses: [offense] })
+            end
             offenses = inspect_circuit(circuit, path, only, except)
             skipped = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
             { path: path, offenses: @checks.suppress(offenses, circuit.lint_disables, circuit, path: path, only: only, except: except, skipped: skipped),

@@ -30,6 +30,9 @@ placement errors, electrical problems, and connections that differ from your
 intent. It accepts Ruby DSL files or resolved JSON IR and can report results to
 a terminal, CI log, or SARIF viewer.
 
+Multi-board circuits currently return `Fatal/UnsupportedMultiBoard` instead of
+an incomplete lint result. See the [multi-board status](docs/MULTI_BOARD.md).
+
 ## Quick start
 
 Install the gem with Ruby 3.3 or newer. The compatible Breadkit core gem is
