@@ -243,6 +243,13 @@ module Breadkit
           def check(context) = emit(context, :capacitor_voltage_ratings)
         end
 
+        class LedOvercurrent < BuiltinRule
+          rule "Electrical/LedOvercurrent", severity: :error,
+            description: "An LED exceeds its declared current limit", state_sensitive: true
+
+          def check(context) = emit(context, :led_overcurrent)
+        end
+
         class I2CAddressConflict < BuiltinRule
           rule "Electrical/I2CAddressConflict", severity: :error,
             description: "I2C devices on one bus use the same address", state_sensitive: true

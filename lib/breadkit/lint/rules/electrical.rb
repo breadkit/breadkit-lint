@@ -450,6 +450,20 @@ module Breadkit
         end
       end
 
+      def led_overcurrent(circuit, rule, state)
+        analysis = circuit.dc_analysis(state)
+        return [] unless analysis.success?
+
+        circuit.components.values.filter_map do |component|
+          limit = component.part.data["max_forward_current"]
+          next unless limit && component.part.id == "led"
+          current = analysis.currents[component.ref]
+          next unless current && current > limit
+          offense(rule.id, "#{component.ref} may carry #{(current * 1000).round(2)} mA; maximum is #{(limit * 1000).round(2)} mA",
+                  component.location, targets: { components: [component.ref] }, state: state.name)
+        end
+      end
+
       def rated_voltage(circuit, component, state, ranges, domains)
         pins = component.pins.values
         return unless pins.length == 2
