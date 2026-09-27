@@ -152,4 +152,24 @@ RSpec.describe "electrical regressions" do
       expect(found.map(&:rule)).to include("Electrical/VoltageDomainMismatch")
     end
   end
+
+  it "checks declared resistor and electrolytic ratings" do
+    source = <<~RUBY
+      board :half
+      supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+      resistor :R1, '10 1/4W', pins: %w[a10 a11]
+      electrolytic :C1, '10u 3V', plus: 'a20', minus: 'a21'
+      wire 'b10', 'B+'
+      wire 'b11', 'B-'
+      wire 'b20', 'B+'
+      wire 'b21', 'B-'
+    RUBY
+    expect(offenses(source, only: "Electrical/ResistorPowerRating").map(&:rule)).to include("Electrical/ResistorPowerRating")
+    expect(offenses(source, only: "Electrical/CapacitorVoltageRating").map(&:rule)).to include("Electrical/CapacitorVoltageRating")
+    safe = source.sub("10 1/4W", "330 1/4W").sub("10u 3V", "10u 16V")
+    expect(offenses(safe, only: "Electrical/ResistorPowerRating")).to be_empty
+    expect(offenses(safe, only: "Electrical/CapacitorVoltageRating")).to be_empty
+    tolerance_case = source.sub("voltage: 5", "voltage: 4.9").sub("10 1/4W", "100 5% 1/4W")
+    expect(offenses(tolerance_case, only: "Electrical/ResistorPowerRating").map(&:rule)).to include("Electrical/ResistorPowerRating")
+  end
 end

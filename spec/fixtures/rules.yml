@@ -288,6 +288,32 @@ Electrical/VoltageDomainMismatch:
     supply :P, voltage: 3.3, plus: 'B+1', minus: 'B-1'
     wire 'U.GND', 'B-'
     wire 'U.SIG', 'B+'
+Electrical/ResistorPowerRating:
+  offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    resistor :R1, '10 1/4W', pins: %w[a10 a11]
+    wire 'b10', 'B+'
+    wire 'b11', 'B-'
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    resistor :R1, '330 1/4W', pins: %w[a10 a11]
+    wire 'b10', 'B+'
+    wire 'b11', 'B-'
+Electrical/CapacitorVoltageRating:
+  offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    electrolytic :C1, '10u 3V', plus: 'a10', minus: 'a11'
+    wire 'b10', 'B+'
+    wire 'b11', 'B-'
+  no_offense: |
+    board :half
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    electrolytic :C1, '10u 16V', plus: 'a10', minus: 'a11'
+    wire 'b10', 'B+'
+    wire 'b11', 'B-'
 Electrical/I2CAddressConflict:
   offense: |
     board :half

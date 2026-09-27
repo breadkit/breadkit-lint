@@ -37,6 +37,8 @@ Electrical/SupplyVoltageRange: {Enabled: true, Severity: error}
 Electrical/NoCommonGround: {Enabled: true, Severity: warning}
 Electrical/NetLabelConflict: {Enabled: true, Severity: error}
 Electrical/VoltageDomainMismatch: {Enabled: true, Severity: error}
+Electrical/ResistorPowerRating: {Enabled: true, Severity: error}
+Electrical/CapacitorVoltageRating: {Enabled: true, Severity: error}
 Electrical/I2CAddressConflict: {Enabled: true, Severity: error}
 Intent/ConnectionMismatch: {Enabled: true, Severity: error}
 Intent/UnknownNet: {Enabled: true, Severity: error}

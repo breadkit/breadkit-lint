@@ -229,6 +229,20 @@ module Breadkit
           def check(context) = emit(context, :voltage_domain_mismatches)
         end
 
+        class ResistorPowerRating < BuiltinRule
+          rule "Electrical/ResistorPowerRating", severity: :error,
+            description: "A resistor exceeds its declared power rating", state_sensitive: true
+
+          def check(context) = emit(context, :resistor_power_ratings)
+        end
+
+        class CapacitorVoltageRating < BuiltinRule
+          rule "Electrical/CapacitorVoltageRating", severity: :error,
+            description: "An electrolytic exceeds its declared voltage rating", state_sensitive: true
+
+          def check(context) = emit(context, :capacitor_voltage_ratings)
+        end
+
         class I2CAddressConflict < BuiltinRule
           rule "Electrical/I2CAddressConflict", severity: :error,
             description: "I2C devices on one bus use the same address", state_sensitive: true

@@ -420,6 +420,46 @@ module Breadkit
         end
       end
 
+      def resistor_power_ratings(circuit, rule, state)
+        ranges, domains = potential_ranges(circuit, state)
+        circuit.components.values.filter_map do |component|
+          next unless component.part.id == "resistor" && component.value
+          rating = Breadkit::Value.power_rating(component.value)
+          next unless rating
+          voltage = rated_voltage(circuit, component, state, ranges, domains)
+          next unless voltage
+          minimum = Breadkit::Value.parse(component.value) * (1.0 - (Breadkit::Value.tolerance(component.value) || 0.0))
+          next unless minimum.positive?
+          watts = voltage**2 / minimum
+          next unless watts > rating
+          offense(rule.id, "#{component.ref} may dissipate #{watts.round(3)} W; rated for #{rating} W",
+                  component.location, targets: { components: [component.ref] }, state: state.name)
+        end
+      end
+
+      def capacitor_voltage_ratings(circuit, rule, state)
+        ranges, domains = potential_ranges(circuit, state)
+        circuit.components.values.filter_map do |component|
+          next unless component.part.id == "electrolytic" && component.value
+          rating = Breadkit::Value.voltage_rating(component.value)
+          next unless rating
+          voltage = rated_voltage(circuit, component, state, ranges, domains)
+          next unless voltage && voltage > rating
+          offense(rule.id, "#{component.ref} may see #{voltage.round(3)} V; rated for #{rating} V",
+                  component.location, targets: { components: [component.ref] }, state: state.name)
+        end
+      end
+
+      def rated_voltage(circuit, component, state, ranges, domains)
+        pins = component.pins.values
+        return unless pins.length == 2
+        left, right = pins.map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
+        return unless left && right && ranges[left] && ranges[right] && domains[left] && domains[left] == domains[right]
+        direct = direct_source_range(circuit, state, left, right) || direct_source_range(circuit, state, right, left)
+        return direct.map(&:abs).max if direct
+        [(ranges[left][0] - ranges[right][1]).abs, (ranges[left][1] - ranges[right][0]).abs].max
+      end
+
       def i2c_address_conflicts(circuit, rule, state)
         devices = circuit.components.values.filter_map do |component|
           address = component.attrs[:address] || component.attrs["address"]
