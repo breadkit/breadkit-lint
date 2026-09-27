@@ -212,7 +212,12 @@ module Breadkit
             circuit = if path.end_with?(".json")
               Breadkit.load(path)
             else
-              document = Breadkit::DSL.load_file(path, timeout: timeout, source: source)
+              document = if source || !path.end_with?(".bk.yml", ".bk.yaml", ".bk.toml")
+                Breadkit::DSL.load_file(path, timeout: timeout, source: source)
+              else
+                raise Error, "declarative YAML/TOML input requires a newer breadkit gem" unless defined?(Breadkit::StructuredInput)
+                Breadkit::StructuredInput.load_file(path)
+              end
               document.part_paths.concat(@config.extra_parts)
               Breadkit::Resolver.new.call(document)
             end
@@ -613,7 +618,7 @@ module Breadkit
           Find.find(root) do |path|
             if File.directory?(path)
               Find.prune if path != root && (File.basename(path).start_with?(".") || File.basename(path) == "node_modules")
-            elsif path.end_with?(".bk.rb") || (path.end_with?(".json") && ir_json?(path))
+            elsif path.end_with?(".bk.rb", ".bk.yml", ".bk.yaml", ".bk.toml") || (path.end_with?(".json") && ir_json?(path))
               found << path
             end
           end

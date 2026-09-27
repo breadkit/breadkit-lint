@@ -27,10 +27,10 @@
 
 `bklint` checks [Breadkit](https://github.com/breadkit/breadkit) circuits for
 placement errors, electrical problems, and connections that differ from your
-intent. It accepts Ruby DSL files or resolved JSON IR and can report results to
+intent. It accepts Ruby DSL, declarative YAML/TOML, or resolved JSON IR and can report results to
 a terminal, CI log, or SARIF viewer.
 
-Named multi-board circuits are supported in Ruby DSL and IR schema version 2.
+Named multi-board circuits are supported in Ruby DSL, declarative YAML/TOML, and IR schema version 2.
 See the [multi-board guide](docs/MULTI_BOARD.md).
 
 ## Quick start
@@ -42,6 +42,11 @@ installed automatically.
 gem install breadkit-lint
 bklint circuit.bk.rb
 ```
+
+The published gems are currently at version 0.1.0. This main branch requires
+Breadkit core 0.2.x, which is not yet published on RubyGems. To use the features
+on main, check out `breadkit` and `breadkit-lint` as sibling directories, then
+run `bundle install` in `breadkit-lint`.
 
 Focus on one rule, or write a machine-readable report:
 
@@ -133,7 +138,7 @@ end
 
 ## Command reference
 
-`bklint [options] [FILES...]` accepts `.bk.rb` and Breadkit IR `.json` files.
+`bklint [options] [FILES...]` accepts `.bk.rb`, `.bk.yml`, `.bk.yaml`, `.bk.toml`, and Breadkit IR `.json` files.
 Directories are scanned recursively. With no files, it scans visible inputs in
 the current directory and skips `node_modules`. Each file uses the nearest
 `.bklint.yml` unless you pass `--config`.
