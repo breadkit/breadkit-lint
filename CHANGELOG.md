@@ -25,6 +25,6 @@
 - Report invalid circuit values, colors, routes, and part options as layout errors before electrical checks run.
 - Reduce redundant findings from switch states, unused suppressions, unplaced pins, and missing pull resistors.
 
-## 0.1.0 — 2026-09-27
+## 0.1.0
 
 - Initial release.
