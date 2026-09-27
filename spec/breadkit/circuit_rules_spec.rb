@@ -145,6 +145,8 @@ RSpec.describe "circuit rules" do
     RUBY
     expect(inspect_source(source, only: ["Style/WireColor"])).to be_empty
     expect(inspect_source(source.sub("#E24B4A", "#00FF00"), only: ["Style/WireColor"]).map(&:rule)).to include("Style/WireColor")
+    expect(inspect_source(source.sub("#E24B4A", "darkgreen"), only: ["Style/WireColor"]).map(&:rule)).to include("Style/WireColor")
+    expect(inspect_source(source.sub("#E24B4A", "lime"), only: ["Style/WireColor"]).map(&:rule)).to include("Style/WireColor")
     item = Breadkit::Lint::Offense.new(rule: "Layout/InvalidHole", severity: "error", message: "bad hole",
                                       location: Breadkit::SourceLocation.new(path: "source.bk.rb", line: 12), targets: {})
     files = [{ path: "circuit.json", offenses: [item] }]

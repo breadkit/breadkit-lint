@@ -84,7 +84,9 @@ module Breadkit
           used << match if match
           !!match
         end
+        redundant_selected = (!only || only.include?("Lint/RedundantDisable")) && !except&.include?("Lint/RedundantDisable")
         redundant = valid.filter_map do |disable|
+          next unless redundant_selected
           rule_id = disable[:rule] || disable["rule"]
           rule = Registry.all.find { |item| item.id == rule_id }
           next if used.include?(disable) || !rule || !@config.enabled?(rule)

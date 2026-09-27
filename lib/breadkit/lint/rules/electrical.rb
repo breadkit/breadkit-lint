@@ -187,8 +187,8 @@ module Breadkit
 
       def source_pairs(circuit, state)
         pairs = circuit.voltage_sources.filter_map do |supply|
-          high = circuit.net_of("#{supply.name}.+", state)&.name
-          low = circuit.net_of("#{supply.name}.-", state)&.name
+          high = circuit.net_of(supply.plus, state)&.name
+          low = circuit.net_of(supply.minus, state)&.name
           [high, low] if high && low
         end
         circuit.components.each_value do |component|
@@ -297,8 +297,8 @@ module Breadkit
       def supply_domains(circuit, state)
         adjacency = Hash.new { |hash, key| hash[key] = [] }
         circuit.voltage_sources.each do |supply|
-          high = circuit.net_of("#{supply.name}.+", state)&.name
-          low = circuit.net_of("#{supply.name}.-", state)&.name
+          high = circuit.net_of(supply.plus, state)&.name
+          low = circuit.net_of(supply.minus, state)&.name
           next unless high && low
           adjacency[high] << low
           adjacency[low] << high
@@ -398,8 +398,7 @@ module Breadkit
       end
 
       def voltage_domain_mismatches(circuit, rule, state)
-        values = circuit.potentials(state).values
-        domains = supply_domains(circuit, state)
+        ranges, domains = potential_ranges(circuit, state)
         circuit.components.values.flat_map do |component|
           ground_names = component.pins.values.select { |pin| pin.role == "ground" }
                                   .filter_map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
@@ -407,11 +406,10 @@ module Breadkit
             limit = component.part.pin(pin.number)&.fetch("max_voltage", nil)
             next unless limit && !ground_names.empty?
             net = circuit.net_of("#{component.ref}.#{pin.name}", state)
-            next unless net && values.key?(net.name)
-            ground = ground_names.find { |name| values.key?(name) && domains[name] == domains[net.name] }
+            next unless net && ranges.key?(net.name)
+            ground = ground_names.find { |name| ranges.key?(name) && domains[name] == domains[net.name] }
             next unless ground
-            nominal = values[net.name] - values[ground]
-            voltage = (direct_source_range(circuit, state, net.name, ground) || [nominal, nominal])[1]
+            voltage = direct_source_range(circuit, state, net.name, ground)&.last || (ranges[net.name][1] - ranges[ground][0])
             next unless voltage > limit.to_f
             message = translate("voltage_domain", "#{component.ref}.#{pin.name} can see up to #{voltage.round(3)} V; maximum is #{limit} V",
                                 pin: "#{component.ref}.#{pin.name}", voltage: voltage.round(3), maximum: limit)

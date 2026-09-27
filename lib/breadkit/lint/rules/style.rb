@@ -26,7 +26,11 @@ module Breadkit
         return "red" if value.match?(/red|crimson|maroon|firebrick|coral|tomato/)
         return "orange" if value.match?(/orange|gold|salmon/)
         return "blue" if value.match?(/blue|navy|azure|cyan|teal|turquoise/)
-        return value if %w[green yellow purple pink brown].include?(value)
+        return "green" if value.match?(/green|lime|chartreuse|olive|spring|aquamarine/)
+        return "yellow" if value.match?(/yellow|khaki/)
+        return "purple" if value.match?(/purple|violet|indigo|orchid|plum|magenta|fuchsia/)
+        return "pink" if value.match?(/pink|lavender/)
+        return "brown" if value.match?(/brown|tan|chocolate|peru|sienna|wheat/)
         if (match = /\Ahsl\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*\)\z/.match(value))
           hue, saturation, lightness = match.captures.map(&:to_i)
           return "black" if lightness <= 15

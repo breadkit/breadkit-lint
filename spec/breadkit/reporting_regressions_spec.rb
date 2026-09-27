@@ -20,6 +20,10 @@ RSpec.describe "lint reporting regressions" do
       expect(result[:offenses].map(&:rule)).to include("Lint/RedundantDisable", "Style/WireColor")
       relevant = result[:offenses].select { |item| %w[Lint/RedundantDisable Style/WireColor].include?(item.rule) }
       expect(relevant.map { |item| item.location&.line }).to eq([2, 4])
+      expect(Breadkit::Lint::Engine.new.run([path], only: ["Electrical/FloatingPin"]).first[:offenses].map(&:rule))
+        .not_to include("Lint/RedundantDisable")
+      expect(Breadkit::Lint::Engine.new.run([path], except: ["Lint/RedundantDisable"]).first[:offenses].map(&:rule))
+        .not_to include("Lint/RedundantDisable")
     end
   end
 

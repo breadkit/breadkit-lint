@@ -74,6 +74,20 @@ RSpec.describe "electrical regressions" do
     expect(offenses(source, only: "Electrical/ShortCircuit").map(&:rule)).to include("Electrical/ShortCircuit")
   end
 
+  it "recognizes an LED directly across an offboard power source" do
+    source = <<~RUBY
+      board :half
+      offboard :UNO, :arduino_uno
+      led :D1, anode: 'a10', cathode: 'a11'
+      wire 'b10', 'UNO.5V'
+      wire 'b11', 'UNO.GND'
+    RUBY
+    expect(offenses(source, only: "Electrical/MissingSeriesResistor").map(&:rule)).to include("Electrical/MissingSeriesResistor")
+    reverse = source.sub("'b10', 'UNO.5V'", "'b10', 'UNO.GND'")
+                    .sub("'b11', 'UNO.GND'", "'b11', 'UNO.5V'")
+    expect(offenses(reverse, only: "Electrical/ReversePolarity").map(&:rule)).to include("Electrical/ReversePolarity")
+  end
+
   it "finds an LED directly between Arduino A0 and ground" do
     source = <<~RUBY
       board :half
@@ -132,6 +146,10 @@ RSpec.describe "electrical regressions" do
       File.write(path, source)
       found = Breadkit::Lint::Engine.new.run([path], only: %w[Electrical/SupplyVoltageRange Electrical/VoltageDomainMismatch]).first[:offenses]
       expect(found.map(&:rule)).to include("Electrical/SupplyVoltageRange", "Electrical/VoltageDomainMismatch")
+      via_resistor = source.sub("wire 'U.SIG', 'B+'", "resistor :R1, '1k', pins: %w[a20 a22]\nwire 'b20', 'B+'\nwire 'U.SIG', 'b22'")
+      File.write(path, via_resistor)
+      found = Breadkit::Lint::Engine.new.run([path], only: ["Electrical/VoltageDomainMismatch"]).first[:offenses]
+      expect(found.map(&:rule)).to include("Electrical/VoltageDomainMismatch")
     end
   end
 end
