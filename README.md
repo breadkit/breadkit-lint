@@ -88,6 +88,9 @@ a rule for a specific part, pin, or wire. Unknown rule IDs are errors; set
 `bklint --format json` with `bkrender --annotations` to show offenses on a
 diagram.
 
+The [lint JSON schema](https://breadkit.github.io/breadkit-lint/schemas/lint-v1.json)
+describes the report format for integrations.
+
 ## Command reference
 
 `bklint [options] [FILES...]` accepts `.bk.rb` and Breadkit IR `.json` files.
@@ -103,6 +106,7 @@ the current directory and skips `node_modules`. Each file uses the nearest
 | `--fail-level LEVEL` | `error`, `warning` (default), or `info`. |
 | `--only RULES` / `--except RULES` | Select or skip comma-separated rule IDs. |
 | `--switch-states MODE` | Evaluate `none`, `single` (default), or `all` switch states. |
+| `--timeout SECONDS` | Limit DSL evaluation time per circuit (default: 10). |
 | `--list-rules` / `--explain RULE` | Discover rules and read guidance. |
 | `--locale LOCALE` | Select `en` or `ja` messages and rule descriptions. |
 

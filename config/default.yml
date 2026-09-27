@@ -3,12 +3,21 @@ AllRules:
   FailLevel: warning
   NewRules: pending
 
+Lint/RedundantDisable: {Enabled: true, Severity: warning}
+
 Layout/InvalidHole: {Enabled: true, Severity: error}
 Layout/UnknownBoard: {Enabled: true, Severity: error}
 Layout/UnknownPart: {Enabled: true, Severity: error}
 Layout/UnknownTransistorModel: {Enabled: true, Severity: warning}
 Layout/UnknownPin: {Enabled: true, Severity: error}
 Layout/UnknownOption: {Enabled: true, Severity: error}
+Layout/InvalidOption: {Enabled: true, Severity: error}
+Layout/InvalidValue: {Enabled: true, Severity: error}
+Layout/InvalidColor: {Enabled: true, Severity: error}
+Layout/InvalidRoute: {Enabled: true, Severity: error}
+Layout/InvalidWireId: {Enabled: true, Severity: error}
+Layout/UnmatchedParts: {Enabled: true, Severity: warning}
+Layout/PartOverride: {Enabled: true, Severity: warning}
 Layout/UnplacedPin: {Enabled: true, Severity: error}
 Layout/DuplicateRef: {Enabled: true, Severity: error}
 Layout/InvalidPlacement: {Enabled: true, Severity: error}
@@ -27,6 +36,8 @@ Electrical/PowerPinUnconnected: {Enabled: true, Severity: warning}
 Electrical/SupplyVoltageRange: {Enabled: true, Severity: error}
 Electrical/NoCommonGround: {Enabled: true, Severity: warning}
 Electrical/NetLabelConflict: {Enabled: true, Severity: error}
+Electrical/VoltageDomainMismatch: {Enabled: true, Severity: error}
+Electrical/I2CAddressConflict: {Enabled: true, Severity: error}
 Intent/ConnectionMismatch: {Enabled: true, Severity: error}
 Intent/UnknownNet: {Enabled: true, Severity: error}
 Style/WireColor:

@@ -116,8 +116,14 @@ module Breadkit
               circuit.wires.any? { |wire| wire.id == member } || circuit.components.keys.any? { |ref| member.start_with?("#{ref}.") }
             end
             next unless net && voltage.nil? && touched
-            offense(rule.id, translate("split_rail", "used segment of #{rail} has no supply", rail: rail), nil,
-                    targets: { holes: [segment_holes.first.id], nets: [net.name] })
+            source_holes = entries.find { |_holes, _net, potential| !potential.nil? }&.first
+            target_hole = segment_holes.first.id
+            source_hole = source_holes&.min_by { |hole| (hole.y - segment_holes.first.y).abs }&.id
+            connection = source_hole ? "#{source_hole} to #{target_hole}" : target_hole
+            location = circuit.wires.find { |wire| net.members.include?(wire.id) }&.location ||
+                       circuit.components.values.find { |component| net.members.any? { |member| member.start_with?("#{component.ref}.") } }&.location
+            offense(rule.id, translate("split_rail", "used segment of #{rail} has no supply; bridge #{connection}", rail: rail, bridge: connection),
+                    location, targets: { holes: [source_hole, target_hole].compact, nets: [net.name] })
           end
         end
       end
@@ -143,9 +149,16 @@ module Breadkit
       def unprotected_path?(circuit, start, finish, excluded_component, state)
         adjacency = Hash.new { |hash, key| hash[key] = [] }
         circuit.components.each_value do |component|
-          next if component == excluded_component || component.pins.length != 2
-          next unless component.part.data["category"] == "diode" || (component.part.id == "resistor" && !current_limiter?(component))
-          pins = component.pins.values
+          next if component == excluded_component
+          pins = if component.part.data["category"] == "transistor"
+            [component.pin("collector"), component.pin("emitter")].compact
+          elsif component.pins.length == 2 &&
+                (component.part.data["category"] == "diode" || (component.part.id == "resistor" && !current_limiter?(component)))
+            component.pins.values
+          else
+            []
+          end
+          next unless pins.length == 2
           left, right = pins.map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
           next unless left && right && left != right
           adjacency[left] << right
@@ -173,7 +186,7 @@ module Breadkit
       end
 
       def source_pairs(circuit, state)
-        pairs = circuit.supplies.filter_map do |supply|
+        pairs = circuit.voltage_sources.filter_map do |supply|
           high = circuit.net_of("#{supply.name}.+", state)&.name
           low = circuit.net_of("#{supply.name}.-", state)&.name
           [high, low] if high && low
@@ -182,10 +195,17 @@ module Breadkit
           next unless component.part.placement == "offboard" || component.part.data["category"] == "module"
           pins = component.pins.values
           grounds = pins.select { |pin| pin.role == "ground" }.filter_map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
-          outputs = pins.select { |pin| pin.role == "power" || pin.name.match?(/\A(?:GP|GPIO|D)\d+\z/i) }
+          outputs = pins.select do |pin|
+            %w[gpio output].include?(pin.role) || component.part.pin(pin.number)&.fetch("output_capable", false)
+          end
           outputs.each do |pin|
-            high = circuit.net_of("#{component.ref}.#{pin.name}", state)&.name
-            grounds.each { |low| pairs << [high, low] } if high
+            gpio = circuit.net_of("#{component.ref}.#{pin.name}", state)&.name
+            next unless gpio
+            grounds.each { |ground| pairs << [gpio, ground] }
+            pairs.concat(circuit.voltage_sources.filter_map do |source|
+              high = circuit.net_of(source.plus, state)&.name
+              [high, gpio] if high
+            end)
           end
         end
         pairs
@@ -200,6 +220,10 @@ module Breadkit
       def reverse_polarity(circuit, rule, state)
         ranges, domains = potential_ranges(circuit, state)
         circuit.components.values.filter_map do |component|
+          flags = Array(component.part.data["flags"])
+          next unless %w[led electrolytic].include?(component.part.id) || flags.include?("needs_series_resistor") || component.part.data["category"] == "capacitor"
+          next if component.attrs[:bias].to_s == "reverse" || component.attrs["bias"].to_s == "reverse"
+          next if flags.include?("reverse_bias_ok")
           polarity = component.part.data["polarity"]
           next unless polarity
           positive = component.pins[polarity["positive"]]
@@ -209,7 +233,8 @@ module Breadkit
           low = circuit.net_of("#{component.ref}.#{negative.name}", state)
           next unless high && low && ranges[high.name] && ranges[low.name]
           next unless domains[high.name] && domains[high.name] == domains[low.name]
-          next unless ranges[high.name][1] < ranges[low.name][0]
+          reverse_voltage = ranges[low.name][0] - ranges[high.name][1]
+          next unless reverse_voltage > component.part.data.fetch("max_reverse_voltage", 0).to_f
           offense(rule.id, translate("reverse_polarity", "#{component.ref} positive pin is below its negative pin",
                                      ref: component.ref), component.location,
                   targets: { components: [component.ref], pins: ["#{component.ref}.#{positive.name}", "#{component.ref}.#{negative.name}"],
@@ -271,7 +296,7 @@ module Breadkit
 
       def supply_domains(circuit, state)
         adjacency = Hash.new { |hash, key| hash[key] = [] }
-        circuit.supplies.each do |supply|
+        circuit.voltage_sources.each do |supply|
           high = circuit.net_of("#{supply.name}.+", state)&.name
           low = circuit.net_of("#{supply.name}.-", state)&.name
           next unless high && low
@@ -312,7 +337,7 @@ module Breadkit
       end
 
       def power_pins(circuit, rule, state)
-        grounds = circuit.supplies.filter_map { |supply| circuit.net_of("#{supply.name}.-", state)&.name }
+        grounds = circuit.voltage_sources.filter_map { |supply| circuit.net_of(supply.minus, state)&.name }
         values = circuit.potentials(state).values
         circuit.components.values.reject { |component| component.part.placement == "offboard" }.flat_map do |component|
           component.pins.values.filter_map do |pin|
@@ -339,8 +364,8 @@ module Breadkit
         values = circuit.potentials(state).values
         domains = supply_domains(circuit, state)
         circuit.components.values.flat_map do |component|
-          range = component.part.data["supply_range"]
-          next [] unless range
+          rated = component.part.data["supply_range"]
+          next [] unless rated
           powers = component.pins.values.select { |pin| pin.role == "power" }
           grounds = component.pins.values.select { |pin| pin.role == "ground" }
           powers.product(grounds).filter_map do |power, ground|
@@ -348,10 +373,12 @@ module Breadkit
             low = circuit.net_of("#{component.ref}.#{ground.name}", state)
             next unless high && low && values.key?(high.name) && values.key?(low.name)
             next unless domains[high.name] && domains[high.name] == domains[low.name]
-            voltage = values[high.name] - values[low.name]
-            next if voltage >= range[0].to_f && voltage <= range[1].to_f
-            message = translate("supply_range", "#{component.ref} #{power.name}/#{ground.name} supply is #{voltage.round(3)} V; expected #{range[0]}..#{range[1]} V",
-                                ref: component.ref, power: power.name, ground: ground.name, voltage: voltage.round(3), minimum: range[0], maximum: range[1])
+            nominal = values[high.name] - values[low.name]
+            actual = direct_source_range(circuit, state, high.name, low.name) || [nominal, nominal]
+            next if actual[0] >= rated[0].to_f && actual[1] <= rated[1].to_f
+            voltage = actual[0] == actual[1] ? actual[0].round(3).to_s : "#{actual[0]}..#{actual[1]}"
+            message = translate("supply_range", "#{component.ref} #{power.name}/#{ground.name} supply is #{voltage} V; expected #{rated[0]}..#{rated[1]} V",
+                                ref: component.ref, power: power.name, ground: ground.name, voltage: voltage, minimum: rated[0], maximum: rated[1])
             offense(rule.id, message, component.location,
                     targets: { components: [component.ref], pins: ["#{component.ref}.#{power.name}", "#{component.ref}.#{ground.name}"],
                                nets: [high.name, low.name] }, state: state.name)
@@ -360,10 +387,69 @@ module Breadkit
       end
 
       def common_ground(circuit, rule, state)
-        return [] if circuit.supplies.length < 2
-        grounds = circuit.supplies.filter_map { |supply| circuit.net_of("#{supply.name}.-", state)&.name }.uniq
-        return [] if grounds.length <= 1
-        [offense(rule.id, translate("common_ground", "power supplies do not share a ground"), nil, targets: { nets: grounds })]
+        supplies = circuit.voltage_sources.reject { |supply| supply.respond_to?(:isolated) && supply.isolated }
+        return [] if supplies.length < 2
+        domains = supply_domains(circuit, state)
+        references = supplies.filter_map { |supply| circuit.net_of(supply.minus, state)&.name }
+        return [] if references.filter_map { |name| domains[name] }.uniq.length <= 1
+        location = supplies.find { |supply| supply.location }&.location
+        [offense(rule.id, translate("common_ground", "power supplies do not share a ground"), location,
+                 targets: { nets: references.uniq })]
+      end
+
+      def voltage_domain_mismatches(circuit, rule, state)
+        values = circuit.potentials(state).values
+        domains = supply_domains(circuit, state)
+        circuit.components.values.flat_map do |component|
+          ground_names = component.pins.values.select { |pin| pin.role == "ground" }
+                                  .filter_map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
+          component.pins.values.filter_map do |pin|
+            limit = component.part.pin(pin.number)&.fetch("max_voltage", nil)
+            next unless limit && !ground_names.empty?
+            net = circuit.net_of("#{component.ref}.#{pin.name}", state)
+            next unless net && values.key?(net.name)
+            ground = ground_names.find { |name| values.key?(name) && domains[name] == domains[net.name] }
+            next unless ground
+            nominal = values[net.name] - values[ground]
+            voltage = (direct_source_range(circuit, state, net.name, ground) || [nominal, nominal])[1]
+            next unless voltage > limit.to_f
+            message = translate("voltage_domain", "#{component.ref}.#{pin.name} can see up to #{voltage.round(3)} V; maximum is #{limit} V",
+                                pin: "#{component.ref}.#{pin.name}", voltage: voltage.round(3), maximum: limit)
+            offense(rule.id, message, component.location,
+                    targets: { components: [component.ref], pins: ["#{component.ref}.#{pin.name}"], nets: [net.name] },
+                    state: state.name)
+          end
+        end
+      end
+
+      def i2c_address_conflicts(circuit, rule, state)
+        devices = circuit.components.values.filter_map do |component|
+          address = component.attrs[:address] || component.attrs["address"]
+          next unless address && component.pin("SDA") && component.pin("SCL")
+          parsed = Integer(address.to_s, 0) rescue nil
+          next unless parsed
+          sda = circuit.net_of("#{component.ref}.SDA", state)&.name
+          scl = circuit.net_of("#{component.ref}.SCL", state)&.name
+          [[sda, scl, parsed], component] if sda && scl
+        end
+        devices.group_by(&:first).filter_map do |(sda, scl, address), entries|
+          next if entries.length < 2
+          components = entries.map(&:last)
+          refs = components.map(&:ref)
+          message = translate("i2c_address", "#{refs.join(', ')} share I2C address 0x#{address.to_s(16).upcase} on the same bus",
+                              refs: refs.join(", "), address: "0x#{address.to_s(16).upcase}")
+          offense(rule.id, message, components.last.location,
+                  targets: { components: refs, pins: refs.flat_map { |ref| ["#{ref}.SDA", "#{ref}.SCL"] },
+                             nets: [sda, scl] }, state: state.name)
+        end
+      end
+
+      def direct_source_range(circuit, state, high_name, low_name)
+        sources = circuit.voltage_sources.select do |source|
+          circuit.net_of(source.plus, state)&.name == high_name && circuit.net_of(source.minus, state)&.name == low_name
+        end
+        return unless sources.length == 1
+        sources.first.voltage_range
       end
 
     end

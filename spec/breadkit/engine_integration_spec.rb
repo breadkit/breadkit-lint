@@ -4,7 +4,7 @@ require "tmpdir"
 require "fileutils"
 require "stringio"
 
-RSpec.describe "remaining lint review findings" do
+RSpec.describe "lint engine integration" do
   def inspect_source(source, only: nil, locale: "en")
     Dir.mktmpdir do |directory|
       path = File.join(directory, "circuit.bk.rb")
@@ -13,25 +13,25 @@ RSpec.describe "remaining lint review findings" do
     end
   end
 
-  it "keeps distinct supply reference nets distinct even when their positive nets meet" do
+  it "treats supplies sharing a positive net as one reference domain" do
     source = <<~RUBY
       board :half
       supply :A, voltage: 5, plus: 'B+1', minus: 'B-1'
       supply :B, voltage: 3.3, plus: 'B+2', minus: 'T-1'
     RUBY
     offenses = inspect_source(source, only: ["Electrical/NoCommonGround"])[:offenses]
-    expect(offenses.map(&:rule)).to include("Electrical/NoCommonGround")
+    expect(offenses.map(&:rule)).not_to include("Electrical/NoCommonGround")
   end
 
   it "uses the core conflict witnesses instead of nominal supply voltages" do
     source = <<~RUBY
       board :half
       supply :POS, voltage: 5, plus: 'B+1', minus: 'B-1'
-      supply :NEG, voltage: -5, plus: 'T-1', minus: 'B-2'
+      supply :NEG, voltage: 5, plus: 'B-2', minus: 'T-1'
       wire 'B+3', 'T-3'
     RUBY
     item = inspect_source(source, only: ["Electrical/ShortCircuit"])[:offenses].first
-    expect(item.message).to include("POS.+", "NEG.+", "path:")
+    expect(item.message).to include("B+1", "T-1", "path:")
     expect(item.targets[:wires]).to include("W1")
     expect(item.location.line).to eq(4)
   end

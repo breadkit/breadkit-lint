@@ -8,3 +8,4 @@ supply :B, voltage: 3.3, plus: "T+1", minus: "T-1"
 ```
 
 Connect the grounds when the powered circuits exchange signals or current.
+Declare `isolated: true` on a supply that intentionally remains separate.

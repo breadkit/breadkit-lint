@@ -176,7 +176,7 @@ module Breadkit
     Registry.const_set(:RULES, Registry.all.dup.freeze)
 
     class Engine
-      BLOCKING_DIAGNOSTICS = %w[invalid_hole unknown_board unknown_part unknown_pin unknown_option unplaced_pin invalid_placement no_free_hole].freeze
+      BLOCKING_DIAGNOSTICS = %w[invalid_hole unknown_board unknown_part unknown_pin unknown_option invalid_option invalid_value invalid_color invalid_route invalid_wire_id unplaced_pin invalid_placement no_free_hole].freeze
       LEVELS = { "info" => 0, "warning" => 1, "error" => 2 }.freeze
 
       def initialize(config: Config.new, locale: "en")
@@ -186,23 +186,29 @@ module Breadkit
         @checks = Checks.new(@config, messages)
       end
 
-      def run(paths, only: nil, except: nil)
+      def run(paths, only: nil, except: nil, timeout: 10)
         Array(paths).filter_map do |path|
           next if excluded?(path)
           begin
             circuit = if path.end_with?(".json")
               Breadkit.load(path)
             else
-              document = Breadkit::DSL.load_file(path)
+              document = Breadkit::DSL.load_file(path, timeout: timeout)
               document.part_paths.concat(@config.extra_parts)
               Breadkit::Resolver.new.call(document)
             end
             offenses = inspect_circuit(circuit, only, except)
-            { path: path, offenses: @checks.suppress(offenses, circuit.lint_disables, circuit),
-              skipped: circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) } }
-          rescue StandardError => e
+            skipped = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
+            { path: path, offenses: @checks.suppress(offenses, circuit.lint_disables, circuit, only: only, except: except, skipped: skipped),
+              skipped: skipped }
+          rescue StandardError, ScriptError, SystemStackError => e
+            location = e.respond_to?(:location) && e.location
+            location ||= begin
+              line = e.message[/\A(?:#{Regexp.escape(path)}|#{Regexp.escape(File.expand_path(path))}):(\d+):/, 1]
+              Breadkit::SourceLocation.new(path: path, line: line&.to_i)
+            end
             offense = Offense.new(rule: "Fatal/EvaluationError", severity: "error", message: e.message,
-                                  location: Breadkit::SourceLocation.new(path: path, line: nil), targets: {}, state: nil)
+                                  location: location, targets: {}, state: nil)
             { path: path, offenses: [offense] }
           end
         end
@@ -264,12 +270,12 @@ module Breadkit
           entries = file[:offenses].map do |item|
             level = { "error" => "E", "warning" => "W", "info" => "I" }.fetch(item.severity, "E")
             state = item.state ? (locale == "ja" ? " (#{item.state} の状態)" : " (#{item.state} state)") : ""
-            path = item.location&.path || file[:path]
+            path = display_path(item.location&.path || file[:path])
             line = item.location&.line ? ":#{item.location.line}" : ""
             "#{path}#{line}: #{level}: [#{item.rule}] #{item.message}#{state}"
           end
-          entries << (locale == "ja" ? "#{file[:path]}: 配置エラーのため電気・意図の検査を省略しました" :
-                                           "#{file[:path]}: electrical and intent checks skipped because of layout errors") if file[:skipped]
+          entries << (locale == "ja" ? "#{display_path(file[:path])}: 配置エラーのため電気・意図の検査を省略しました" :
+                                           "#{display_path(file[:path])}: electrical and intent checks skipped because of layout errors") if file[:skipped]
           entries
         end
         errors, warnings, infos = files.flat_map { |file| file[:offenses] }.group_by(&:severity).values_at("error", "warning", "info").map { |items| items ? items.length : 0 }
@@ -288,9 +294,9 @@ module Breadkit
           schema_version: 1,
           tool: { name: "bklint", version: VERSION },
           files: files.map do |file|
-            { path: File.expand_path(file[:path]), analysis_skipped: !!file[:skipped], offenses: file[:offenses].map do |item|
+            { path: display_path(file[:path]), analysis_skipped: !!file[:skipped], offenses: file[:offenses].map do |item|
               { rule: item.rule, severity: item.severity, message: item.message,
-                location: { path: item.location&.path || file[:path], line: item.location&.line },
+                location: { path: display_path(item.location&.path || file[:path]), line: item.location&.line },
                 state: item.state, targets: item.targets }
             end }
           end,
@@ -305,7 +311,7 @@ module Breadkit
             level = { "error" => "error", "warning" => "warning", "info" => "notice" }.fetch(item.severity, "error")
             line = item.location&.line
             message = escape_data(item.message)
-            location = "file=#{escape_property(item.location&.path || file[:path])}"
+            location = "file=#{escape_property(display_path(item.location&.path || file[:path]))}"
             location += ",line=#{line}" if line
             "::#{level} #{location},title=#{escape_property(item.rule)}::#{message}"
           end
@@ -344,6 +350,11 @@ module Breadkit
 
       private
 
+      def display_path(path)
+        absolute = File.expand_path(path)
+        Pathname.new(absolute).relative_path_from(Pathname.new(Dir.pwd)).to_s.tr("\\", "/")
+      end
+
       def escape_data(value)
         value.to_s.gsub("%", "%25").gsub("\r", "%0D").gsub("\n", "%0A")
       end
@@ -365,6 +376,7 @@ module Breadkit
           opts.on("--only RULES") { |value| options[:only] = value.split(",") }
           opts.on("--except RULES") { |value| options[:except] = value.split(",") }
           opts.on("--switch-states MODE", %w[none single all]) { |value| options[:switch_states] = value }
+          opts.on("--timeout SECONDS", Float) { |value| options[:timeout] = value }
           opts.on("--list-rules") { options[:list_rules] = true }
           opts.on("--explain RULE") { |value| options[:explain] = value }
           opts.on("--locale LOCALE", %w[ja en]) { |value| options[:locale] = value }
@@ -372,6 +384,7 @@ module Breadkit
           opts.on("-h", "--help") { puts opts; return 0 }
         end
         parser.parse!(argv)
+        raise Error, "timeout must be positive" if options[:timeout] && !options[:timeout].positive?
         locale = options[:locale] || locale_from_environment
         return list_rules(locale) if options[:list_rules]
         return explain(options[:explain], locale) if options[:explain]
@@ -389,7 +402,7 @@ module Breadkit
           config = configs[config_path]
           config.data["AllRules"] ||= {}
           config.data["AllRules"]["SwitchStates"] = options[:switch_states] if options[:switch_states]
-          Engine.new(config: config, locale: locale).run([path], only: options[:only], except: options[:except])
+          Engine.new(config: config, locale: locale).run([path], only: options[:only], except: options[:except], timeout: options[:timeout] || 10)
         end
         formatter = Formatter.new
         output = case options[:format]
@@ -459,6 +472,13 @@ module Breadkit
       def explain(id, locale)
         rule = Registry.all.find { |item| item.id == id }
         raise Error, "unknown rule #{id}" unless rule
+        if locale == "ja"
+          translations = YAML.safe_load(File.read(File.expand_path("../../locales/ja.yml", __dir__), encoding: "UTF-8"), aliases: false) || {}
+          description = translations.dig("rules", rule.id) || rule.description
+          guidance = translations.dig("guidance", rule.id)
+          puts "# #{rule.id}\n\n#{description}#{guidance ? "\n\n#{guidance}" : ""}"
+          return 0
+        end
         path = File.expand_path("../../docs/rules/#{rule.id}.md", __dir__)
         puts File.file?(path) ? File.read(path, encoding: "UTF-8") : "#{rule.id} (#{rule.severity})\n#{localized_description(rule, locale)}"
         0

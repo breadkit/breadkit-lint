@@ -22,18 +22,30 @@ module Breadkit
 
       def diagnostic_targets(circuit, values)
         ids = { components: circuit.components.keys, wires: circuit.wires.map(&:id),
-                holes: circuit.board.holes.keys, nets: circuit.nets.map(&:name) }
+                holes: circuit.board.holes.keys,
+                pins: circuit.components.values.flat_map { |component| component.pins.values.map { |pin| "#{component.ref}.#{pin.name}" } },
+                nets: circuit.nets.map(&:name) }
         Array(values).each_with_object({}) do |value, targets|
-          kind = ids.find { |_type, known| known.include?(value) }&.first
-          (targets[kind] ||= []) << value if kind
+          canonical = canonical_pin(circuit, value)
+          kind = ids.find { |_type, known| known.include?(canonical) }&.first
+          (targets[kind] ||= []) << canonical if kind
         end
       end
 
       def diagnostic_message(diagnostic)
         target = Array(diagnostic.targets).join(", ")
         target = diagnostic.message[/unknown pin ([^;]+)/, 1] || target if diagnostic.code == "unknown_pin"
+        target = diagnostic.message[/unknown board: (.+)/, 1] || target if diagnostic.code == "unknown_board"
         option = diagnostic.message[/unknown component option ([^ ]+)/, 1] if diagnostic.code == "unknown_option"
-        translate("diagnostic_#{diagnostic.code}", diagnostic.message, target: target, option: option)
+        reason = case diagnostic.message
+        when /must straddle the center gap/ then translate("placement_straddle", "must straddle the center gap")
+        when /extends beyond the board or into the center gap/ then translate("placement_bounds_or_gap", "extends beyond the board or into the center gap")
+        when /extends beyond the board/ then translate("placement_bounds", "extends beyond the board")
+        when /pins do not match its footprint/ then translate("placement_footprint", "pins do not match the footprint")
+        when /needs a terminal hole anchor/ then translate("placement_anchor", "needs a terminal hole anchor")
+        else diagnostic.message
+        end
+        translate("diagnostic_#{diagnostic.code}", diagnostic.message, target: target, option: option, reason: reason)
       end
 
       def translate(key, english, **values)
@@ -47,7 +59,7 @@ module Breadkit
                     location: location, targets: targets, state: state)
       end
 
-      def suppress(offenses, disables, circuit)
+      def suppress(offenses, disables, circuit, only: nil, except: nil, skipped: false)
         invalid_disables = []
         invalid = disables.filter_map do |disable|
           rule_id = disable[:rule] || disable["rule"]
@@ -62,14 +74,28 @@ module Breadkit
           offense("Config/InvalidDisable", message, location_from(disable[:location] || disable["location"]))
         end
         valid = disables - invalid_disables
+        used = []
         kept = offenses.reject do |item|
-          valid.any? do |disable|
+          matches = valid.select do |disable|
             rule = disable[:rule] || disable["rule"]
             target = disable[:on] || disable["on"]
             rule == item.rule && (!target || item.targets.values.flatten.include?(canonical_pin(circuit, target)))
           end
+          used.concat(matches)
+          matches.any?
         end
-        kept + invalid
+        redundant = valid.filter_map do |disable|
+          rule_id = disable[:rule] || disable["rule"]
+          rule = Registry.all.find { |item| item.id == rule_id }
+          next if used.include?(disable) || !rule || !@config.enabled?(rule)
+          next if only && !only.include?(rule_id)
+          next if except&.include?(rule_id)
+          next if skipped && rule_id.start_with?("Electrical/", "Intent/")
+          next unless @config.enabled?(Rules::Lint::RedundantDisable)
+          offense("Lint/RedundantDisable", translate("redundant_disable", "lint_disable for #{rule_id} suppresses no offense", rule: rule_id),
+                  location_from(disable[:location] || disable["location"]))
+        end
+        (kept + invalid + redundant).sort_by { |item| [item.location&.path.to_s, item.location&.line.to_i, item.rule] }
       end
 
       def canonical_pin(circuit, reference)

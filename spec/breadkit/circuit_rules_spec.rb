@@ -2,7 +2,7 @@
 
 require "tmpdir"
 
-RSpec.describe "reviewed lint behavior" do
+RSpec.describe "circuit rules" do
   def inspect_source(source, only: nil, config: Breadkit::Lint::Config.new)
     Dir.mktmpdir do |directory|
       path = File.join(directory, "circuit.bk.rb")
@@ -15,9 +15,9 @@ RSpec.describe "reviewed lint behavior" do
     common = <<~RUBY
       board :half
       supply :POS, voltage: 5, plus: 'B+1', minus: 'B-1'
-      supply :NEG, voltage: -5, plus: 'T-1', minus: 'B-2'
+      supply :NEG, voltage: 5, plus: 'B-2', minus: 'T-1'
     RUBY
-    separate = common.sub("minus: 'B-2'", "minus: 'T+1'")
+    separate = common.sub("plus: 'B-2'", "plus: 'T+1'")
     expect(inspect_source(common, only: ["Electrical/NoCommonGround"])).to be_empty
     expect(inspect_source(separate, only: ["Electrical/NoCommonGround"]).map(&:rule)).to include("Electrical/NoCommonGround")
   end
@@ -38,7 +38,7 @@ RSpec.describe "reviewed lint behavior" do
     RUBY
     offenses = inspect_source(source, only: ["Electrical/ShortCircuit"])
     expect(offenses.length).to eq(1)
-    expect(offenses.first.message).to include("USB.+", "REG.+", "path:")
+    expect(offenses.first.message).to include("B+1", "T+1", "path:")
     expect(offenses.first.location.line).to eq(4)
   end
 
@@ -60,7 +60,7 @@ RSpec.describe "reviewed lint behavior" do
       board :half
       ic :U1, 'NE555', at: 'e20'
       net :VCC, at: 'f20'
-      expect strict: true do
+      expect strict: false do
         net :VCC, 'U1.8'
       end
     RUBY

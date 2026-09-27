@@ -24,6 +24,14 @@ module Breadkit
     end
 
     module Rules
+      module Lint
+        class RedundantDisable < BuiltinRule
+          rule "Lint/RedundantDisable", severity: :warning, description: "A lint_disable matches no offense"
+
+          def check(_context); end
+        end
+      end
+
       module Layout
         class InvalidHole < DiagnosticRule
           rule "Layout/InvalidHole", severity: :error, description: "Unknown board hole"
@@ -57,6 +65,48 @@ module Breadkit
 
         class UnknownOption < DiagnosticRule
           rule "Layout/UnknownOption", severity: :error, description: "Unknown component option"
+
+          def check(context) = emit_diagnostics(context)
+        end
+
+        class InvalidOption < DiagnosticRule
+          rule "Layout/InvalidOption", severity: :error, description: "Invalid component option value"
+
+          def check(context) = emit_diagnostics(context)
+        end
+
+        class InvalidValue < DiagnosticRule
+          rule "Layout/InvalidValue", severity: :error, description: "Invalid component value"
+
+          def check(context) = emit_diagnostics(context)
+        end
+
+        class InvalidColor < DiagnosticRule
+          rule "Layout/InvalidColor", severity: :error, description: "Invalid component or wire color"
+
+          def check(context) = emit_diagnostics(context)
+        end
+
+        class InvalidRoute < DiagnosticRule
+          rule "Layout/InvalidRoute", severity: :error, description: "Invalid wire route"
+
+          def check(context) = emit_diagnostics(context)
+        end
+
+        class InvalidWireId < DiagnosticRule
+          rule "Layout/InvalidWireId", severity: :error, description: "Wire ID conflicts with a board hole"
+
+          def check(context) = emit_diagnostics(context)
+        end
+
+        class UnmatchedParts < DiagnosticRule
+          rule "Layout/UnmatchedParts", severity: :warning, description: "Part glob matches no files"
+
+          def check(context) = emit_diagnostics(context)
+        end
+
+        class PartOverride < DiagnosticRule
+          rule "Layout/PartOverride", severity: :warning, description: "Custom part overrides a built-in part"
 
           def check(context) = emit_diagnostics(context)
         end
@@ -170,6 +220,20 @@ module Breadkit
           rule "Electrical/NetLabelConflict", severity: :error, description: "Different labels name one net"
 
           def check(context) = emit(context, :label_conflicts)
+        end
+
+        class VoltageDomainMismatch < BuiltinRule
+          rule "Electrical/VoltageDomainMismatch", severity: :error,
+            description: "A signal exceeds a pin's voltage limit", state_sensitive: true
+
+          def check(context) = emit(context, :voltage_domain_mismatches)
+        end
+
+        class I2CAddressConflict < BuiltinRule
+          rule "Electrical/I2CAddressConflict", severity: :error,
+            description: "I2C devices on one bus use the same address", state_sensitive: true
+
+          def check(context) = emit(context, :i2c_address_conflicts)
         end
 
       end

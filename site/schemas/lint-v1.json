@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://breadkit.github.io/breadkit-lint/schemas/lint-v1.json",
+  "title": "Breadkit lint report v1",
+  "type": "object",
+  "required": ["schema_version", "tool", "files", "summary"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {"name": {"const": "bklint"}, "version": {"type": "string"}}
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "analysis_skipped", "offenses"],
+        "properties": {
+          "path": {"type": "string"},
+          "analysis_skipped": {"type": "boolean"},
+          "offenses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["rule", "severity", "message", "location", "state", "targets"],
+              "properties": {
+                "rule": {"type": "string"},
+                "severity": {"enum": ["error", "warning", "info"]},
+                "message": {"type": "string"},
+                "location": {
+                  "type": "object",
+                  "required": ["path", "line"],
+                  "properties": {
+                    "path": {"type": "string"},
+                    "line": {"type": ["integer", "null"], "minimum": 1}
+                  }
+                },
+                "state": {"type": ["string", "null"]},
+                "targets": {
+                  "type": "object",
+                  "properties": {
+                    "components": {"$ref": "#/$defs/identifiers"},
+                    "pins": {"$ref": "#/$defs/identifiers"},
+                    "holes": {"$ref": "#/$defs/identifiers"},
+                    "wires": {"$ref": "#/$defs/identifiers"},
+                    "nets": {"$ref": "#/$defs/identifiers"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["files", "errors", "warnings", "infos"],
+      "properties": {
+        "files": {"type": "integer", "minimum": 0},
+        "errors": {"type": "integer", "minimum": 0},
+        "warnings": {"type": "integer", "minimum": 0},
+        "infos": {"type": "integer", "minimum": 0}
+      }
+    }
+  },
+  "$defs": {"identifiers": {"type": "array", "items": {"type": "string"}}}
+}

@@ -40,6 +40,60 @@ Layout/UnknownOption:
   no_offense: |
     board :half
     resistor :R1, '330', pins: %w[a1 a2]
+Layout/InvalidOption:
+  offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2], bands: 6
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2], bands: 5
+Layout/InvalidValue:
+  offense: |
+    board :half
+    resistor :R1, '33O', pins: %w[a1 a2]
+  no_offense: |
+    board :half
+    resistor :R1, '330', pins: %w[a1 a2]
+Layout/InvalidColor:
+  offense: |
+    board :half
+    wire 'a1', 'a2', color: :rde
+  no_offense: |
+    board :half
+    wire 'a1', 'a2', color: :red
+Layout/InvalidRoute:
+  offense: |
+    board :half
+    wire 'a1', 'a2', route: :curvy
+  no_offense: |
+    board :half
+    wire 'a1', 'a2', route: :straight
+Layout/InvalidWireId:
+  offense: |
+    board :half
+    wire 'a1', 'a2', id: 'a20'
+  no_offense: |
+    board :half
+    wire 'a1', 'a2', id: 'W20'
+Layout/UnmatchedParts:
+  offense: |
+    board :half
+    use_parts 'no-such-parts/*.yml'
+  no_offense: |
+    board :half
+Layout/PartOverride:
+  offense: |
+    board :half
+    File.write(File.join(__dir__, 'replacement.yml'), "id: led\noverride: true\ncategory: diode\nplacement: leads\npins:\n  - {num: 1, name: anode}\n  - {num: 2, name: cathode}\n")
+    use_parts File.join(__dir__, 'replacement.yml')
+  no_offense: |
+    board :half
+Lint/RedundantDisable:
+  offense: |
+    board :half
+    lint_disable 'Lint/RedundantDisable'
+  no_offense: |
+    board :half
 Layout/UnplacedPin:
   offense: |
     board :half
@@ -217,6 +271,40 @@ Electrical/NetLabelConflict:
     board :half
     net :A, at: 'a1'
     net :B, at: 'a2'
+Electrical/VoltageDomainMismatch:
+  offense: |
+    board :half
+    File.write(File.join(__dir__, 'signal.yml'), "id: signal\nplacement: offboard\npins:\n  - {num: 1, name: GND, role: ground}\n  - {num: 2, name: SIG, role: gpio, max_voltage: 3.3}\n")
+    use_parts File.join(__dir__, 'signal.yml')
+    offboard :U, :signal
+    supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+    wire 'U.GND', 'B-'
+    wire 'U.SIG', 'B+'
+  no_offense: |
+    board :half
+    File.write(File.join(__dir__, 'signal.yml'), "id: signal\nplacement: offboard\npins:\n  - {num: 1, name: GND, role: ground}\n  - {num: 2, name: SIG, role: gpio, max_voltage: 3.3}\n")
+    use_parts File.join(__dir__, 'signal.yml')
+    offboard :U, :signal
+    supply :P, voltage: 3.3, plus: 'B+1', minus: 'B-1'
+    wire 'U.GND', 'B-'
+    wire 'U.SIG', 'B+'
+Electrical/I2CAddressConflict:
+  offense: |
+    board :half
+    File.write(File.join(__dir__, 'sensor.yml'), "id: sensor\nplacement: offboard\npins:\n  - {num: 1, name: SDA, role: data}\n  - {num: 2, name: SCL, role: clock}\n")
+    use_parts File.join(__dir__, 'sensor.yml')
+    offboard :A, :sensor, address: '0x44'
+    offboard :B, :sensor, address: '0x44'
+    wire 'A.SDA', 'B.SDA'
+    wire 'A.SCL', 'B.SCL'
+  no_offense: |
+    board :half
+    File.write(File.join(__dir__, 'sensor.yml'), "id: sensor\nplacement: offboard\npins:\n  - {num: 1, name: SDA, role: data}\n  - {num: 2, name: SCL, role: clock}\n")
+    use_parts File.join(__dir__, 'sensor.yml')
+    offboard :A, :sensor, address: '0x44'
+    offboard :B, :sensor, address: '0x45'
+    wire 'A.SDA', 'B.SDA'
+    wire 'A.SCL', 'B.SCL'
 Intent/ConnectionMismatch:
   offense: |
     board :half

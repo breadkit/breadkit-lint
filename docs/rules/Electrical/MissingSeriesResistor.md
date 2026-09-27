@@ -1,6 +1,6 @@
 # Electrical/MissingSeriesResistor
 
-An LED has a known unprotected path across a supply. This MVP check uses net reachability and is conservative about complex load branches.
+An LED has a known unprotected path across a supply or GPIO output. The check follows conductive diode and transistor paths but cannot prove current through every active device.
 
 ```ruby
 led :D1, anode: "b10", cathode: "g12"

@@ -7,7 +7,8 @@ module Breadkit
         circuit.nets(state).filter_map do |net|
           next unless net.labels.length > 1
           message = translate("label_conflict", "net has conflicting labels: #{net.labels.join(', ')}", labels: net.labels.join(", "))
-          offense(rule.id, message, nil, targets: { nets: [net.name] }, state: state.name)
+          location = circuit.labels.find { |label| net.labels.include?(label.name) }&.location
+          offense(rule.id, message, location, targets: { nets: [net.name] }, state: state.name)
         end
       end
 
@@ -15,7 +16,8 @@ module Breadkit
         return [] if rule.id == "Intent/UnknownNet" && circuit.diagnostics.any? { |item| item.code == "unknown_net" }
         circuit.expectations.flat_map do |expectation|
           strict = expectation["strict"] || expectation[:strict]
-          Array(expectation["entries"] || expectation[:entries]).filter_map do |item|
+          entries = Array(expectation["entries"] || expectation[:entries])
+          results = entries.filter_map do |item|
             kind = item["kind"] || item[:kind]
             refs = item["refs"] || item[:refs] || []
             expected_name = item["name"] || item[:name]
@@ -44,13 +46,30 @@ module Breadkit
               detail = if !extra_pins.empty?
                 translate("undeclared_pins", "undeclared pins on expected net: #{extra_pins.join(', ')}", pins: extra_pins.join(", "))
               elsif !name_matches
-                translate("expected_net_name", "expected net #{expected_name}, found #{nets.first.name}", expected: expected_name, actual: nets.first.name)
+                translate("expected_net_name", "expected net #{expected_name}, found #{nets.first.name}; add net :#{expected_name}, at: ... to label it", expected: expected_name, actual: nets.first.name)
               else
                 translate("expected_one_net", "expected #{names.join(', ')} on one net", refs: names.join(", "))
               end
               offense(rule.id, detail, location_from(loc), targets: { nets: nets.compact.map(&:name), components: extra_pins.map { |pin| pin.split('.', 2).first } }, state: state.name)
             end
           end
+          if strict && rule.id == "Intent/ConnectionMismatch"
+            declared_names = entries.select { |item| (item["kind"] || item[:kind]) == "net" }.flat_map do |item|
+              Array(item["refs"] || item[:refs]).filter_map { |ref| circuit.net_of(ref, state)&.name }
+            end.uniq
+            circuit.nets(state).each do |net|
+              next if declared_names.include?(net.name)
+              pins = net.members.select { |member| circuit.components.key?(member.split(".", 2).first) }
+              next if pins.empty?
+              message = translate("undeclared_pins", "undeclared pins outside expected nets: #{pins.join(', ')}", pins: pins.join(", "))
+              first_net_entry = entries.find { |item| (item["kind"] || item[:kind]) == "net" }
+              location = first_net_entry && (first_net_entry["location"] || first_net_entry[:location])
+              results << offense(rule.id, message, location_from(location || expectation["location"] || expectation[:location]),
+                                 targets: { nets: [net.name], components: pins.map { |pin| pin.split(".", 2).first }.uniq,
+                                            pins: pins }, state: state.name)
+            end
+          end
+          results
         end
       end
 

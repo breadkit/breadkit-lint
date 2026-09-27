@@ -5,6 +5,14 @@ rules:
   Layout/UnknownTransistorModel: トランジスタの型番が不明なため汎用ピン配置を使用します。
   Layout/UnknownPin: 指定した部品ピンが存在しません。
   Layout/UnknownOption: 指定した部品オプションが存在しません。
+  Layout/InvalidOption: 部品オプションの値が無効です。
+  Layout/InvalidValue: 部品の値が無効です。
+  Layout/InvalidColor: 部品またはワイヤの色が無効です。
+  Layout/InvalidRoute: ワイヤの経路指定が無効です。
+  Layout/InvalidWireId: ワイヤ ID が穴の名前と衝突しています。
+  Layout/UnmatchedParts: 部品定義の指定に一致するファイルがありません。
+  Layout/PartOverride: カスタム部品が組み込み部品を上書きしました。
+  Lint/RedundantDisable: lint_disable が指摘を抑制していません。
   Layout/UnplacedPin: 部品ピンがボードの穴に配置されていません。
   Layout/DuplicateRef: 部品記号またはワイヤ ID が重複しています。
   Layout/InvalidPlacement: 部品の配置がボードに収まりません。
@@ -22,20 +30,72 @@ rules:
   Electrical/PowerPinUnconnected: IC の電源ピンまたは GND ピンが電源につながっていません。
   Electrical/SupplyVoltageRange: IC の電源電圧が定格範囲外です。
   Electrical/NoCommonGround: 複数の電源で GND が共通化されていません。
+  Electrical/VoltageDomainMismatch: 信号の電圧がピンの許容範囲を超えています。
+  Electrical/I2CAddressConflict: 同じ I2C バス上でアドレスが重複しています。
   Electrical/NetLabelConflict: 同じネットに異なる名前が付いています。
   Intent/ConnectionMismatch: 宣言した接続と実際の配線が異なります。
   Intent/UnknownNet: 宣言で参照したネットが見つかりません。
   Style/WireColor: 電源レールの慣例とワイヤ色が異なります。
+guidance:
+  Lint/RedundantDisable: lint_disable の対象とルール名を確認し、使われていない指定を削除してください。
+  Layout/InvalidHole: 指定したボードに存在する穴 ID を使用してください。
+  Layout/UnknownBoard: board で使用可能なボード名を指定するか、use_boards で定義を読み込んでください。
+  Layout/UnknownPart: 部品名を確認するか、use_parts で定義を読み込んでください。
+  Layout/UnknownTransistorModel: 型番別のピン配置を定義するか、実物のピン配置を確認してください。
+  Layout/UnknownPin: 部品定義にあるピン名または番号を指定してください。
+  Layout/UnknownOption: 部品定義にある属性名を指定してください。
+  Layout/InvalidOption: 属性に許可された値を指定してください。
+  Layout/InvalidValue: 抵抗やコンデンサの値を有効な単位表記で指定してください。
+  Layout/InvalidColor: CSS の色名、16進色、rgb()、hsl() のいずれかを指定してください。
+  Layout/InvalidRoute: 対応しているワイヤ経路を指定してください。
+  Layout/InvalidWireId: 穴 ID と紛らわしくないワイヤ ID を指定してください。
+  Layout/UnmatchedParts: use_parts のパスとファイル名を確認してください。
+  Layout/PartOverride: 上書きした部品のピン配置と属性を確認してください。
+  Layout/UnplacedPin: 必要なピンをボードの穴に配置してください。
+  Layout/DuplicateRef: 部品、ワイヤ、電源に固有の ID を指定してください。
+  Layout/InvalidPlacement: 部品のフットプリントと中央の溝を確認してください。
+  Layout/HoleConflict: 1つの穴に挿すリードを1本にしてください。
+  Layout/NoFreeHole: 同じストリップまたはレールの空き穴を使用してください。
+  Layout/SplitNetLabel: 同じラベルを付けたネットをワイヤで接続してください。
+  Layout/PinsInSameStrip: 同じ部品のピンを別の導通ストリップに配置してください。
+  Electrical/ShortCircuit: 短絡経路に示されたワイヤと電源端子を確認してください。
+  Electrical/ShortedComponent: 部品の両端が別々のネットにつながるように配置してください。
+  Electrical/FloatingPin: 使用するピンを接続し、未使用なら unused で明示してください。
+  Electrical/DanglingWire: ワイヤの両端を部品、電源、または別のワイヤにつないでください。
+  Electrical/SplitRail: 表示された2つの穴をワイヤで橋渡ししてください。
+  Electrical/MissingSeriesResistor: LED と電源または GPIO の間に電流制限抵抗を直列に入れてください。
+  Electrical/ReversePolarity: "部品の極性と電位を確認してください。意図的な逆バイアスは bias: :reverse と明示できます。"
+  Electrical/PowerPinUnconnected: 電源ピンと GND ピンを対応する電源ネットに接続してください。
+  Electrical/SupplyVoltageRange: IC の電源電圧を部品定義の定格範囲内にしてください。
+  Electrical/NoCommonGround: 電源の基準が必要な回路では GND を共有してください。
+  Electrical/VoltageDomainMismatch: ピンの最大許容電圧を確認し、レベルシフタや分圧で信号を下げてください。
+  Electrical/I2CAddressConflict: 一方のモジュールの ADR 設定を変更するか、別の I2C バスにつないでください。
+  Electrical/NetLabelConflict: 同じネットに付いた異なるラベルを確認してください。
+  Intent/ConnectionMismatch: expect の接続宣言と実際のワイヤ、ネットラベルを一致させてください。
+  Intent/UnknownNet: expect で参照したネット名またはピン名を確認してください。
+  Style/WireColor: 正極には赤や橙、GND には黒や青など慣例に合う色を指定してください。
 messages:
   diagnostic_invalid_hole: "無効な穴または接続先です: %{target}"
-  diagnostic_unknown_board: "ボード定義が見つかりません。"
+  diagnostic_unknown_board: "ボード定義が見つかりません: %{target}"
   diagnostic_unknown_part: "部品定義が見つかりません: %{target}"
   diagnostic_unknown_transistor_model: "トランジスタの型番が不明なため汎用 EBC ピン配置を使用します: %{target}"
   diagnostic_unknown_pin: "ピンが見つかりません: %{target}"
   diagnostic_unknown_option: "部品オプションが見つかりません: %{option}"
+  diagnostic_invalid_option: "部品オプションの値が無効です: %{target}（%{reason}）"
+  diagnostic_invalid_value: "部品の値が無効です: %{target}（%{reason}）"
+  diagnostic_invalid_color: "色が無効です: %{target}（%{reason}）"
+  diagnostic_invalid_route: "ワイヤの経路指定が無効です: %{target}（%{reason}）"
+  diagnostic_invalid_wire_id: "ワイヤ ID が穴の名前と衝突しています: %{target}"
+  diagnostic_unmatched_parts: "部品定義に一致するファイルがありません: %{reason}"
+  diagnostic_part_override: "カスタム部品が組み込み部品を上書きしました: %{reason}"
   diagnostic_unplaced_pin: "部品ピンが穴に配置されていません: %{target}"
   diagnostic_duplicate_ref: "識別子が重複しています: %{target}"
-  diagnostic_invalid_placement: "部品の配置が無効です: %{target}"
+  diagnostic_invalid_placement: "部品の配置が無効です: %{target}（%{reason}）"
+  placement_straddle: "中央の溝をまたぐ必要があります"
+  placement_bounds_or_gap: "フットプリントが盤外または中央の溝にはみ出します"
+  placement_bounds: "フットプリントが盤外にはみ出します"
+  placement_footprint: "ピン位置がフットプリントと一致しません"
+  placement_anchor: "端子穴を基準点に指定してください"
   diagnostic_hole_conflict: "同じ穴に複数の端子があります: %{target}"
   diagnostic_no_free_hole: "空き穴がありません: %{target}"
   diagnostic_split_net_label: "同じラベルが切断されたネットにあります: %{target}"
@@ -47,19 +107,22 @@ messages:
   unplaced_pin: "%{pin} がボードの穴に配置されていません"
   floating_pin: "%{pin} が外部に接続されていません"
   dangling_wire: "%{wire} の端が接続されていません"
-  split_rail: "%{rail} の使用中の区間に電源がありません"
+  split_rail: "%{rail} の使用中の区間に電源がありません。%{bridge} を橋渡ししてください"
   missing_series_resistor: "%{ref} に直列の電流制限抵抗がありません"
   reverse_polarity: "%{ref} の正極の電位が負極より低くなっています"
   power_pin: "%{pin} が有効な電源に接続されていません"
   supply_range: "%{ref} の %{power}/%{ground} 間は %{voltage} V です（定格 %{minimum}〜%{maximum} V）"
   common_ground: "複数の電源で GND が共通化されていません"
+  voltage_domain: "%{pin} に %{voltage} V がかかっています（最大 %{maximum} V）"
+  i2c_address: "%{refs} が同じ I2C バスでアドレス %{address} を使用しています"
   wire_color: "%{wire} の色 %{color} は想定色 %{expected} と異なります"
   label_conflict: "同じネットに異なるラベルがあります: %{labels}"
   unknown_expectation: "接続宣言に不明な参照があります: %{refs}"
   expected_connected: "%{refs} は接続されている必要があります"
   expected_isolated: "%{refs} は分離されている必要があります"
   undeclared_pins: "宣言したネットに未宣言のピンがあります: %{pins}"
-  expected_net_name: "ネット名は %{expected} のはずですが %{actual} です"
+  expected_net_name: "ネット名は %{expected} のはずですが %{actual} です。net :%{expected}, at: ... でラベルを付けてください"
   expected_one_net: "%{refs} は同じネットにある必要があります"
   unknown_disable: "lint_disable に不明なルールがあります: %{rule}"
   disable_reason: "%{rule} の lint_disable には理由が必要です"
+  redundant_disable: "%{rule} の lint_disable は指摘を抑制していません"

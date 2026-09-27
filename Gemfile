@@ -4,6 +4,7 @@ source "https://rubygems.org"
 
 # Specify your gem's dependencies in breadkit-lint.gemspec
 gemspec
+gem "breadkit", path: "../breadkit"
 
 gem "irb"
 gem "rake", "~> 13.0"

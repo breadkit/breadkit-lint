@@ -5,6 +5,14 @@ rules:
   Layout/UnknownTransistorModel: The transistor model is unknown and a generic pinout is used.
   Layout/UnknownPin: A component pin reference does not exist.
   Layout/UnknownOption: A component option is not recognized.
+  Layout/InvalidOption: A component option value is invalid.
+  Layout/InvalidValue: A component value is invalid.
+  Layout/InvalidColor: A component or wire color is invalid.
+  Layout/InvalidRoute: A wire route is invalid.
+  Layout/InvalidWireId: A wire ID conflicts with a board hole.
+  Layout/UnmatchedParts: A part glob matches no files.
+  Layout/PartOverride: A custom part overrides a built-in part.
+  Lint/RedundantDisable: A lint_disable matches no offense.
   Layout/UnplacedPin: A component pin has no board hole.
   Layout/DuplicateRef: A component or wire identifier is repeated.
   Layout/InvalidPlacement: A component footprint does not fit the board.
@@ -22,6 +30,8 @@ rules:
   Electrical/PowerPinUnconnected: An IC power or ground pin is not connected to a supply.
   Electrical/SupplyVoltageRange: An IC supply voltage is outside its rated range.
   Electrical/NoCommonGround: Power supplies do not share a ground.
+  Electrical/VoltageDomainMismatch: A signal exceeds a pin's voltage limit.
+  Electrical/I2CAddressConflict: I2C devices on one bus use the same address.
   Electrical/NetLabelConflict: Different labels name one net.
   Intent/ConnectionMismatch: Wiring differs from declared expectations.
   Intent/UnknownNet: An expectation refers to an unknown net.

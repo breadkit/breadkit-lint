@@ -7,4 +7,4 @@ led :D1, anode: "b10", cathode: "g12"
 # Connect anode to GND and cathode to VCC.
 ```
 
-Swap the connections so the positive pin faces the higher potential.
+Swap accidental reverse connections. For an intentional reverse-biased LED, use `bias: :reverse`. Part definitions can declare `max_reverse_voltage`; ordinary diodes are not flagged by this rule.
