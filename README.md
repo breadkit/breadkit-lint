@@ -46,6 +46,8 @@ Focus on one rule, or write a machine-readable report:
 bklint circuit.bk.rb --only Electrical/ShortCircuit
 bklint circuit.bk.rb --format json --out lint.json
 bklint circuit.bk.rb --format sarif --out lint.sarif
+bklint circuit.bk.rb --format markdown --out lint.md
+bklint circuit.bk.rb --format rdjson --out lint.rdjson
 ```
 
 Try the [shared circuit examples](https://github.com/breadkit/breadkit/tree/main/examples)
@@ -100,7 +102,7 @@ the current directory and skips `node_modules`. Each file uses the nearest
 
 | Option | Description |
 | --- | --- |
-| `-f, --format FORMAT` | `text` (default), `json`, `github`, or `sarif`. |
+| `-f, --format FORMAT` | `text` (default), `json`, `github`, `sarif`, `markdown`, `junit`, `checkstyle`, or `rdjson`. |
 | `-o, --out PATH` | Write output to a file. |
 | `-c, --config PATH` | Load a specific configuration. |
 | `--fail-level LEVEL` | `error`, `warning` (default), or `info`. |

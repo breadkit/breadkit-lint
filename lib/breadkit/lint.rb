@@ -318,6 +318,55 @@ module Breadkit
         end.join("\n")
       end
 
+      def markdown(files)
+        rows = files.flat_map do |file|
+          file[:offenses].map do |item|
+            path = display_path(item.location&.path || file[:path])
+            [path, item.location&.line, item.severity, item.rule, item.message].map do |value|
+              xml_escape(value).gsub("|", "\\|").gsub(/\r?\n/, "<br>")
+            end.join(" | ").then { |row| "| #{row} |" }
+          end
+        end
+        (["| File | Line | Severity | Rule | Message |", "| --- | ---: | --- | --- | --- |"] + rows).join("\n")
+      end
+
+      def junit(files)
+        failures = files.count { |file| file[:offenses].any? { |item| item.severity == "error" } }
+        cases = files.map do |file|
+          name = xml_escape(display_path(file[:path]))
+          errors, notices = file[:offenses].partition { |item| item.severity == "error" }
+          details = errors.map do |item|
+            "<failure type=\"#{xml_escape(item.rule)}\" message=\"#{xml_escape(item.message)}\"/>"
+          end
+          details << "<system-out>#{xml_escape(notices.map { |item| "#{item.severity}: #{item.rule}: #{item.message}" }.join("\n"))}</system-out>" unless notices.empty?
+          "<testcase name=\"#{name}\">#{details.join}</testcase>"
+        end
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><testsuites><testsuite name=\"bklint\" tests=\"#{files.length}\" failures=\"#{failures}\">#{cases.join}</testsuite></testsuites>"
+      end
+
+      def checkstyle(files)
+        entries = files.map do |file|
+          errors = file[:offenses].map do |item|
+            line = item.location&.line ? " line=\"#{item.location.line}\"" : ""
+            "<error#{line} severity=\"#{xml_escape(item.severity)}\" message=\"#{xml_escape(item.message)}\" source=\"#{xml_escape(item.rule)}\"/>"
+          end
+          "<file name=\"#{xml_escape(display_path(file[:path]))}\">#{errors.join}</file>"
+        end
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><checkstyle version=\"10.0\">#{entries.join}</checkstyle>"
+      end
+
+      def rdjson(files)
+        diagnostics = files.flat_map do |file|
+          file[:offenses].map do |item|
+            location = { path: display_path(item.location&.path || file[:path]) }
+            location[:range] = { start: { line: item.location.line } } if item.location&.line.to_i.positive?
+            { message: item.message, location: location, severity: item.severity.upcase,
+              code: { value: item.rule } }
+          end
+        end
+        JSON.pretty_generate(source: { name: "bklint", url: "https://github.com/breadkit/breadkit-lint" }, diagnostics: diagnostics)
+      end
+
       def sarif(files)
         rules = (Registry.all.map do |rule|
           level = { "error" => "error", "warning" => "warning", "info" => "note" }.fetch(rule.severity, "error")
@@ -355,6 +404,11 @@ module Breadkit
         Pathname.new(absolute).relative_path_from(Pathname.new(Dir.pwd)).to_s.tr("\\", "/")
       end
 
+      def xml_escape(value)
+        value.to_s.gsub(/[\x00-\x08\x0B\x0C\x0E-\x1F]/, "\uFFFD")
+             .gsub(/[&<>"']/) { |char| { "&" => "&amp;", "<" => "&lt;", ">" => "&gt;", '"' => "&quot;", "'" => "&apos;" }.fetch(char) }
+      end
+
       def escape_data(value)
         value.to_s.gsub("%", "%25").gsub("\r", "%0D").gsub("\n", "%0A")
       end
@@ -369,7 +423,7 @@ module Breadkit
         options = { format: "text", fail_level: nil }
         parser = OptionParser.new do |opts|
           opts.banner = "Usage: bklint [options] [FILES...]"
-          opts.on("-f", "--format FORMAT", %w[text json github sarif]) { |value| options[:format] = value }
+          opts.on("-f", "--format FORMAT", %w[text json github sarif markdown junit checkstyle rdjson]) { |value| options[:format] = value }
           opts.on("-o", "--out PATH") { |value| options[:out] = value }
           opts.on("-c", "--config PATH") { |value| options[:config] = value }
           opts.on("--fail-level LEVEL", %w[error warning info]) { |value| options[:fail_level] = value }
@@ -409,6 +463,10 @@ module Breadkit
         when "json" then formatter.json(results)
         when "github" then formatter.github(results)
         when "sarif" then formatter.sarif(results)
+        when "markdown" then formatter.markdown(results)
+        when "junit" then formatter.junit(results)
+        when "checkstyle" then formatter.checkstyle(results)
+        when "rdjson" then formatter.rdjson(results)
         else formatter.text(results, locale: locale)
         end
         options[:out] ? File.write(options[:out], output + "\n") : puts(output)

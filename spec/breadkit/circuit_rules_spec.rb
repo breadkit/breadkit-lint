@@ -159,4 +159,17 @@ RSpec.describe "circuit rules" do
     expect(formatter.text(files)).to include("circuit.json: E:")
     expect(formatter.github(files)).not_to include("line=1")
   end
+
+  it "formats review comments and machine-readable diagnostics" do
+    item = Breadkit::Lint::Offense.new(rule: "Layout/InvalidHole", severity: "error", message: "bad | hole <a&b>",
+                                      location: Breadkit::SourceLocation.new(path: "source.bk.rb", line: 12), targets: {})
+    files = [{ path: "source.bk.rb", offenses: [item] }]
+    formatter = Breadkit::Lint::Formatter.new
+    expect(formatter.markdown(files)).to include("| source.bk.rb | 12 | error | Layout/InvalidHole | bad \\| hole &lt;a&amp;b&gt; |")
+    expect(formatter.junit(files)).to include("<testsuites>", "failures=\"1\"", "&lt;a&amp;b&gt;")
+    expect(formatter.checkstyle(files)).to include("<checkstyle version=\"10.0\">", "line=\"12\"", "&lt;a&amp;b&gt;")
+    rdjson = JSON.parse(formatter.rdjson(files))
+    expect(rdjson.dig("diagnostics", 0, "location", "range", "start", "line")).to eq(12)
+    expect(rdjson.dig("diagnostics", 0, "code", "value")).to eq("Layout/InvalidHole")
+  end
 end
