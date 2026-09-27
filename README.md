@@ -202,6 +202,12 @@ Breadkit::RakeTask.new(:circuits) do |task|
 end
 ```
 
+For a local pre-commit check, copy [scripts/pre-commit](scripts/pre-commit) to
+your project's `.git/hooks/pre-commit` and make it executable. It lints the
+staged contents of changed `.bk.rb` files and blocks a commit when bklint
+fails. Declarative YAML and TOML files are not included because `--stdin`
+currently accepts Ruby DSL only.
+
 ## Command reference
 
 `bklint [options] [FILES...]` accepts `.bk.rb`, `.bk.yml`, `.bk.yaml`, `.bk.toml`, and Breadkit IR `.json` files.

@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+
+paths, error, status = Open3.capture3("git", "diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z")
+abort error unless status.success?
+
+command = File.file?("Gemfile") ? %w[bundle exec bklint] : ["bklint"]
+failed = false
+paths.split("\0").grep(/\.bk\.rb\z/).each do |path|
+  source, error, status = Open3.capture3("git", "show", ":#{path}")
+  unless status.success?
+    warn error
+    failed = true
+    next
+  end
+
+  output, error, status = Open3.capture3(*command, "--stdin=#{path}", stdin_data: source)
+  print output
+  warn error unless error.empty?
+  failed ||= !status.success?
+end
+exit(failed ? 1 : 0)
