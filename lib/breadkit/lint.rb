@@ -479,6 +479,7 @@ module Breadkit
 
     class CLI
       def run(argv)
+        original_args = argv.dup
         options = { format: "text", fail_level: nil }
         parser = OptionParser.new do |opts|
           opts.banner = "Usage: bklint [options] [FILES...]"
@@ -497,6 +498,7 @@ module Breadkit
           opts.on("--fix") { options[:fix] = true }
           opts.on("--fix-check", "--fix-dry-run") { options[:fix_check] = true }
           opts.on("--teach") { options[:teach] = true }
+          opts.on("--watch") { options[:watch] = true }
           opts.on("--list-rules") { options[:list_rules] = true }
           opts.on("--explain RULE") { |value| options[:explain] = value }
           opts.on("--locale LOCALE", %w[ja en]) { |value| options[:locale] = value }
@@ -513,11 +515,18 @@ module Breadkit
         raise Error, "--stdin PATH requires a .bk.rb path" if options[:stdin] && !options[:stdin].end_with?(".bk.rb")
         raise Error, "choose --baseline or --generate-baseline" if options[:baseline] && options[:generate_baseline]
         raise Error, "--diff cannot be combined with a baseline" if options[:diff] && (options[:baseline] || options[:generate_baseline])
+        if options[:watch] && (options[:stdin] || options[:fix] || options[:fix_check] || options[:generate_baseline])
+          raise Error, "--watch cannot be combined with stdin, source fixes, or baseline generation"
+        end
         if (options[:fix] || options[:fix_check]) && (options[:stdin] || options[:diff] || options[:baseline] || options[:generate_baseline] || options[:out])
           raise Error, "source fixes cannot be combined with stdin, diff, baseline, or output options"
         end
         raise Error, "choose --fix or --fix-check" if options[:fix] && options[:fix_check]
         files = options[:stdin] ? [options[:stdin]] : expand_inputs(argv)
+        if options[:watch]
+          original_args.delete_at(original_args.index("--watch"))
+          return watch(argv.empty? ? ["."] : argv, files, options, original_args)
+        end
         source = $stdin.read if options[:stdin]
         configs = {}
         inspect_files = lambda do
@@ -597,6 +606,44 @@ module Breadkit
       end
 
       private
+
+      def watch(roots, files, options, args)
+        watched = (files + [options[:config], options[:baseline]].compact + files.filter_map { |path| nearest_config(path) }).uniq
+        snapshot = watch_snapshot(roots, watched, options[:out])
+        warn "bklint: watching circuit and part files; press Ctrl-C to stop"
+        loop do
+          run(args.dup)
+          loop do
+            sleep 0.5
+            updated = watch_snapshot(roots, watched, options[:out])
+            next if updated == snapshot
+
+            snapshot = updated
+            break
+          end
+        end
+      end
+
+      def watch_snapshot(roots, watched, output)
+        # ponytail: poll the project tree; use file events if large projects make scans slow.
+        files = watched.dup
+        roots.each do |entry|
+          root = File.directory?(entry) ? entry : File.dirname(entry)
+          Find.find(root) do |path|
+            if File.directory?(path)
+              Find.prune if path != root && (File.basename(path).start_with?(".") || File.basename(path) == "node_modules")
+            elsif path.end_with?(".bk.rb", ".yml", ".yaml", ".toml", ".json")
+              files << path
+            end
+          end
+        end
+        files.map { |path| File.expand_path(path) }.uniq.sort.reject { |path| output && path == File.expand_path(output) }.to_h do |path|
+          stat = File.stat(path)
+          [path, [stat.mtime.to_r, stat.size]]
+        rescue Errno::ENOENT
+          [path, nil]
+        end
+      end
 
       def filter_diff(results, files, options, locale:)
         root, error, status = Open3.capture3("git", "rev-parse", "--show-toplevel")

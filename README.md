@@ -224,6 +224,7 @@ the current directory and skips `node_modules`. Each file uses the nearest
 | `--generate-baseline PATH` | Save current nonfatal findings and exit successfully. |
 | `--baseline PATH` | Hide findings listed in a generated baseline. |
 | `--diff REF` | Report findings added since a local Git revision, using its archived circuit and part files. |
+| `--watch` | Rerun lint when circuit, part, or configuration files change; press Ctrl-C to stop. |
 | `--fix-check` / `--fix-dry-run` | Preview safe Ruby DSL source edits without writing; exit `1` when an edit is available. |
 | `--fix` | Apply safe Ruby DSL source edits, then lint the updated files. |
 | `--teach` | Add short rule explanations to text output. |
