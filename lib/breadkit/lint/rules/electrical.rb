@@ -741,6 +741,55 @@ module Breadkit
         end
       end
 
+      def missing_flyback_diodes(circuit, rule, state)
+        source_nets = circuit.voltage_sources.filter_map do |source|
+          positive = circuit.net_of(source.plus, state)&.name
+          negative = circuit.net_of(source.minus, state)&.name
+          [positive, negative] if positive && negative && positive != negative
+        end
+        return [] if source_nets.empty?
+
+        circuit.components.values.filter_map do |component|
+          next unless Array(component.part.data["flags"]).include?("needs_flyback_diode")
+          polarity = component.part.data["polarity"] || {}
+          positive_pin = component.pin(polarity["positive"])
+          negative_pin = component.pin(polarity["negative"])
+          next unless positive_pin && negative_pin
+          positive = circuit.net_of("#{component.ref}.#{positive_pin.name}", state)&.name
+          negative = circuit.net_of("#{component.ref}.#{negative_pin.name}", state)&.name
+          next unless positive && negative && positive != negative
+          next unless source_nets.any? { |source_positive, source_negative| source_positive == positive || source_negative == negative }
+          next unless [positive, negative].all? { |net| flyback_terminal_attached?(circuit, state, net, component.ref, source_nets) }
+          next if reverse_flyback_diode?(circuit, state, positive, negative)
+
+          message = translate("missing_flyback_diode", "#{component.ref} has no reverse flyback diode across #{positive_pin.name} and #{negative_pin.name}",
+                              ref: component.ref, positive: positive_pin.name, negative: negative_pin.name)
+          offense(rule.id, message, component.location,
+                  targets: { components: [component.ref], pins: ["#{component.ref}.#{positive_pin.name}", "#{component.ref}.#{negative_pin.name}"],
+                             nets: [positive, negative] }, state: state.name)
+        end
+      end
+
+      def flyback_terminal_attached?(circuit, state, net_name, owner, source_nets)
+        return true if source_nets.any? { |positive, negative| positive == net_name || negative == net_name }
+        circuit.components.values.any? do |component|
+          component.ref != owner && component.part.data["category"] != "diode" &&
+            component.pins.values.any? { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name == net_name }
+        end
+      end
+
+      def reverse_flyback_diode?(circuit, state, positive, negative)
+        circuit.components.values.any? do |component|
+          next false unless component.part.data["category"] == "diode"
+          polarity = component.part.data["polarity"] || {}
+          anode = component.pin(polarity["positive"])
+          cathode = component.pin(polarity["negative"])
+          next false unless anode && cathode
+          circuit.net_of("#{component.ref}.#{anode.name}", state)&.name == negative &&
+            circuit.net_of("#{component.ref}.#{cathode.name}", state)&.name == positive
+        end
+      end
+
       def direct_source_range(circuit, state, high_name, low_name)
         sources = circuit.voltage_sources.select do |source|
           circuit.net_of(source.plus, state)&.name == high_name && circuit.net_of(source.minus, state)&.name == low_name

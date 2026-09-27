@@ -348,6 +348,13 @@ module Breadkit
           def check(context) = emit(context, :missing_base_resistors)
         end
 
+        class MissingFlybackDiode < BuiltinRule
+          rule "Electrical/MissingFlybackDiode", severity: :warning,
+            description: "An explicitly inductive load has no reverse flyback diode", state_sensitive: true
+
+          def check(context) = emit(context, :missing_flyback_diodes)
+        end
+
       end
 
       module Intent

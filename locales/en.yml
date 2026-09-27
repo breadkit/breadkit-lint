@@ -40,6 +40,7 @@ rules:
   Electrical/I2CPullupMissing: An I2C bus line has no modeled pull-up resistor.
   Electrical/MissingDecouplingCapacitor: A powered IC has no modeled capacitor across its supply pins.
   Electrical/MissingBaseResistor: A declared output drives a transistor base without a series resistor.
+  Electrical/MissingFlybackDiode: An explicitly inductive load has no reverse flyback diode.
   Electrical/SupplyOverload: A modeled load exceeds its supply current limit.
   Electrical/NetLabelConflict: Different labels name one net.
   Intent/ConnectionMismatch: Wiring differs from declared expectations.
