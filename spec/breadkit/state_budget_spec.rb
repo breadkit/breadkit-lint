@@ -60,4 +60,17 @@ RSpec.describe "switch state budget" do
       expect(result[:offenses].first.message).to include("512", "256")
     end
   end
+
+  it "checks explicitly named states without enumerating unrelated combinations" do
+    Dir.mktmpdir do |directory|
+      input = File.join(directory, "switches.bk.rb")
+      switches = (0...9).map { |index| "button :SW#{index + 1}, at: 'e#{3 + index * 5}'" }
+      expectation = "expect(when: 'SW1,SW2') { isolated 'SW1.1', 'SW1.3' }"
+      File.write(input, (["board :full"] + switches + [expectation]).join("\n"))
+
+      result = Breadkit::Lint::Engine.new.run([input], only: ["Intent/ConnectionMismatch"]).first
+      expect(result[:offenses].map(&:rule)).not_to include("Fatal/EvaluationError")
+      expect(result[:offenses].map(&:state)).to include("SW1,SW2")
+    end
+  end
 end

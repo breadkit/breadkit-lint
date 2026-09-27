@@ -17,7 +17,7 @@ module Breadkit
         circuit.expectations.flat_map do |expectation|
           at_state = expectation["when"] || expectation[:when]
           if at_state
-            unless @config.states(circuit, "all").any? { |candidate| candidate.name == at_state }
+            unless @config.intent_states(circuit, [expectation]).any? { |candidate| candidate.name == at_state }
               next [] unless state.name.nil? && rule.id == "Intent/ConnectionMismatch"
               next [offense(rule.id, translate("unknown_state", "unknown circuit state #{at_state}", state: at_state),
                             location_from(expectation["location"] || expectation[:location]), targets: {})]

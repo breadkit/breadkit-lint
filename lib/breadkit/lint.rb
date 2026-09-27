@@ -126,6 +126,22 @@ module Breadkit
         circuit.states(mode)
       end
 
+      def intent_states(circuit, expectations)
+        singles = circuit.states("single")
+        ordered = singles.drop(1).map(&:name)
+        by_name = singles.drop(1).to_h { |state| [state.name, state] }
+        composite = expectations.filter_map do |expectation|
+          name = expectation["when"] || expectation[:when]
+          next unless name&.include?(",")
+
+          refs = name.split(",", -1)
+          next unless refs.uniq == refs && refs == ordered.select { |ref| refs.include?(ref) }
+
+          Breadkit::State.new(name: name, closed_switches: refs.flat_map { |ref| by_name.fetch(ref).closed_switches })
+        end
+        singles + composite.uniq(&:name)
+      end
+
       def fail_level
         data.dig("AllRules", "FailLevel") || "warning"
       end
@@ -272,7 +288,7 @@ module Breadkit
         broken_layout = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
         states = @config.states(circuit)
         scoped_expectations = circuit.expectations.any? { |item| item["when"] || item[:when] }
-        intent_states = scoped_expectations ? @config.states(circuit, "all") : states
+        intent_states = scoped_expectations ? @config.intent_states(circuit, circuit.expectations) : states
         Registry.all.each do |rule|
           next unless @config.enabled?(rule) && @config.rule_applies?(rule, path) && selected?(rule.id, only, except)
           next if broken_layout && rule.id.start_with?("Electrical/", "Intent/")

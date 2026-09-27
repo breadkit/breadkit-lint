@@ -117,6 +117,8 @@ a rule for a specific part, pin, or wire. Unknown rule IDs are errors; set
 diagram.
 Use `expect(when: "SW1") { connected "SW1.1", "SW1.3" }` in a circuit to
 check a connection when that switch is closed.
+Named expectations evaluate only their named switch combination; they do not
+consume the exhaustive state budget.
 Use `expect_voltage "VCC", 3.0..3.6` and `expect_current "R1", 0.001..0.02`
 to check calculated DC ranges. Current uses amperes and is compared by
 magnitude. Add a ground label for absolute voltage checks; unsupported DC
