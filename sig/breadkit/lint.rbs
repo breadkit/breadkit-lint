@@ -12,6 +12,7 @@ module Breadkit
       attr_reader location: Breadkit::SourceLocation?
       attr_reader targets: Hash[Symbol, untyped]
       attr_reader state: String?
+      attr_reader column: Integer?
     end
 
     class Rule

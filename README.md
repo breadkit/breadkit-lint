@@ -64,6 +64,8 @@ bundle exec bklint circuit.bk.rb --format sarif --out lint.sarif
 bundle exec bklint circuit.bk.rb --format markdown --out lint.md
 bundle exec bklint circuit.bk.rb --format rdjson --out lint.rdjson
 bundle exec bklint circuit.bk.rb --teach
+bundle exec bklint circuit.bk.rb --fix-check
+bundle exec bklint circuit.bk.rb --fix
 cat circuit.bk.rb | bundle exec bklint --stdin circuit.bk.rb
 ```
 
@@ -216,6 +218,8 @@ the current directory and skips `node_modules`. Each file uses the nearest
 | `--generate-baseline PATH` | Save current nonfatal findings and exit successfully. |
 | `--baseline PATH` | Hide findings listed in a generated baseline. |
 | `--diff REF` | Report findings added since a local Git revision, using its archived circuit and part files. |
+| `--fix-check` / `--fix-dry-run` | Preview safe Ruby DSL source edits without writing; exit `1` when an edit is available. |
+| `--fix` | Apply safe Ruby DSL source edits, then lint the updated files. |
 | `--teach` | Add short rule explanations to text output. |
 | `--fail-level LEVEL` | `error`, `warning` (default), or `info`. |
 | `--only RULES` / `--except RULES` | Select or skip comma-separated rule IDs. |
@@ -227,6 +231,13 @@ the current directory and skips `node_modules`. Each file uses the nearest
 Exit status is `0` when no offense reaches the failure level, `1` when one
 does, and `2` for invalid input, configuration, or command usage. Use
 `--format github` for GitHub Actions annotations.
+
+Source fixing currently handles a uniquely identifiable one-character typo in
+a named wire color and an unused `lint_disable` that occupies its whole line.
+Ambiguous colors, comments on suppression lines, malformed Ruby, and
+declarative/JSON inputs are left unchanged. Fix modes cannot be combined with
+stdin, diff, baseline, or `--out`. Ruby DSL reports include source columns when
+the location can be identified unambiguously.
 
 ## Input safety
 

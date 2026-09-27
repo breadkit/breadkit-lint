@@ -33,7 +33,8 @@
                   "required": ["path", "line"],
                   "properties": {
                     "path": {"type": "string"},
-                    "line": {"type": ["integer", "null"], "minimum": 1}
+                    "line": {"type": ["integer", "null"], "minimum": 1},
+                    "column": {"type": "integer", "minimum": 1}
                   }
                 },
                 "state": {"type": ["string", "null"]},

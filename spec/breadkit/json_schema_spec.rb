@@ -9,7 +9,7 @@ RSpec.describe "lint JSON schema" do
     offense = Breadkit::Lint::Offense.new(
       rule: "Layout/HoleConflict", severity: "error", message: "two pins in a1",
       location: Breadkit::SourceLocation.new(path: "circuit.bk.rb", line: 2),
-      state: nil, targets: { holes: ["a1"] }
+      state: nil, targets: { holes: ["a1"] }, column: 7
     )
     files = [{ path: "circuit.bk.rb", skipped: false, offenses: [offense] }]
     result = JSON.parse(Breadkit::Lint::Formatter.new.json(files))

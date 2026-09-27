@@ -17,7 +17,8 @@ module Breadkit
     class Error < StandardError; end
     require_relative "lint/baseline"
 
-    Offense = Struct.new(:rule, :severity, :message, :location, :targets, :state, keyword_init: true)
+    Offense = Struct.new(:rule, :severity, :message, :location, :targets, :state, :column, keyword_init: true)
+    require_relative "lint/source_editor"
 
     class Rule
       attr_reader :id, :severity, :description, :state_sensitive, :checker
@@ -301,7 +302,7 @@ module Breadkit
             level = { "error" => "E", "warning" => "W", "info" => "I" }.fetch(item.severity, "E")
             state = item.state ? (locale == "ja" ? " (#{item.state} の状態)" : " (#{item.state} state)") : ""
             path = display_path(item.location&.path || file[:path])
-            line = item.location&.line ? ":#{item.location.line}" : ""
+            line = item.location&.line ? ":#{item.location.line}#{item.column ? ":#{item.column}" : ""}" : ""
             heading = "#{path}#{line}: #{level}: [#{item.rule}] #{item.message}#{state}"
             guidance = teach && teach_guidance(item.rule, locale)
             guidance ? [heading, "  #{locale == 'ja' ? '説明' : 'Why'}: #{guidance}"] : [heading]
@@ -328,7 +329,8 @@ module Breadkit
           files: files.map do |file|
             { path: display_path(file[:path]), analysis_skipped: !!file[:skipped], offenses: file[:offenses].map do |item|
               { rule: item.rule, severity: item.severity, message: item.message,
-                location: { path: display_path(item.location&.path || file[:path]), line: item.location&.line },
+                location: { path: display_path(item.location&.path || file[:path]), line: item.location&.line }
+                  .merge(item.column ? { column: item.column } : {}),
                 state: item.state, targets: item.targets }
             end }
           end,
@@ -345,6 +347,7 @@ module Breadkit
             message = escape_data(item.message)
             location = "file=#{escape_property(display_path(item.location&.path || file[:path]))}"
             location += ",line=#{line}" if line
+            location += ",col=#{item.column}" if line && item.column
             "::#{level} #{location},title=#{escape_property(item.rule)}::#{message}"
           end
         end.join("\n")
@@ -417,7 +420,10 @@ module Breadkit
             relative = display_path(path)
             uri = URI::DEFAULT_PARSER.escape(relative, /[^A-Za-z0-9\-._~\/]/)
             physical = { artifactLocation: { uri: uri, uriBaseId: "%SRCROOT%" } }
-            physical[:region] = { startLine: item.location.line } if item.location&.line.to_i.positive?
+            if item.location&.line.to_i.positive?
+              physical[:region] = { startLine: item.location.line }
+              physical[:region][:startColumn] = item.column if item.column
+            end
             result[:locations] = [{ physicalLocation: physical }]
             result
           end
@@ -486,6 +492,8 @@ module Breadkit
           opts.on("--baseline PATH") { |value| options[:baseline] = value }
           opts.on("--generate-baseline PATH") { |value| options[:generate_baseline] = value }
           opts.on("--diff REF") { |value| options[:diff] = value }
+          opts.on("--fix") { options[:fix] = true }
+          opts.on("--fix-check", "--fix-dry-run") { options[:fix_check] = true }
           opts.on("--teach") { options[:teach] = true }
           opts.on("--list-rules") { options[:list_rules] = true }
           opts.on("--explain RULE") { |value| options[:explain] = value }
@@ -503,23 +511,58 @@ module Breadkit
         raise Error, "--stdin PATH requires a .bk.rb path" if options[:stdin] && !options[:stdin].end_with?(".bk.rb")
         raise Error, "choose --baseline or --generate-baseline" if options[:baseline] && options[:generate_baseline]
         raise Error, "--diff cannot be combined with a baseline" if options[:diff] && (options[:baseline] || options[:generate_baseline])
+        if (options[:fix] || options[:fix_check]) && (options[:stdin] || options[:diff] || options[:baseline] || options[:generate_baseline] || options[:out])
+          raise Error, "source fixes cannot be combined with stdin, diff, baseline, or output options"
+        end
+        raise Error, "choose --fix or --fix-check" if options[:fix] && options[:fix_check]
         files = options[:stdin] ? [options[:stdin]] : expand_inputs(argv)
         source = $stdin.read if options[:stdin]
         configs = {}
-        results = files.flat_map do |path|
-          config_path = options[:config] || nearest_config(path)
-          unless configs.key?(config_path)
-            configs[config_path] = Config.new(config_path)
-            configs[config_path].unknown_rules.each do |rule|
-              suggestion = DidYouMean::SpellChecker.new(dictionary: Registry.all.map(&:id)).correct(rule).first
-              warn "bklint: unknown rule #{rule.inspect}#{suggestion ? "; did you mean #{suggestion.inspect}?" : ""}"
+        inspect_files = lambda do
+          files.flat_map do |path|
+            config_path = options[:config] || nearest_config(path)
+            unless configs.key?(config_path)
+              configs[config_path] = Config.new(config_path)
+              configs[config_path].unknown_rules.each do |rule|
+                suggestion = DidYouMean::SpellChecker.new(dictionary: Registry.all.map(&:id)).correct(rule).first
+                warn "bklint: unknown rule #{rule.inspect}#{suggestion ? "; did you mean #{suggestion.inspect}?" : ""}"
+              end
             end
+            config = configs[config_path]
+            config.data["AllRules"] ||= {}
+            config.data["AllRules"]["SwitchStates"] = options[:switch_states] if options[:switch_states]
+            Engine.new(config: config, locale: locale).run([path], only: options[:only], except: options[:except],
+                                                           timeout: options[:timeout] || 10, source: source)
           end
-          config = configs[config_path]
-          config.data["AllRules"] ||= {}
-          config.data["AllRules"]["SwitchStates"] = options[:switch_states] if options[:switch_states]
-          Engine.new(config: config, locale: locale).run([path], only: options[:only], except: options[:except],
-                                                         timeout: options[:timeout] || 10, source: source)
+        end
+        results = inspect_files.call
+        annotate = lambda do |items|
+          items.filter_map do |file|
+            path = file[:path]
+            next if file[:offenses].empty?
+            next unless path.end_with?(".bk.rb") && (source || File.file?(path))
+            editor = SourceEditor.new(path, source: source)
+            editor.annotate(file[:offenses])
+            [file, editor]
+          end
+        end
+        editors = annotate.call(results)
+        planned = if options[:fix] || options[:fix_check]
+          editors.filter_map do |file, editor|
+            next if File.symlink?(file[:path])
+            edits = editor.plan(file[:offenses])
+            [file, editor, edits] unless edits.empty?
+          end
+        else
+          []
+        end
+        planned.each do |file, _editor, edits|
+          edits.each { |edit| warn "bklint: #{options[:fix_check] ? 'would' : 'will'} #{edit.description} at #{file[:path]}:#{edit.line}" }
+        end
+        if options[:fix] && !planned.empty?
+          planned.each { |_file, editor, edits| editor.apply(edits) }
+          results = inspect_files.call
+          annotate.call(results)
         end
         if options[:generate_baseline]
           count = Baseline.new(options[:generate_baseline]).write(results)
@@ -541,6 +584,7 @@ module Breadkit
         end
         options[:out] ? File.write(options[:out], output + "\n") : puts(output)
         return 2 if results.any? { |file| file[:offenses].any? { |item| item.rule.start_with?("Fatal/") } }
+        return 1 if options[:fix_check] && !planned.empty?
         results.any? do |file|
           config = configs[options[:config] || nearest_config(file[:path])]
           Engine.new(config: config).fail?([file], options[:fail_level] || config.fail_level)
