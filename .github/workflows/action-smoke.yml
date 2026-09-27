@@ -6,6 +6,10 @@ on:
     paths:
       - action.yml
       - scripts/action-run.sh
+      - breadkit-lint.gemspec
+      - Gemfile
+      - Gemfile.lock
+      - lib/**
       - spec/fixtures/action/basic.bk.rb
       - .github/workflows/action-smoke.yml
   workflow_dispatch:

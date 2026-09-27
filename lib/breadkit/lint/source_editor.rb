@@ -54,6 +54,7 @@ module Breadkit
           temp.write(updated)
           temp.flush
           temp.fsync
+          temp.close
           raise Error, "source changed while fixing #{@path}" unless File.binread(@path) == @source
           File.rename(temp.path, @path)
         end
