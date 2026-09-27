@@ -76,13 +76,13 @@ module Breadkit
         valid = disables - invalid_disables
         used = []
         kept = offenses.reject do |item|
-          matches = valid.select do |disable|
+          match = valid.find do |disable|
             rule = disable[:rule] || disable["rule"]
             target = disable[:on] || disable["on"]
             rule == item.rule && (!target || item.targets.values.flatten.include?(canonical_pin(circuit, target)))
           end
-          used.concat(matches)
-          matches.any?
+          used << match if match
+          !!match
         end
         redundant = valid.filter_map do |disable|
           rule_id = disable[:rule] || disable["rule"]

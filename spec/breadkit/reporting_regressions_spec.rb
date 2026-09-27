@@ -23,6 +23,15 @@ RSpec.describe "lint reporting regressions" do
     end
   end
 
+  it "reports a duplicate suppression after the first one hides an offense" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "circuit.bk.rb")
+      File.write(path, "board :half\nled :D1, anode: 'a10', cathode: 'a11'\nlint_disable 'Electrical/FloatingPin'\nlint_disable 'Electrical/FloatingPin'\n")
+      found = Breadkit::Lint::Engine.new.run([path]).first[:offenses]
+      expect(found.count { |item| item.rule == "Lint/RedundantDisable" }).to eq(1)
+    end
+  end
+
   it "finds pins outside every declared strict net" do
     Dir.mktmpdir do |directory|
       path = File.join(directory, "circuit.bk.rb")
