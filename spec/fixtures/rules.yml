@@ -468,6 +468,41 @@ Electrical/LedOvercurrent:
     led :D1, anode: 'b12', cathode: 'a14'
     wire 'b10', 'B+'
     wire 'b14', 'B-'
+Electrical/GpioOvercurrent:
+  offense: |
+    board :half
+    File.write(File.join(__dir__, 'fixed_driver.yml'), <<~YAML)
+      id: fixed_driver
+      category: offboard
+      placement: offboard
+      pins:
+        - {num: 1, name: OUT, type: gpio, max_current: 0.01}
+        - {num: 2, name: GND, type: ground}
+      provides:
+        - {positive: OUT, negative: GND, voltage: 5}
+    YAML
+    use_parts File.join(__dir__, 'fixed_driver.yml')
+    offboard :MCU, :fixed_driver
+    resistor :R1, '100', pins: %w[a10 a11]
+    wire 'MCU.OUT', 'b10'
+    wire 'MCU.GND', 'b11'
+  no_offense: |
+    board :half
+    File.write(File.join(__dir__, 'fixed_driver.yml'), <<~YAML)
+      id: fixed_driver
+      category: offboard
+      placement: offboard
+      pins:
+        - {num: 1, name: OUT, type: gpio, max_current: 0.01}
+        - {num: 2, name: GND, type: ground}
+      provides:
+        - {positive: OUT, negative: GND, voltage: 5}
+    YAML
+    use_parts File.join(__dir__, 'fixed_driver.yml')
+    offboard :MCU, :fixed_driver
+    resistor :R1, '1k', pins: %w[a10 a11]
+    wire 'MCU.OUT', 'b10'
+    wire 'MCU.GND', 'b11'
 Electrical/I2CAddressConflict:
   offense: |
     board :half

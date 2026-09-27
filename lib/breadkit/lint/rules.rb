@@ -320,6 +320,13 @@ module Breadkit
           def check(context) = emit(context, :led_overcurrent)
         end
 
+        class GpioOvercurrent < BuiltinRule
+          rule "Electrical/GpioOvercurrent", severity: :error,
+            description: "A modeled output current exceeds a pin's declared limit", state_sensitive: true
+
+          def check(context) = emit(context, :gpio_overcurrent)
+        end
+
         class SupplyOverload < BuiltinRule
           rule "Electrical/SupplyOverload", severity: :error,
             description: "A modeled load exceeds its supply current limit", state_sensitive: true

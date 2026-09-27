@@ -51,6 +51,7 @@ Electrical/VoltageDomainMismatch: {Enabled: true, Severity: error}
 Electrical/ResistorPowerRating: {Enabled: true, Severity: error}
 Electrical/CapacitorVoltageRating: {Enabled: true, Severity: error}
 Electrical/LedOvercurrent: {Enabled: true, Severity: error}
+Electrical/GpioOvercurrent: {Enabled: true, Severity: error}
 Electrical/SupplyOverload: {Enabled: true, Severity: error}
 Electrical/I2CAddressConflict: {Enabled: true, Severity: error}
 Electrical/I2CPullupMissing: {Enabled: true, Severity: info}

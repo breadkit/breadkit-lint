@@ -621,6 +621,32 @@ module Breadkit
         end
       end
 
+      def gpio_overcurrent(circuit, rule, state)
+        analysis = circuit.dc_analysis(state)
+        return [] unless analysis.success?
+
+        circuit.components.values.flat_map do |component|
+          Array(component.part.data["provides"]).flat_map do |source|
+            name = "#{component.ref}.#{source.fetch('positive')}"
+            current = analysis.currents[name]
+            next [] unless current
+            %w[positive negative].filter_map do |terminal|
+              pin = component.pin(source.fetch(terminal))
+              next unless pin && %w[gpio output].include?(pin.role)
+              limit = component.part.pin(pin.number)&.fetch("max_current", nil)
+              next unless limit && current.abs > limit * (1 + 1e-9)
+              actual_ma, limit_ma = [current.abs, limit].map { |value| (value * 1000).round(2) }
+              reference = "#{component.ref}.#{pin.name}"
+              message = translate("gpio_overcurrent", "#{reference} carries #{actual_ma} mA; maximum is #{limit_ma} mA",
+                                  pin: reference, current: actual_ma, limit: limit_ma)
+              net = circuit.net_of(reference, state)
+              offense(rule.id, message, component.location,
+                      targets: { components: [component.ref], pins: [reference], nets: [net&.name].compact }, state: state.name)
+            end
+          end
+        end
+      end
+
       def supply_overloads(circuit, rule, state)
         analysis = circuit.dc_analysis(state)
         return [] unless analysis.success?

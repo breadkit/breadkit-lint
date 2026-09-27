@@ -45,6 +45,7 @@ rules:
   Electrical/ResistorPowerRating: 抵抗の推定消費電力が指定された定格を超えています。
   Electrical/CapacitorVoltageRating: 電解コンデンサの推定電圧が指定された定格を超えています。
   Electrical/LedOvercurrent: LED の推定電流が指定された上限を超えています。
+  Electrical/GpioOvercurrent: 出力ピンの推定電流が指定された上限を超えています。
   Electrical/I2CAddressConflict: 同じ I2C バス上でアドレスが重複しています。
   Electrical/I2CPullupMissing: I2C バスの信号線にプルアップ抵抗がありません。
   Electrical/MissingDecouplingCapacitor: IC の電源ピン間にデカップリングコンデンサがありません。
@@ -103,6 +104,7 @@ guidance:
   Electrical/ResistorPowerRating: 定格電力の高い抵抗を選ぶか、抵抗値を上げてください。
   Electrical/CapacitorVoltageRating: 回路でかかる電圧より高い定格のコンデンサを選んでください。
   Electrical/LedOvercurrent: LED の電流上限を確認し、適切な直列抵抗を追加してください。
+  Electrical/GpioOvercurrent: 出力ピンの電流上限を確認し、負荷を減らしてください。
   Electrical/I2CAddressConflict: 一方のモジュールの ADR 設定を変更するか、別の I2C バスにつないでください。
   Electrical/I2CPullupMissing: SDA と SCL をそれぞれ適切な電源レールへ固定抵抗でプルアップしてください。
   Electrical/MissingDecouplingCapacitor: IC の電源ピンと GND ピンの間にデカップリングコンデンサを配置してください。
@@ -171,6 +173,7 @@ messages:
   missing_base_resistor: "%{driver} が %{base} を直列抵抗なしで駆動しています"
   missing_flyback_diode: "%{ref} の %{positive} と %{negative} の間に逆向きのフライバックダイオードがありません"
   supply_overload: "%{supply} の供給電流は %{current} mA です（上限 %{limit} mA）"
+  gpio_overcurrent: "%{pin} に %{current} mA が流れています（上限 %{limit} mA）"
   wire_color: "%{wire} の色 %{color} は想定色 %{expected} と異なります"
   label_conflict: "同じネットに異なるラベルがあります: %{labels}"
   unknown_expectation: "接続宣言に不明な参照があります: %{refs}"

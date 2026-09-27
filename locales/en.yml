@@ -43,6 +43,7 @@ rules:
   Electrical/MissingBaseResistor: A declared output drives a transistor base without a series resistor.
   Electrical/MissingFlybackDiode: An explicitly inductive load has no reverse flyback diode.
   Electrical/SupplyOverload: A modeled load exceeds its supply current limit.
+  Electrical/GpioOvercurrent: A modeled output current exceeds a pin's declared limit.
   Electrical/NetLabelConflict: Different labels name one net.
   Intent/ConnectionMismatch: Wiring differs from declared expectations.
   Intent/UnknownNet: An expectation refers to an unknown net.
