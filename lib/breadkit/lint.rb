@@ -111,6 +111,21 @@ module Breadkit
         data.dig("AllRules", "SwitchStates") || "single"
       end
 
+      def state_budget
+        data.dig("AllRules", "StateBudget")
+      end
+
+      def states(circuit, mode = switch_states)
+        return circuit.states(mode) unless state_budget && mode.to_s == "all"
+        return circuit.states(mode, budget: state_budget) if circuit.method(:states).parameters.any? { |kind, name| kind == :key && name == :budget }
+
+        count = circuit.states("single").length - 1
+        required = 1 << count
+        raise Error, "#{required} switch states exceed budget #{state_budget}" if required > state_budget
+        raise Error, "exhaustive state analysis above 8 switches requires a newer breadkit gem" if count > 8
+        circuit.states(mode)
+      end
+
       def fail_level
         data.dig("AllRules", "FailLevel") || "warning"
       end
@@ -176,9 +191,11 @@ module Breadkit
         fail_level = data.dig("AllRules", "FailLevel")
         switch_states = data.dig("AllRules", "SwitchStates")
         new_rules = data.dig("AllRules", "NewRules")
+        budget = data.dig("AllRules", "StateBudget")
         raise Error, "invalid fail level: #{fail_level}" if fail_level && !%w[error warning info].include?(fail_level.to_s)
         raise Error, "invalid switch state mode: #{switch_states}" if switch_states && !%w[none single all].include?(switch_states.to_s)
         raise Error, "invalid new rules mode: #{new_rules}" if new_rules && !%w[pending enable disable].include?(new_rules.to_s)
+        raise Error, "StateBudget must be a positive integer" if budget && (!budget.is_a?(Integer) || !budget.positive?)
         Registry.all.each do |rule|
           %w[Include Exclude].each do |key|
             patterns = data.dig(rule.id, key)
@@ -253,9 +270,9 @@ module Breadkit
       def inspect_circuit(circuit, path, only, except)
         offenses = []
         broken_layout = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
-        states = circuit.states(@config.switch_states)
+        states = @config.states(circuit)
         scoped_expectations = circuit.expectations.any? { |item| item["when"] || item[:when] }
-        intent_states = scoped_expectations ? circuit.states("all") : states
+        intent_states = scoped_expectations ? @config.states(circuit, "all") : states
         Registry.all.each do |rule|
           next unless @config.enabled?(rule) && @config.rule_applies?(rule, path) && selected?(rule.id, only, except)
           next if broken_layout && rule.id.start_with?("Electrical/", "Intent/")
@@ -490,6 +507,7 @@ module Breadkit
           opts.on("--only RULES") { |value| options[:only] = value.split(",") }
           opts.on("--except RULES") { |value| options[:except] = value.split(",") }
           opts.on("--switch-states MODE", %w[none single all]) { |value| options[:switch_states] = value }
+          opts.on("--state-budget COUNT", Integer) { |value| options[:state_budget] = value }
           opts.on("--timeout SECONDS", Float) { |value| options[:timeout] = value }
           opts.on("--stdin PATH") { |value| options[:stdin] = value }
           opts.on("--baseline PATH") { |value| options[:baseline] = value }
@@ -507,6 +525,7 @@ module Breadkit
         end
         parser.parse!(argv)
         raise Error, "timeout must be positive" if options[:timeout] && !options[:timeout].positive?
+        raise Error, "state budget must be a positive integer" if options[:state_budget] && !options[:state_budget].positive?
         raise Error, "--teach requires --format text" if options[:teach] && options[:format] != "text"
         locale = options[:locale] || locale_from_environment
         return list_rules(locale) if options[:list_rules]
@@ -542,6 +561,7 @@ module Breadkit
             config = configs[config_path]
             config.data["AllRules"] ||= {}
             config.data["AllRules"]["SwitchStates"] = options[:switch_states] if options[:switch_states]
+            config.data["AllRules"]["StateBudget"] = options[:state_budget] if options[:state_budget]
             Engine.new(config: config, locale: locale).run([path], only: options[:only], except: options[:except],
                                                            timeout: options[:timeout] || 10, source: source)
           end
@@ -671,6 +691,7 @@ module Breadkit
             config = Config.new(options[:config] || nearest_config(base_path))
             config.data["AllRules"] ||= {}
             config.data["AllRules"]["SwitchStates"] = options[:switch_states] if options[:switch_states]
+            config.data["AllRules"]["StateBudget"] = options[:state_budget] if options[:state_budget]
             Engine.new(config: config, locale: locale).run([base_path], only: options[:only], except: options[:except],
                                                             timeout: options[:timeout] || 10).map do |result|
               result[:path] = File.expand_path(file)

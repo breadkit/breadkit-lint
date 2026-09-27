@@ -231,6 +231,7 @@ the current directory and skips `node_modules`. Each file uses the nearest
 | `--fail-level LEVEL` | `error`, `warning` (default), or `info`. |
 | `--only RULES` / `--except RULES` | Select or skip comma-separated rule IDs. |
 | `--switch-states MODE` | Evaluate `none`, `single` (default), or `all` switch states. |
+| `--state-budget COUNT` | Limit exhaustive switch combinations (default: 256); report an error instead of silently skipping states when the limit is exceeded. Also available as `AllRules.StateBudget` in `.bklint.yml`. |
 | `--timeout SECONDS` | Limit DSL evaluation time per circuit (default: 10). |
 | `--list-rules` / `--explain RULE` | Discover rules and read guidance. |
 | `--locale LOCALE` | Select `en` or `ja` messages and rule descriptions. |

@@ -1,5 +1,6 @@
 AllRules:
   SwitchStates: single
+  StateBudget: 256
   FailLevel: warning
   NewRules: pending
 
