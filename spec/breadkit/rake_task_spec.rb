@@ -14,8 +14,11 @@ RSpec.describe Breadkit::RakeTask do
       task.files = ["circuit.bk.rb"]
     end
     expect { Rake::Task[:circuits].invoke }.not_to raise_error
-    Rake::Task[:circuits].reenable
-    expect { Rake::Task[:circuits].invoke }.to raise_error(Breadkit::Lint::Error, /status 1/)
+    described_class.new(:failed) do |task|
+      task.options = ["--format", "json"]
+      task.files = ["circuit.bk.rb"]
+    end
+    expect { Rake::Task[:failed].invoke }.to raise_error(Breadkit::Lint::Error, /status 1/)
   ensure
     Rake.application = previous
   end
