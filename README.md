@@ -95,6 +95,17 @@ check a connection when that switch is closed.
 The [lint JSON schema](https://breadkit.github.io/breadkit-lint/schemas/lint-v1.json)
 describes the report format for integrations.
 
+In a Rakefile, define a lint task with selected files and CLI options:
+
+```ruby
+require "breadkit/lint/rake_task"
+
+Breadkit::RakeTask.new(:circuits) do |task|
+  task.files = FileList["circuits/**/*.bk.rb"]
+  task.options = ["--format", "github"]
+end
+```
+
 ## Command reference
 
 `bklint [options] [FILES...]` accepts `.bk.rb` and Breadkit IR `.json` files.

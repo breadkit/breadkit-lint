@@ -14,6 +14,7 @@
 - Check an LED's declared current limit when a DC operating point can be calculated.
 - Add Markdown, JUnit, Checkstyle, and reviewdog JSON output formats.
 - Evaluate `expect(when: "SW1")` only in its selected switch state.
+- Provide `Breadkit::RakeTask` for circuit linting in Rake projects.
 
 ## 0.1.0 — 2026-09-27
 
