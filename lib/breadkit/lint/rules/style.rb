@@ -39,7 +39,7 @@ module Breadkit
           return "orange" if hue < 50
           return "yellow" if hue < 75
           return "green" if hue < 165
-          return "blue" if hue.between?(195, 255)
+          return "blue" if hue.between?(165, 255)
           return "purple"
         end
         if (match = /\Argb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\z/.match(value))
@@ -63,7 +63,7 @@ module Breadkit
         return "orange" if hue < 50
         return "yellow" if hue < 75
         return "green" if hue < 165
-        return "blue" if hue.between?(195, 255)
+        return "blue" if hue.between?(165, 255)
         "purple"
       end
 

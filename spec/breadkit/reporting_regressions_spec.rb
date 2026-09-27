@@ -10,6 +10,17 @@ RSpec.describe "lint reporting regressions" do
     expect(checks.color_family("navy")).to eq("blue")
     expect(checks.color_family("rgb(255, 0, 0)")).to eq("red")
     expect(checks.color_family("hsl(210, 100%, 50%)")).to eq("blue")
+    expect(checks.color_family("rgb(0, 255, 255)")).to eq("blue")
+    expect(checks.color_family("hsl(180, 100%, 50%)")).to eq("blue")
+  end
+
+  it "does not flag functional cyan on a negative rail" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "cyan.bk.rb")
+      File.write(path, "board :half\nsupply :P, voltage: 5, plus: 'B+1', minus: 'B-1'\nwire 'a10', 'B-', color: 'rgb(0, 255, 255)'\n")
+      found = Breadkit::Lint::Engine.new.run([path], only: ["Style/WireColor"]).first[:offenses]
+      expect(found).to be_empty
+    end
   end
 
   it "reports an unused suppression in source order" do
@@ -33,6 +44,20 @@ RSpec.describe "lint reporting regressions" do
       File.write(path, "board :half\nled :D1, anode: 'a10', cathode: 'a11'\nlint_disable 'Electrical/FloatingPin'\nlint_disable 'Electrical/FloatingPin'\n")
       found = Breadkit::Lint::Engine.new.run([path]).first[:offenses]
       expect(found.count { |item| item.rule == "Lint/RedundantDisable" }).to eq(1)
+    end
+  end
+
+  it "keeps invalid and redundant suppressions in source order" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "suppression.bk.rb")
+      config_path = File.join(directory, ".bklint.yml")
+      File.write(config_path, "AllRules:\n  RequireDisableReason: true\n")
+      File.write(path, "board :half\nlint_disable 'Missing/Rule'\nlint_disable 'Electrical/FloatingPin'\nlint_disable 'Electrical/FloatingPin', reason: 'planned'\n")
+      found = Breadkit::Lint::Engine.new(config: Breadkit::Lint::Config.new(config_path)).run([path]).first[:offenses]
+      selected = found.select { |item| %w[Lint/UnknownRuleInDisable Config/InvalidDisable Lint/RedundantDisable].include?(item.rule) }
+      expect(selected.map { |item| [item.rule, item.location&.line] }).to eq([
+        ["Lint/UnknownRuleInDisable", 2], ["Config/InvalidDisable", 3], ["Lint/RedundantDisable", 4]
+      ])
     end
   end
 
@@ -89,6 +114,18 @@ RSpec.describe "lint reporting regressions" do
   it "explains unknown suppression rules in Japanese" do
     expect { expect(Breadkit::Lint::CLI.new.run(["--explain", "Lint/UnknownRuleInDisable", "--locale", "ja"])).to eq(0) }
       .to output(/不明なルール/).to_stdout
+  end
+
+  it "explains newly added rules in Japanese" do
+    expect { expect(Breadkit::Lint::CLI.new.run(["--explain", "Layout/LeadSpan", "--locale", "ja"])).to eq(0) }
+      .to output(/リード長の上限.*穴を近づける/m).to_stdout
+  end
+
+  it "has Japanese descriptions and guidance for every listed rule" do
+    translations = YAML.safe_load(File.read(File.expand_path("../../locales/ja.yml", __dir__), encoding: "UTF-8"))
+    rule_ids = Breadkit::Lint::Registry::RULES.map(&:id)
+    expect(rule_ids - translations.fetch("rules").keys).to be_empty
+    expect(rule_ids - translations.fetch("guidance").keys).to be_empty
   end
 
   it "adds rule guidance to text findings in teach mode" do
