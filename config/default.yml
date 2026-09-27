@@ -11,6 +11,8 @@ Layout/UnknownBoard: {Enabled: true, Severity: error}
 Layout/UnknownPart: {Enabled: true, Severity: error}
 Layout/UnknownTransistorModel: {Enabled: true, Severity: warning}
 Layout/UnknownPin: {Enabled: true, Severity: error}
+Layout/UnknownSupplySource: {Enabled: true, Severity: error}
+Layout/AmbiguousSupplySource: {Enabled: true, Severity: error}
 Layout/UnknownOption: {Enabled: true, Severity: error}
 Layout/InvalidOption: {Enabled: true, Severity: error}
 Layout/InvalidValue: {Enabled: true, Severity: error}

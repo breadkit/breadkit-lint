@@ -69,6 +69,18 @@ module Breadkit
           def check(context) = emit_diagnostics(context)
         end
 
+        class UnknownSupplySource < DiagnosticRule
+          rule "Layout/UnknownSupplySource", severity: :error, description: "Supply source is not a provided power output"
+
+          def check(context) = emit_diagnostics(context)
+        end
+
+        class AmbiguousSupplySource < DiagnosticRule
+          rule "Layout/AmbiguousSupplySource", severity: :error, description: "Supply source matches multiple power outputs"
+
+          def check(context) = emit_diagnostics(context)
+        end
+
         class UnknownOption < DiagnosticRule
           rule "Layout/UnknownOption", severity: :error, description: "Unknown component option"
 

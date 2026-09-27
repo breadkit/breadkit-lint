@@ -4,6 +4,8 @@ rules:
   Layout/UnknownPart: The part definition is not available.
   Layout/UnknownTransistorModel: The transistor model is unknown and a generic pinout is used.
   Layout/UnknownPin: A component pin reference does not exist.
+  Layout/UnknownSupplySource: The selected source is not a provided power output.
+  Layout/AmbiguousSupplySource: The selected source matches multiple provided power outputs.
   Layout/UnknownOption: A component option is not recognized.
   Layout/InvalidOption: A component option value is invalid.
   Layout/InvalidValue: A component value is invalid.

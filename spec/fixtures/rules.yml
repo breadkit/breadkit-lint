@@ -33,6 +33,27 @@ Layout/UnknownPin:
     board :half
     resistor :R1, '330', pins: %w[a1 a2]
     wire 'R1.1', 'a3'
+Layout/UnknownSupplySource:
+  offense: |
+    board :half
+    supply from: "UNO.5V", plus: "T+", minus: "T-"
+  no_offense: |
+    board :half
+    offboard :UNO, :arduino_uno
+    supply from: "UNO.5V", plus: "T+", minus: "T-"
+Layout/AmbiguousSupplySource:
+  offense: |
+    board :half
+    duplicate = Marshal.load(Marshal.dump(Breadkit::PartLibrary.new.find("arduino_uno").data))
+    duplicate["override"] = true
+    duplicate["provides"] << { "positive" => "5V", "negative" => "GND2", "voltage" => 5 }
+    document.part_definitions << duplicate
+    offboard :UNO, :arduino_uno
+    supply from: "UNO.5V", plus: "T+", minus: "T-"
+  no_offense: |
+    board :half
+    offboard :UNO, :arduino_uno
+    supply from: "UNO.5V", plus: "T+", minus: "T-"
 Layout/UnknownOption:
   offense: |
     board :half

@@ -4,6 +4,8 @@ rules:
   Layout/UnknownPart: パーツ定義が見つかりません。
   Layout/UnknownTransistorModel: トランジスタの型番が不明なため汎用ピン配置を使用します。
   Layout/UnknownPin: 指定した部品ピンが存在しません。
+  Layout/UnknownSupplySource: 指定した電源元は電源出力として定義されていません。
+  Layout/AmbiguousSupplySource: 指定した電源元に複数の電源出力が一致します。
   Layout/UnknownOption: 指定した部品オプションが存在しません。
   Layout/InvalidOption: 部品オプションの値が無効です。
   Layout/InvalidValue: 部品の値が無効です。
@@ -91,6 +93,8 @@ messages:
   diagnostic_unknown_part: "部品定義が見つかりません: %{target}"
   diagnostic_unknown_transistor_model: "トランジスタの型番が不明なため汎用 EBC ピン配置を使用します: %{target}"
   diagnostic_unknown_pin: "ピンが見つかりません: %{target}"
+  diagnostic_unknown_supply_source: "電源出力として定義されていない電源元です: %{target}"
+  diagnostic_ambiguous_supply_source: "複数の電源出力に一致する電源元です: %{target}"
   diagnostic_unknown_option: "部品オプションが見つかりません: %{option}"
   diagnostic_invalid_option: "部品オプションの値が無効です: %{target}（%{reason}）"
   diagnostic_invalid_value: "部品の値が無効です: %{target}（%{reason}）"

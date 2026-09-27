@@ -195,7 +195,7 @@ module Breadkit
     Registry.const_set(:RULES, Registry.all.dup.freeze)
 
     class Engine
-      BLOCKING_DIAGNOSTICS = %w[invalid_hole unknown_board unknown_part unknown_pin unknown_option invalid_option invalid_value invalid_color invalid_route invalid_wire_id unplaced_pin invalid_placement no_free_hole].freeze
+      BLOCKING_DIAGNOSTICS = %w[invalid_hole unknown_board unknown_part unknown_pin unknown_supply_source ambiguous_supply_source unknown_option invalid_option invalid_value invalid_color invalid_route invalid_wire_id unplaced_pin invalid_placement no_free_hole].freeze
       LEVELS = { "info" => 0, "warning" => 1, "error" => 2 }.freeze
 
       def initialize(config: Config.new, locale: "en")
