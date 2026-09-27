@@ -25,6 +25,12 @@ module Breadkit
 
     module Rules
       module Lint
+        class UnknownRuleInDisable < BuiltinRule
+          rule "Lint/UnknownRuleInDisable", severity: :error, description: "A lint_disable names an unknown rule"
+
+          def check(_context); end
+        end
+
         class RedundantDisable < BuiltinRule
           rule "Lint/RedundantDisable", severity: :warning, description: "A lint_disable matches no offense"
 

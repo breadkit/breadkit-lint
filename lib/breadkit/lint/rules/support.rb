@@ -64,14 +64,20 @@ module Breadkit
         invalid = disables.filter_map do |disable|
           rule_id = disable[:rule] || disable["rule"]
           reason = disable[:reason] || disable["reason"]
-          message = if Registry.all.none? { |rule| rule.id == rule_id }
+          unknown = Registry.all.none? { |rule| rule.id == rule_id }
+          message = if unknown
             translate("unknown_disable", "unknown rule in lint_disable: #{rule_id}", rule: rule_id)
           elsif @config.data.dig("AllRules", "RequireDisableReason") && reason.to_s.strip.empty?
             translate("disable_reason", "lint_disable for #{rule_id} requires a reason", rule: rule_id)
           end
           next unless message
           invalid_disables << disable
-          offense("Config/InvalidDisable", message, location_from(disable[:location] || disable["location"]))
+          if unknown
+            rule = Rules::Lint::UnknownRuleInDisable
+            next if !@config.enabled?(rule) || (only && !only.include?(rule.id)) || except&.include?(rule.id)
+          end
+          offense(unknown ? "Lint/UnknownRuleInDisable" : "Config/InvalidDisable", message,
+                  location_from(disable[:location] || disable["location"]))
         end
         valid = disables - invalid_disables
         used = []

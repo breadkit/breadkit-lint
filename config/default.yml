@@ -4,6 +4,7 @@ AllRules:
   NewRules: pending
 
 Lint/RedundantDisable: {Enabled: true, Severity: warning}
+Lint/UnknownRuleInDisable: {Enabled: true, Severity: error}
 
 Layout/InvalidHole: {Enabled: true, Severity: error}
 Layout/UnknownBoard: {Enabled: true, Severity: error}

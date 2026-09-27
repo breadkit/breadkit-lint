@@ -4,11 +4,11 @@ require "tmpdir"
 require "stringio"
 
 RSpec.describe "circuit rules" do
-  def inspect_source(source, only: nil, config: Breadkit::Lint::Config.new)
+  def inspect_source(source, only: nil, except: nil, config: Breadkit::Lint::Config.new)
     Dir.mktmpdir do |directory|
       path = File.join(directory, "circuit.bk.rb")
       File.write(path, source)
-      Breadkit::Lint::Engine.new(config: config).run([path], only: only).first[:offenses]
+      Breadkit::Lint::Engine.new(config: config).run([path], only: only, except: except).first[:offenses]
     end
   end
 
@@ -148,8 +148,14 @@ RSpec.describe "circuit rules" do
       lint_disable 'Missing/Rule'
     RUBY
     offenses = inspect_source(source, only: ["Electrical/FloatingPin"])
-    expect(offenses.map(&:rule)).to include("Config/InvalidDisable")
     expect(offenses.select { |item| item.rule == "Electrical/FloatingPin" }.map(&:message)).to eq(["D1.cathode has no external connection"])
+  end
+
+  it "identifies unknown rules in lint_disable separately from invalid disable reasons" do
+    source = "board :half\nlint_disable 'Missing/Rule'\n"
+    expect(inspect_source(source).map(&:rule)).to include("Lint/UnknownRuleInDisable")
+    expect(inspect_source(source, only: ["Electrical/FloatingPin"]).map(&:rule)).not_to include("Lint/UnknownRuleInDisable")
+    expect(inspect_source(source, except: ["Lint/UnknownRuleInDisable"]).map(&:rule)).not_to include("Lint/UnknownRuleInDisable")
   end
 
   it "requires disable reasons when configured and gates pending rules" do

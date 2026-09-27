@@ -94,6 +94,13 @@ Lint/RedundantDisable:
     lint_disable 'Lint/RedundantDisable'
   no_offense: |
     board :half
+Lint/UnknownRuleInDisable:
+  offense: |
+    board :half
+    lint_disable 'Missing/Rule'
+  no_offense: |
+    board :half
+    lint_disable 'Electrical/FloatingPin'
 Layout/UnplacedPin:
   offense: |
     board :half
