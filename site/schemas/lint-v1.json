@@ -28,6 +28,7 @@
                 "rule": {"type": "string"},
                 "severity": {"enum": ["error", "warning", "info"]},
                 "message": {"type": "string"},
+                "docs_url": {"type": ["string", "null"], "format": "uri"},
                 "location": {
                   "type": "object",
                   "required": ["path", "line"],

@@ -347,7 +347,7 @@ module Breadkit
           tool: { name: "bklint", version: VERSION },
           files: files.map do |file|
             { path: display_path(file[:path]), analysis_skipped: !!file[:skipped], offenses: file[:offenses].map do |item|
-              { rule: item.rule, severity: item.severity, message: item.message,
+              { rule: item.rule, severity: item.severity, message: item.message, docs_url: rule_help_url(item.rule),
                 location: { path: display_path(item.location&.path || file[:path]), line: item.location&.line }
                   .merge(item.column ? { column: item.column } : {}),
                 state: item.state, targets: item.targets }
@@ -425,8 +425,7 @@ module Breadkit
         rules = (Registry.all.map do |rule|
           level = { "error" => "error", "warning" => "warning", "info" => "note" }.fetch(rule.severity, "error")
           definition = { id: rule.id, shortDescription: { text: rule.description }, defaultConfiguration: { level: level } }
-          path = File.expand_path("../../docs/rules/#{rule.id}.md", __dir__)
-          definition[:helpUri] = "https://github.com/breadkit/breadkit-lint/blob/main/docs/rules/#{rule.id}.md" if File.file?(path)
+          definition[:helpUri] = rule_help_url(rule.id)
           definition
         end + %w[Fatal/EvaluationError Fatal/RuleError Config/InvalidDisable].map do |id|
           { id: id, shortDescription: { text: id.split("/").last }, defaultConfiguration: { level: "error" } }
@@ -454,6 +453,11 @@ module Breadkit
       end
 
       private
+
+      def rule_help_url(id)
+        path = File.expand_path("../../docs/rules/#{id}.md", __dir__)
+        "https://breadkit.github.io/breadkit-lint/rules/#{id}/" if File.file?(path)
+      end
 
       def source_root_uri(root)
         path = root.tr("\\", "/")

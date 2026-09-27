@@ -14,7 +14,16 @@ RSpec.describe "lint JSON schema" do
     files = [{ path: "circuit.bk.rb", skipped: false, offenses: [offense] }]
     result = JSON.parse(Breadkit::Lint::Formatter.new.json(files))
     expect(schemer.valid?(result)).to be(true)
+    expect(result.dig("files", 0, "offenses", 0, "docs_url"))
+      .to eq("https://breadkit.github.io/breadkit-lint/rules/Layout/HoleConflict/")
     result["summary"]["errors"] = -1
     expect(schemer.valid?(result)).to be(false)
+  end
+
+  it "links SARIF rules to the same published reference pages" do
+    result = JSON.parse(Breadkit::Lint::Formatter.new.sarif([]))
+    rules = result.dig("runs", 0, "tool", "driver", "rules")
+    rule = rules.find { |item| item["id"] == "Electrical/ShortCircuit" }
+    expect(rule["helpUri"]).to eq("https://breadkit.github.io/breadkit-lint/rules/Electrical/ShortCircuit/")
   end
 end
