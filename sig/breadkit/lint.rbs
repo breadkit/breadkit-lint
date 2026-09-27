@@ -54,6 +54,12 @@ module Breadkit
       def fatal?: (Array[Hash[Symbol, untyped]] files) -> bool
     end
 
+    class Baseline
+      def initialize: (String path) -> void
+      def write: (Array[Hash[Symbol, untyped]] files) -> Integer
+      def filter: (Array[Hash[Symbol, untyped]] files) -> Array[Hash[Symbol, untyped]]
+    end
+
     class Formatter
       def text: (Array[Hash[Symbol, untyped]] files, ?locale: String) -> String
       def json: (Array[Hash[Symbol, untyped]] files) -> String

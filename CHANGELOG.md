@@ -16,6 +16,7 @@
 - Evaluate `expect(when: "SW1")` only in its selected switch state.
 - Provide `Breadkit::RakeTask` for circuit linting in Rake projects.
 - Add `--stdin PATH` for checking unsaved Ruby DSL content.
+- Add a portable baseline file for existing lint findings.
 
 ## 0.1.0 — 2026-09-27
 

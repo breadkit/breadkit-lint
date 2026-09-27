@@ -12,6 +12,7 @@ require_relative "lint/version"
 module Breadkit
   module Lint
     class Error < StandardError; end
+    require_relative "lint/baseline"
 
     Offense = Struct.new(:rule, :severity, :message, :location, :targets, :state, keyword_init: true)
 
@@ -438,6 +439,8 @@ module Breadkit
           opts.on("--switch-states MODE", %w[none single all]) { |value| options[:switch_states] = value }
           opts.on("--timeout SECONDS", Float) { |value| options[:timeout] = value }
           opts.on("--stdin PATH") { |value| options[:stdin] = value }
+          opts.on("--baseline PATH") { |value| options[:baseline] = value }
+          opts.on("--generate-baseline PATH") { |value| options[:generate_baseline] = value }
           opts.on("--list-rules") { options[:list_rules] = true }
           opts.on("--explain RULE") { |value| options[:explain] = value }
           opts.on("--locale LOCALE", %w[ja en]) { |value| options[:locale] = value }
@@ -451,6 +454,7 @@ module Breadkit
         return explain(options[:explain], locale) if options[:explain]
         raise Error, "--stdin accepts no additional file arguments" if options[:stdin] && !argv.empty?
         raise Error, "--stdin PATH requires a .bk.rb path" if options[:stdin] && !options[:stdin].end_with?(".bk.rb")
+        raise Error, "choose --baseline or --generate-baseline" if options[:baseline] && options[:generate_baseline]
         files = options[:stdin] ? [options[:stdin]] : expand_inputs(argv)
         source = $stdin.read if options[:stdin]
         configs = {}
@@ -469,6 +473,12 @@ module Breadkit
           Engine.new(config: config, locale: locale).run([path], only: options[:only], except: options[:except],
                                                          timeout: options[:timeout] || 10, source: source)
         end
+        if options[:generate_baseline]
+          count = Baseline.new(options[:generate_baseline]).write(results)
+          puts "Wrote #{count} baseline offenses to #{options[:generate_baseline]}"
+          return 0
+        end
+        results = Baseline.new(options[:baseline]).filter(results) if options[:baseline]
         formatter = Formatter.new
         output = case options[:format]
         when "json" then formatter.json(results)

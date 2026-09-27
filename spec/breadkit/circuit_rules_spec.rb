@@ -197,4 +197,31 @@ RSpec.describe "circuit rules" do
   ensure
     $stdin = previous
   end
+
+  it "filters known offenses with a portable baseline" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "baseline.json")
+      file = File.join(directory, "circuit.bk.rb")
+      known = Breadkit::Lint::Offense.new(rule: "Layout/InvalidHole", severity: "error", message: "bad hole",
+                                         location: Breadkit::SourceLocation.new(path: file, line: 2), targets: { holes: ["a99"] })
+      baseline = Breadkit::Lint::Baseline.new(path)
+      expect(baseline.write([{ path: file, offenses: [known] }])).to eq(1)
+      expect(JSON.parse(File.read(path)).dig("entries", 0, "path")).to eq("circuit.bk.rb")
+      known.location.line = 20
+      fresh = known.dup
+      fresh.message = "another hole"
+      expect(baseline.filter([{ path: file, offenses: [known, fresh] }]).first[:offenses]).to eq([fresh])
+    end
+  end
+
+  it "generates and applies a baseline through the CLI" do
+    Dir.mktmpdir do |directory|
+      source = File.join(directory, "circuit.bk.rb")
+      baseline = File.join(directory, "baseline.json")
+      File.write(source, "board :missing\n")
+      cli = Breadkit::Lint::CLI.new
+      expect { expect(cli.run(["--generate-baseline", baseline, source])).to eq(0) }.to output(/Wrote 1 baseline offense/).to_stdout
+      expect { expect(cli.run(["--baseline", baseline, source])).to eq(0) }.to output(/0 offenses/).to_stdout
+    end
+  end
 end
