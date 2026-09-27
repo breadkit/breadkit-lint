@@ -254,7 +254,7 @@ the current directory and skips `node_modules`. Each file uses the nearest
 | `--state-budget COUNT` | Limit exhaustive switch combinations (default: 256); report an error instead of silently skipping states when the limit is exceeded. Also available as `AllRules.StateBudget` in `.bklint.yml`. |
 | `--timeout SECONDS` | Limit DSL evaluation time per circuit (default: 10). |
 | `--list-rules` / `--explain RULE` | Discover rules and read guidance. |
-| `--locale LOCALE` | Select `en` or `ja` messages and rule descriptions. |
+| `--locale LOCALE` | Select `en`, `ja`, `zh`, or `ko` messages and rule descriptions. |
 
 Exit status is `0` when no offense reaches the failure level, `1` when one
 does, and `2` for invalid input, configuration, or command usage. Use

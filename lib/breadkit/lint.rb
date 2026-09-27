@@ -315,23 +315,45 @@ module Breadkit
     end
 
     class Formatter
+      REPORT_LABELS = {
+        "zh" => { state: " (%{state} 状态)", why: "原因", skipped: "%{path}: 因布局错误而跳过电气与意图检查",
+                  summary: "检查了 %{files} 个文件，共 %{count} 条诊断（错误 %{errors}、警告 %{warnings}、信息 %{infos}）" },
+        "ko" => { state: " (%{state} 상태)", why: "이유", skipped: "%{path}: 배치 오류로 전기 및 의도 검사 생략",
+                  summary: "파일 %{files}개 검사, 진단 %{count}개 (오류 %{errors}, 경고 %{warnings}, 정보 %{infos})" }
+      }.freeze
+
       def text(files, locale: "en", teach: false)
+        labels = REPORT_LABELS[locale]
         lines = files.flat_map do |file|
           entries = file[:offenses].flat_map do |item|
             level = { "error" => "E", "warning" => "W", "info" => "I" }.fetch(item.severity, "E")
-            state = item.state ? (locale == "ja" ? " (#{item.state} の状態)" : " (#{item.state} state)") : ""
+            state = if item.state
+              labels ? format(labels[:state], state: item.state) : (locale == "ja" ? " (#{item.state} の状態)" : " (#{item.state} state)")
+            else
+              ""
+            end
             path = display_path(item.location&.path || file[:path])
             line = item.location&.line ? ":#{item.location.line}#{item.column ? ":#{item.column}" : ""}" : ""
             heading = "#{path}#{line}: #{level}: [#{item.rule}] #{item.message}#{state}"
             guidance = teach && teach_guidance(item.rule, locale)
-            guidance ? [heading, "  #{locale == 'ja' ? '説明' : 'Why'}: #{guidance}"] : [heading]
+            guidance ? [heading, "  #{labels ? labels[:why] : (locale == 'ja' ? '説明' : 'Why')}: #{guidance}"] : [heading]
           end
-          entries << (locale == "ja" ? "#{display_path(file[:path])}: 配置エラーのため電気・意図の検査を省略しました" :
-                                           "#{display_path(file[:path])}: electrical and intent checks skipped because of layout errors") if file[:skipped]
+          if file[:skipped]
+            entries << if labels
+              format(labels[:skipped], path: display_path(file[:path]))
+            elsif locale == "ja"
+              "#{display_path(file[:path])}: 配置エラーのため電気・意図の検査を省略しました"
+            else
+              "#{display_path(file[:path])}: electrical and intent checks skipped because of layout errors"
+            end
+          end
           entries
         end
         errors, warnings, infos = files.flat_map { |file| file[:offenses] }.group_by(&:severity).values_at("error", "warning", "info").map { |items| items ? items.length : 0 }
-        summary = if locale == "ja"
+        summary = if labels
+          format(labels[:summary], files: files.length, count: errors + warnings + infos,
+                                   errors: errors, warnings: warnings, infos: infos)
+        elsif locale == "ja"
           "#{files.length} ファイルを検査、#{errors + warnings + infos} 件の指摘（エラー #{errors} 件、警告 #{warnings} 件、情報 #{infos} 件）"
         else
           count = errors + warnings + infos
@@ -480,9 +502,8 @@ module Breadkit
 
       def teach_guidance(rule_id, locale)
         @teach_guidance ||= {}
-        @teach_guidance[[rule_id, locale]] ||= if locale == "ja"
-          translations = YAML.safe_load(File.read(File.expand_path("../../locales/ja.yml", __dir__), encoding: "UTF-8"), aliases: false)
-          translations.dig("guidance", rule_id) || translations.dig("rules", rule_id)
+        @teach_guidance[[rule_id, locale]] ||= if locale != "en"
+          suggestion_for_rule(rule_id, locale)
         else
           path = File.expand_path("../../docs/rules/#{rule_id}.md", __dir__)
           File.read(path, encoding: "UTF-8").split(/\n\s*\n/)[1]&.gsub(/\s+/, " ")&.strip if File.file?(path)
@@ -534,7 +555,7 @@ module Breadkit
           opts.on("--watch") { options[:watch] = true }
           opts.on("--list-rules") { options[:list_rules] = true }
           opts.on("--explain RULE") { |value| options[:explain] = value }
-          opts.on("--locale LOCALE", %w[ja en]) { |value| options[:locale] = value }
+          opts.on("--locale LOCALE", %w[en ja zh ko]) { |value| options[:locale] = value }
           opts.on("-v", "--version") { puts "bklint #{VERSION}"; return 0 }
           opts.on("-h", "--help") { puts opts; return 0 }
         end
@@ -727,7 +748,8 @@ module Breadkit
 
       def locale_from_environment
         value = %w[LC_ALL LC_MESSAGES LANG].map { |key| ENV[key] }.find { |item| !item.to_s.empty? }
-        value.to_s.start_with?("ja") ? "ja" : "en"
+        language = value.to_s[0, 2].downcase
+        %w[ja zh ko].include?(language) ? language : "en"
       end
 
       def nearest_config(path)
@@ -773,8 +795,8 @@ module Breadkit
       def explain(id, locale)
         rule = Registry.all.find { |item| item.id == id }
         raise Error, "unknown rule #{id}" unless rule
-        if locale == "ja"
-          translations = YAML.safe_load(File.read(File.expand_path("../../locales/ja.yml", __dir__), encoding: "UTF-8"), aliases: false) || {}
+        if locale != "en"
+          translations = YAML.safe_load(File.read(File.expand_path("../../locales/#{locale}.yml", __dir__), encoding: "UTF-8"), aliases: false) || {}
           description = translations.dig("rules", rule.id) || rule.description
           guidance = translations.dig("guidance", rule.id)
           puts "# #{rule.id}\n\n#{description}#{guidance ? "\n\n#{guidance}" : ""}"

@@ -1,0 +1,190 @@
+rules:
+  Layout/InvalidHole: 所选面包板上不存在该孔位。
+  Layout/UnknownBoard: 找不到所选面包板定义。
+  Layout/UnknownPart: 找不到元件定义。
+  Layout/UnknownTransistorModel: 晶体管型号未知，正在使用通用引脚排列。
+  Layout/UnknownPin: 引用的元件引脚不存在。
+  Layout/UnknownSupplySource: 所选引脚未声明为电源输出。
+  Layout/AmbiguousSupplySource: 所选电源来源匹配多个输出。
+  Layout/UnknownOption: 无法识别元件选项。
+  Layout/InvalidOption: 元件选项的值无效。
+  Layout/InvalidValue: 元件数值无效。
+  Layout/InvalidColor: 元件或导线的颜色无效。
+  Layout/InvalidRoute: 导线的布线路径无效。
+  Layout/InvalidWireId: 导线 ID 与孔位 ID 冲突。
+  Layout/UnmatchedParts: 元件定义的文件模式没有匹配项。
+  Layout/PartOverride: 自定义元件覆盖了内置元件。
+  Lint/RedundantDisable: lint_disable 没有抑制任何诊断。
+  Lint/UnknownRuleInDisable: lint_disable 指定了未知规则。
+  Layout/UnplacedPin: 元件引脚未插入面包板孔位。
+  Layout/DuplicateRef: 元件或导线的标识符重复。
+  Layout/InvalidPlacement: 元件无法按指定位置安装在面包板上。
+  Layout/HoleConflict: 多个引脚占用了同一个孔位。
+  Layout/HoleCovered: 模块或 DIP 本体盖住了其他引脚或导线端点。
+  Layout/BodyOverlap: 两个元件本体发生重叠。
+  Layout/WireOverIC: 直线跳线穿过 DIP 芯片本体。
+  Layout/LeadSpan: 引脚孔位间距超过元件引脚的最大跨度。
+  Layout/NoFreeHole: 自动布线找不到空闲孔位。
+  Layout/SplitNetLabel: 同一标签被赋给互不连通的网络。
+  Layout/PinsInSameStrip: 同一元件的多个引脚接入同一导电条。
+  Electrical/ShortCircuit: 电源电位约束互相冲突。
+  Electrical/ShortedComponent: 双端元件被导线旁路。
+  Electrical/FloatingPin: 元件引脚没有外部连接。
+  Electrical/FloatingInput: 输入网络没有已建模的驱动源或上拉下拉电阻。
+  Electrical/MissingPullResistor: 由电源切换的输入缺少上拉或下拉电阻。
+  Electrical/DanglingWire: 导线端点没有连接到其他对象。
+  Electrical/SplitRail: 分段电源轨的一段没有供电。
+  Electrical/MissingSeriesResistor: LED 缺少限流电阻。
+  Electrical/MinimumResistance: LED 的可变电阻限流路径可能降到 0 Ω。
+  Electrical/RailPolarityMismatch: 电源正负端与电源轨的极性标记相反。
+  Electrical/ReversePolarity: 有极性元件的接线方向相反。
+  Electrical/PowerPinUnconnected: 芯片电源或接地引脚未接入电源。
+  Electrical/SupplyVoltageRange: 芯片电源电压超出额定范围。
+  Electrical/NoCommonGround: 多个电源没有共用地参考。
+  Electrical/VoltageDomainMismatch: 信号电压超出引脚容许范围。
+  Electrical/ResistorPowerRating: 电阻的估算耗散功率超过额定值。
+  Electrical/CapacitorVoltageRating: 电解电容的估算电压超过额定值。
+  Electrical/LedOvercurrent: LED 的估算电流超过额定值。
+  Electrical/GpioOvercurrent: 输出引脚的估算电流超过额定值。
+  Electrical/I2CAddressConflict: 同一 I2C 总线上存在重复地址。
+  Electrical/I2CPullupMissing: I2C 信号线缺少上拉电阻。
+  Electrical/MissingDecouplingCapacitor: 芯片电源引脚之间缺少去耦电容。
+  Electrical/MissingBaseResistor: 输出引脚与晶体管基极之间缺少串联电阻。
+  Electrical/MissingFlybackDiode: 感性负载两端缺少反向续流二极管。
+  Electrical/SupplyOverload: 电源供给电流超过规定上限。
+  Electrical/NetLabelConflict: 同一网络被赋予不同标签。
+  Intent/ConnectionMismatch: 实际接线与声明的连接意图不符。
+  Intent/UnknownNet: 连接声明引用了未知网络。
+  Intent/MeasurementUnavailable: 无法计算指定的直流电压或电流。
+  Style/WireColor: 导线颜色不符合电源轨的颜色约定。
+guidance:
+  Lint/RedundantDisable: 删除未使用的 lint_disable，或修正其规则及目标。
+  Lint/UnknownRuleInDisable: 用 bklint --list-rules 确认规则 ID。
+  Layout/InvalidHole: 使用所选面包板上实际存在的孔位 ID。
+  Layout/UnknownBoard: 选择已有面包板，或通过 use_boards 加载定义。
+  Layout/UnknownPart: 核对元件 ID，或通过 use_parts 加载定义。
+  Layout/UnknownTransistorModel: 核对实物引脚排列并定义准确的型号。
+  Layout/UnknownPin: 使用元件定义中的引脚名称或编号。
+  Layout/UnknownSupplySource: 选择元件定义中声明为电源输出的引脚。
+  Layout/AmbiguousSupplySource: 为每个电源输出指定唯一的正极引脚。
+  Layout/UnknownOption: 使用元件定义中声明的属性。
+  Layout/InvalidOption: 为元件属性选择允许的值。
+  Layout/InvalidValue: 核对元件数值的数字和单位。
+  Layout/InvalidColor: 使用 CSS 颜色名、十六进制颜色、rgb() 或 hsl()。
+  Layout/InvalidRoute: 选择受支持的导线布线路径。
+  Layout/InvalidWireId: 使用不会与孔位 ID 混淆的导线 ID。
+  Layout/UnmatchedParts: 核对 use_parts 的路径及文件模式。
+  Layout/PartOverride: 核对覆盖后元件的引脚排列和属性。
+  Layout/UnplacedPin: 将每个必需引脚插入面包板孔位。
+  Layout/DuplicateRef: 为元件、导线和电源分别指定唯一 ID。
+  Layout/InvalidPlacement: 检查封装、面包板边缘和中央沟槽。
+  Layout/HoleConflict: 每个孔位只插入一个引脚。
+  Layout/HoleCovered: 将引脚或导线端点移至模块本体外的孔位。
+  Layout/BodyOverlap: 调整元件位置，避免本体相互重叠。
+  Layout/WireOverIC: 如需保持导线可见，请绕开芯片本体布线。
+  Layout/LeadSpan: 缩短引脚间距，或选用引脚足够长的元件。
+  Layout/NoFreeHole: 使用目标导电条或电源轨上的空闲孔位。
+  Layout/SplitNetLabel: 用导线连接具有相同标签的网络。
+  Layout/PinsInSameStrip: 将该元件的引脚插到不同的导电条。
+  Electrical/ShortCircuit: 检查报告中的短路路径和电源端子。
+  Electrical/ShortedComponent: 将元件两端连接到不同的网络。
+  Electrical/FloatingPin: 连接该引脚；有意悬空时将其标记为 unused。
+  Electrical/FloatingInput: 添加上拉下拉电阻，或将输入接到已建模的输出。
+  Electrical/MissingPullResistor: 添加固定电阻，使开关断开时输入有确定电位。
+  Electrical/DanglingWire: 将导线两端接到元件、电源或其他导线。
+  Electrical/SplitRail: 用导线桥接报告中的两个孔位。
+  Electrical/MissingSeriesResistor: 在 LED 路径中串联限流电阻。
+  Electrical/MinimumResistance: 在 LED 和可变电阻的路径中串联固定电阻。
+  Electrical/RailPolarityMismatch: 对照电源轨极性标记检查电源端子。
+  Electrical/ReversePolarity: "检查元件极性及电压；若为有意反向偏置，请使用 bias: :reverse 声明。"
+  Electrical/PowerPinUnconnected: 将电源与接地引脚连接到对应电源网络。
+  Electrical/SupplyVoltageRange: 将芯片电源电压保持在其额定范围内。
+  Electrical/NoCommonGround: 在需要共同参考的电路中连接电源地。
+  Electrical/VoltageDomainMismatch: 使用电平转换器或分压器降低信号电压。
+  Electrical/ResistorPowerRating: 使用更高功率额定值的电阻，或降低其耗散功率。
+  Electrical/CapacitorVoltageRating: 使用额定电压高于实际电压的电容。
+  Electrical/LedOvercurrent: 增加或加大串联电阻，使电流低于 LED 上限。
+  Electrical/GpioOvercurrent: 减少负载，使电流低于输出引脚上限。
+  Electrical/I2CAddressConflict: 修改其中一个设备的地址，或改用另一条 I2C 总线。
+  Electrical/I2CPullupMissing: 从 SDA 和 SCL 分别接固定上拉电阻至适当电源。
+  Electrical/MissingDecouplingCapacitor: 在芯片电源和接地引脚之间放置去耦电容。
+  Electrical/MissingBaseResistor: 在输出引脚与晶体管基极之间串联电阻。
+  Electrical/MissingFlybackDiode: 在感性负载两端反向并联二极管。
+  Electrical/SupplyOverload: 减少负载，或选用供电能力足够的电源。
+  Electrical/NetLabelConflict: 解决同一网络上的标签冲突。
+  Intent/ConnectionMismatch: 使 expect 声明与实际导线及网络标签一致。
+  Intent/UnknownNet: 核对 expect 声明中的网络或引脚名称。
+  Intent/MeasurementUnavailable: 接入有地参考的电源和受支持的无源元件，或使用电路仿真器。
+  Style/WireColor: 正电压使用红色或橙色，接地使用黑色或蓝色，或自定义颜色约定。
+messages:
+  diagnostic_invalid_hole: "无效的孔位或端点：%{target}"
+  diagnostic_unknown_board: "找不到面包板定义：%{target}"
+  diagnostic_unknown_part: "找不到元件定义：%{target}"
+  diagnostic_unknown_transistor_model: "晶体管型号未知，使用通用 EBC 引脚排列：%{target}"
+  diagnostic_unknown_pin: "找不到引脚：%{target}"
+  diagnostic_unknown_supply_source: "此端点未声明为电源输出：%{target}"
+  diagnostic_ambiguous_supply_source: "此电源来源匹配多个输出：%{target}"
+  diagnostic_unknown_option: "找不到元件选项：%{option}"
+  diagnostic_invalid_option: "元件选项的值无效：%{target}（%{reason}）"
+  diagnostic_invalid_value: "元件数值无效：%{target}（%{reason}）"
+  diagnostic_invalid_color: "颜色无效：%{target}（%{reason}）"
+  diagnostic_invalid_route: "导线布线路径无效：%{target}（%{reason}）"
+  diagnostic_invalid_wire_id: "导线 ID 与孔位 ID 冲突：%{target}"
+  diagnostic_unmatched_parts: "没有匹配的元件定义文件：%{reason}"
+  diagnostic_part_override: "自定义元件覆盖了内置元件：%{reason}"
+  diagnostic_unplaced_pin: "元件引脚未插入孔位：%{target}"
+  diagnostic_duplicate_ref: "标识符重复：%{target}"
+  diagnostic_invalid_placement: "元件位置无效：%{target}（%{reason}）"
+  placement_straddle: "必须跨越中央沟槽"
+  placement_bounds_or_gap: "封装越过面包板边缘或进入中央沟槽"
+  placement_bounds: "封装越过面包板边缘"
+  placement_footprint: "引脚位置与封装不符"
+  placement_anchor: "请指定端子孔位作为锚点"
+  diagnostic_hole_conflict: "多个端子占用同一孔位：%{target}"
+  hole_covered_lead: "%{pin} 插在 %{module} 本体下方的 %{hole}"
+  hole_covered_wire: "%{wire} 的端点插在 %{module} 本体下方的 %{hole}"
+  body_overlap: "%{first} 与 %{second} 的本体重叠"
+  wire_over_ic: "%{wire} 穿过 %{ic} 的本体"
+  lead_span: "%{ref} 的引脚间距为 %{actual} mm，超过 %{limit} mm 上限"
+  diagnostic_no_free_hole: "找不到空闲孔位：%{target}"
+  diagnostic_split_net_label: "同一标签出现在互不连通的网络上：%{target}"
+  diagnostic_unknown_net: "找不到网络：%{target}"
+  rule_error: "检查 %{rule} 时出错：%{error}"
+  same_strip: "%{ref} 的引脚 %{left} 与 %{right} 位于同一导电条 %{strip}"
+  short_circuit: "%{first}（%{first_voltage} V）与 %{second}（%{second_voltage} V）在网络 %{net} 上电位冲突（路径：%{path}）"
+  shorted_component: "%{ref} 的两端连接到同一网络"
+  unplaced_pin: "%{pin} 未插入面包板孔位"
+  floating_pin: "%{pin} 没有外部连接"
+  floating_input: "%{pin} 没有已建模的驱动源或上拉下拉电阻"
+  missing_pull_resistor: "开关 %{switch} 断开时，%{pin} 可能悬空；请添加上拉或下拉电阻"
+  dangling_wire: "%{wire} 的端点未连接"
+  split_rail: "%{rail} 的使用区段没有供电；请桥接 %{bridge}"
+  missing_series_resistor: "%{ref} 缺少串联限流电阻"
+  minimum_resistance: "%{led} 仅靠可变电阻 %{pot} 限流；滑动端到达端点时可能降至 0 Ω"
+  rail_polarity_mismatch: "%{source} 的正极接到 %{positive_rail}，负极接到 %{negative_rail}，与电源轨标记相反"
+  reverse_polarity: "%{ref} 的正极电位低于负极"
+  power_pin: "%{pin} 未接入有效电源"
+  supply_range: "%{ref} 的 %{power}/%{ground} 间电压为 %{voltage} V（额定 %{minimum}–%{maximum} V）"
+  common_ground: "多个电源没有共用地参考"
+  voltage_domain: "%{pin} 承受 %{voltage} V（上限 %{maximum} V）"
+  i2c_address: "%{refs} 在同一 I2C 总线上使用地址 %{address}"
+  i2c_pullup_missing: "%{refs} 的 I2C %{line} 信号线缺少上拉电阻"
+  missing_decoupling_capacitor: "%{ref} 的 %{power} 与 %{ground} 之间缺少电容"
+  missing_base_resistor: "%{driver} 没有通过串联电阻就驱动 %{base}"
+  missing_flyback_diode: "%{ref} 的 %{positive} 与 %{negative} 之间缺少反向续流二极管"
+  supply_overload: "%{supply} 的供电电流为 %{current} mA（上限 %{limit} mA）"
+  gpio_overcurrent: "%{pin} 的电流为 %{current} mA（上限 %{limit} mA）"
+  wire_color: "%{wire} 的颜色 %{color} 不符合预期颜色 %{expected}"
+  label_conflict: "同一网络有不同标签：%{labels}"
+  unknown_expectation: "连接声明引用了未知对象：%{refs}"
+  unknown_state: "未知电路状态：%{state}"
+  measurement_unavailable: "无法验证 %{ref} 的 %{kind}：%{reason}"
+  measurement_mismatch: "%{ref} 的 %{kind} 应为 %{range} %{unit}，实际为 %{value} %{unit}"
+  expected_connected: "%{refs} 应当连接"
+  expected_isolated: "%{refs} 应当互相隔离"
+  undeclared_pins: "声明的网络包含未声明引脚：%{pins}"
+  expected_net_name: "网络名称应为 %{expected}，实际为 %{actual}；可用 net :%{expected}, at: ... 添加标签"
+  expected_one_net: "%{refs} 应位于同一网络"
+  unknown_disable: "lint_disable 指定了未知规则：%{rule}"
+  disable_reason: "%{rule} 的 lint_disable 必须填写原因"
+  redundant_disable: "%{rule} 的 lint_disable 没有抑制任何诊断"

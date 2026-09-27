@@ -1,0 +1,190 @@
+rules:
+  Layout/InvalidHole: 선택한 브레드보드에 없는 구멍입니다.
+  Layout/UnknownBoard: 선택한 브레드보드 정의를 찾을 수 없습니다.
+  Layout/UnknownPart: 부품 정의를 찾을 수 없습니다.
+  Layout/UnknownTransistorModel: 트랜지스터 모델을 알 수 없어 일반 핀 배열을 사용합니다.
+  Layout/UnknownPin: 지정한 부품 핀이 없습니다.
+  Layout/UnknownSupplySource: 선택한 핀이 전원 출력으로 정의되지 않았습니다.
+  Layout/AmbiguousSupplySource: 선택한 전원 소스가 여러 출력과 일치합니다.
+  Layout/UnknownOption: 알 수 없는 부품 옵션입니다.
+  Layout/InvalidOption: 부품 옵션 값이 잘못되었습니다.
+  Layout/InvalidValue: 부품 값이 잘못되었습니다.
+  Layout/InvalidColor: 부품 또는 전선 색상이 잘못되었습니다.
+  Layout/InvalidRoute: 전선 경로가 잘못되었습니다.
+  Layout/InvalidWireId: 전선 ID가 구멍 ID와 충돌합니다.
+  Layout/UnmatchedParts: 부품 정의 파일 패턴에 일치하는 파일이 없습니다.
+  Layout/PartOverride: 사용자 정의 부품이 내장 부품을 덮어썼습니다.
+  Lint/RedundantDisable: lint_disable이 어떤 진단도 숨기지 않습니다.
+  Lint/UnknownRuleInDisable: lint_disable에 알 수 없는 규칙이 있습니다.
+  Layout/UnplacedPin: 부품 핀이 브레드보드 구멍에 배치되지 않았습니다.
+  Layout/DuplicateRef: 부품 또는 전선 식별자가 중복됩니다.
+  Layout/InvalidPlacement: 부품을 지정한 위치에 배치할 수 없습니다.
+  Layout/HoleConflict: 같은 구멍에 여러 리드가 꽂혀 있습니다.
+  Layout/HoleCovered: 모듈 또는 DIP 본체가 다른 리드나 전선 끝을 가립니다.
+  Layout/BodyOverlap: 두 부품의 본체가 겹칩니다.
+  Layout/WireOverIC: 직선 점퍼선이 DIP IC 본체 위를 지납니다.
+  Layout/LeadSpan: 핀 구멍 사이 거리가 부품 리드의 최대 길이를 초과합니다.
+  Layout/NoFreeHole: 자동 배치에 쓸 빈 구멍이 없습니다.
+  Layout/SplitNetLabel: 연결되지 않은 네트에 같은 라벨이 붙었습니다.
+  Layout/PinsInSameStrip: 같은 부품의 핀 여러 개가 같은 도전 스트립에 연결됩니다.
+  Electrical/ShortCircuit: 전원 전위 제약이 서로 충돌합니다.
+  Electrical/ShortedComponent: 두 단자 부품이 우회 연결되었습니다.
+  Electrical/FloatingPin: 부품 핀이 외부에 연결되지 않았습니다.
+  Electrical/FloatingInput: 입력 네트에 모델링된 구동원이나 풀 저항이 없습니다.
+  Electrical/MissingPullResistor: 전원으로 전환되는 입력에 풀 저항이 없습니다.
+  Electrical/DanglingWire: 전선 끝이 다른 요소에 연결되지 않았습니다.
+  Electrical/SplitRail: 분할된 전원 레일의 한 구간에 전원이 없습니다.
+  Electrical/MissingSeriesResistor: LED에 전류 제한 저항이 없습니다.
+  Electrical/MinimumResistance: LED 전류 제한에 쓰는 가변 저항이 0 Ω이 될 수 있습니다.
+  Electrical/RailPolarityMismatch: 전원 단자가 레일의 극성 표시와 반대로 연결되었습니다.
+  Electrical/ReversePolarity: 극성이 있는 부품이 반대로 연결되었습니다.
+  Electrical/PowerPinUnconnected: IC 전원 또는 접지 핀이 전원에 연결되지 않았습니다.
+  Electrical/SupplyVoltageRange: IC 전원 전압이 정격 범위를 벗어납니다.
+  Electrical/NoCommonGround: 여러 전원이 공통 접지를 사용하지 않습니다.
+  Electrical/VoltageDomainMismatch: 신호 전압이 핀 허용 범위를 초과합니다.
+  Electrical/ResistorPowerRating: 저항의 예상 소비 전력이 정격을 초과합니다.
+  Electrical/CapacitorVoltageRating: 전해 콘덴서의 예상 전압이 정격을 초과합니다.
+  Electrical/LedOvercurrent: LED의 예상 전류가 정격을 초과합니다.
+  Electrical/GpioOvercurrent: 출력 핀의 예상 전류가 정격을 초과합니다.
+  Electrical/I2CAddressConflict: 같은 I2C 버스에 중복 주소가 있습니다.
+  Electrical/I2CPullupMissing: I2C 신호선에 풀업 저항이 없습니다.
+  Electrical/MissingDecouplingCapacitor: IC 전원 핀 사이에 디커플링 콘덴서가 없습니다.
+  Electrical/MissingBaseResistor: 출력 핀과 트랜지스터 베이스 사이에 직렬 저항이 없습니다.
+  Electrical/MissingFlybackDiode: 유도성 부하 양단에 역방향 플라이백 다이오드가 없습니다.
+  Electrical/SupplyOverload: 전원 공급 전류가 지정된 한도를 초과합니다.
+  Electrical/NetLabelConflict: 같은 네트에 다른 라벨이 붙었습니다.
+  Intent/ConnectionMismatch: 실제 배선이 선언한 연결 의도와 다릅니다.
+  Intent/UnknownNet: 연결 선언이 알 수 없는 네트를 참조합니다.
+  Intent/MeasurementUnavailable: 지정한 직류 전압 또는 전류를 계산할 수 없습니다.
+  Style/WireColor: 전선 색상이 전원 레일의 색상 관례와 다릅니다.
+guidance:
+  Lint/RedundantDisable: 사용하지 않는 lint_disable을 삭제하거나 규칙과 대상을 수정하세요.
+  Lint/UnknownRuleInDisable: bklint --list-rules로 규칙 ID를 확인하세요.
+  Layout/InvalidHole: 선택한 브레드보드에 실제로 있는 구멍 ID를 사용하세요.
+  Layout/UnknownBoard: 기존 보드를 선택하거나 use_boards로 정의를 불러오세요.
+  Layout/UnknownPart: 부품 ID를 확인하거나 use_parts로 정의를 불러오세요.
+  Layout/UnknownTransistorModel: 실제 핀 배열을 확인하고 정확한 모델을 정의하세요.
+  Layout/UnknownPin: 부품 정의에 있는 핀 이름이나 번호를 사용하세요.
+  Layout/UnknownSupplySource: 부품 정의에서 전원 출력으로 선언한 핀을 선택하세요.
+  Layout/AmbiguousSupplySource: 각 전원 출력에 고유한 양극 핀을 지정하세요.
+  Layout/UnknownOption: 부품 정의에 선언된 속성을 사용하세요.
+  Layout/InvalidOption: 부품 속성에 허용된 값을 선택하세요.
+  Layout/InvalidValue: 부품 값의 숫자와 단위를 확인하세요.
+  Layout/InvalidColor: CSS 색상 이름, 16진 색상, rgb() 또는 hsl()을 사용하세요.
+  Layout/InvalidRoute: 지원되는 전선 경로를 선택하세요.
+  Layout/InvalidWireId: 구멍 ID와 혼동되지 않는 전선 ID를 사용하세요.
+  Layout/UnmatchedParts: use_parts 경로와 파일 패턴을 확인하세요.
+  Layout/PartOverride: 덮어쓴 부품의 핀 배열과 속성을 확인하세요.
+  Layout/UnplacedPin: 필요한 핀을 모두 브레드보드 구멍에 배치하세요.
+  Layout/DuplicateRef: 부품, 전선, 전원에 각각 고유한 ID를 지정하세요.
+  Layout/InvalidPlacement: 풋프린트, 보드 가장자리, 중앙 홈을 확인하세요.
+  Layout/HoleConflict: 한 구멍에는 리드 하나만 꽂으세요.
+  Layout/HoleCovered: 리드나 전선 끝을 모듈 본체 바깥 구멍으로 옮기세요.
+  Layout/BodyOverlap: 부품 본체가 겹치지 않도록 위치를 바꾸세요.
+  Layout/WireOverIC: 전선을 보이게 해야 한다면 IC 본체 바깥으로 우회하세요.
+  Layout/LeadSpan: 핀 간격을 줄이거나 리드가 충분히 긴 부품을 선택하세요.
+  Layout/NoFreeHole: 대상 스트립 또는 레일의 빈 구멍을 사용하세요.
+  Layout/SplitNetLabel: 같은 라벨을 가진 네트를 전선으로 연결하세요.
+  Layout/PinsInSameStrip: 부품 핀을 서로 다른 도전 스트립에 배치하세요.
+  Electrical/ShortCircuit: 보고된 단락 경로와 전원 단자를 확인하세요.
+  Electrical/ShortedComponent: 부품의 두 단자를 서로 다른 네트에 연결하세요.
+  Electrical/FloatingPin: 핀을 연결하거나 의도적으로 비워 둔 경우 unused로 표시하세요.
+  Electrical/FloatingInput: 풀 저항을 추가하거나 입력을 모델링된 출력에 연결하세요.
+  Electrical/MissingPullResistor: 스위치가 열려 있을 때 입력 전위가 정해지도록 고정 풀 저항을 추가하세요.
+  Electrical/DanglingWire: 전선 양끝을 부품, 전원 또는 다른 전선에 연결하세요.
+  Electrical/SplitRail: 보고된 두 구멍을 전선으로 이어 주세요.
+  Electrical/MissingSeriesResistor: LED 경로에 전류 제한 저항을 직렬로 넣으세요.
+  Electrical/MinimumResistance: LED와 가변 저항의 경로에 고정 저항을 직렬로 넣으세요.
+  Electrical/RailPolarityMismatch: 레일의 극성 표시와 전원 단자를 비교하세요.
+  Electrical/ReversePolarity: "부품 극성과 전압을 확인하세요. 의도적인 역바이어스는 bias: :reverse로 선언하세요."
+  Electrical/PowerPinUnconnected: 전원 핀과 접지 핀을 알맞은 전원 네트에 연결하세요.
+  Electrical/SupplyVoltageRange: IC 전원 전압을 지정된 정격 범위 안에 유지하세요.
+  Electrical/NoCommonGround: 공통 기준이 필요한 회로에서는 전원 접지를 연결하세요.
+  Electrical/VoltageDomainMismatch: 레벨 시프터나 분압기로 신호 전압을 낮추세요.
+  Electrical/ResistorPowerRating: 더 높은 정격의 저항을 사용하거나 소비 전력을 줄이세요.
+  Electrical/CapacitorVoltageRating: 실제 전압보다 정격 전압이 높은 콘덴서를 사용하세요.
+  Electrical/LedOvercurrent: 직렬 저항을 추가하거나 저항값을 높여 LED 전류를 제한하세요.
+  Electrical/GpioOvercurrent: 부하를 줄여 출력 핀 전류를 허용 범위 안에 유지하세요.
+  Electrical/I2CAddressConflict: 한 장치의 주소를 바꾸거나 별도의 I2C 버스를 사용하세요.
+  Electrical/I2CPullupMissing: SDA와 SCL을 각각 적절한 전원에 고정 풀업 저항으로 연결하세요.
+  Electrical/MissingDecouplingCapacitor: IC 전원 핀과 접지 핀 사이에 디커플링 콘덴서를 놓으세요.
+  Electrical/MissingBaseResistor: 출력 핀과 트랜지스터 베이스 사이에 저항을 직렬로 넣으세요.
+  Electrical/MissingFlybackDiode: 유도성 부하 양단에 역방향 다이오드를 연결하세요.
+  Electrical/SupplyOverload: 부하를 줄이거나 충분한 전류를 공급하는 전원을 사용하세요.
+  Electrical/NetLabelConflict: 같은 네트에 붙은 라벨의 충돌을 해결하세요.
+  Intent/ConnectionMismatch: expect 선언을 실제 전선과 네트 라벨에 맞추세요.
+  Intent/UnknownNet: expect 선언에 사용한 네트 또는 핀 이름을 확인하세요.
+  Intent/MeasurementUnavailable: 접지 기준이 있는 전원과 지원되는 수동 부품을 연결하거나 회로 시뮬레이터를 사용하세요.
+  Style/WireColor: 양전압에는 빨강이나 주황, 접지에는 검정이나 파랑을 사용하거나 색상 관례를 설정하세요.
+messages:
+  diagnostic_invalid_hole: "잘못된 구멍 또는 끝점: %{target}"
+  diagnostic_unknown_board: "브레드보드 정의를 찾을 수 없음: %{target}"
+  diagnostic_unknown_part: "부품 정의를 찾을 수 없음: %{target}"
+  diagnostic_unknown_transistor_model: "트랜지스터 모델을 알 수 없어 일반 EBC 핀 배열 사용: %{target}"
+  diagnostic_unknown_pin: "핀을 찾을 수 없음: %{target}"
+  diagnostic_unknown_supply_source: "전원 출력으로 선언되지 않은 끝점: %{target}"
+  diagnostic_ambiguous_supply_source: "여러 전원 출력과 일치하는 소스: %{target}"
+  diagnostic_unknown_option: "알 수 없는 부품 옵션: %{option}"
+  diagnostic_invalid_option: "잘못된 부품 옵션 값: %{target} (%{reason})"
+  diagnostic_invalid_value: "잘못된 부품 값: %{target} (%{reason})"
+  diagnostic_invalid_color: "잘못된 색상: %{target} (%{reason})"
+  diagnostic_invalid_route: "잘못된 전선 경로: %{target} (%{reason})"
+  diagnostic_invalid_wire_id: "전선 ID가 구멍 ID와 충돌: %{target}"
+  diagnostic_unmatched_parts: "일치하는 부품 정의 파일이 없음: %{reason}"
+  diagnostic_part_override: "사용자 정의 부품이 내장 부품을 덮어씀: %{reason}"
+  diagnostic_unplaced_pin: "부품 핀이 구멍에 배치되지 않음: %{target}"
+  diagnostic_duplicate_ref: "중복된 식별자: %{target}"
+  diagnostic_invalid_placement: "잘못된 부품 위치: %{target} (%{reason})"
+  placement_straddle: "중앙 홈을 가로질러야 합니다"
+  placement_bounds_or_gap: "풋프린트가 보드 밖이나 중앙 홈으로 넘어갑니다"
+  placement_bounds: "풋프린트가 보드 밖으로 넘어갑니다"
+  placement_footprint: "핀 위치가 풋프린트와 일치하지 않습니다"
+  placement_anchor: "단자 구멍을 기준점으로 지정하세요"
+  diagnostic_hole_conflict: "같은 구멍에 여러 단자가 있음: %{target}"
+  hole_covered_lead: "%{pin}이(가) %{module} 본체 아래의 %{hole}에 꽂혀 있습니다"
+  hole_covered_wire: "%{wire} 끝이 %{module} 본체 아래의 %{hole}에 꽂혀 있습니다"
+  body_overlap: "%{first}와(과) %{second}의 본체가 겹칩니다"
+  wire_over_ic: "%{wire}이(가) %{ic} 본체 위를 지납니다"
+  lead_span: "%{ref}의 리드 간격은 %{actual} mm이며 한도 %{limit} mm를 넘습니다"
+  diagnostic_no_free_hole: "빈 구멍이 없음: %{target}"
+  diagnostic_split_net_label: "연결되지 않은 네트에 같은 라벨이 있음: %{target}"
+  diagnostic_unknown_net: "네트를 찾을 수 없음: %{target}"
+  rule_error: "%{rule} 검사 중 오류: %{error}"
+  same_strip: "%{ref}의 핀 %{left}와(과) %{right}이(가) 같은 스트립 %{strip}에 있습니다"
+  short_circuit: "%{first} (%{first_voltage} V)와(과) %{second} (%{second_voltage} V)의 전위가 네트 %{net}에서 충돌합니다 (경로: %{path})"
+  shorted_component: "%{ref}의 두 단자가 같은 네트에 연결되었습니다"
+  unplaced_pin: "%{pin}이(가) 브레드보드 구멍에 배치되지 않았습니다"
+  floating_pin: "%{pin}에 외부 연결이 없습니다"
+  floating_input: "%{pin}에 모델링된 구동원이나 풀 저항이 없습니다"
+  missing_pull_resistor: "스위치 %{switch}이(가) 열리면 %{pin}이(가) 부유할 수 있습니다. 풀 저항을 추가하세요"
+  dangling_wire: "%{wire} 끝이 연결되지 않았습니다"
+  split_rail: "%{rail}의 사용 구간에 전원이 없습니다. %{bridge}를 이어 주세요"
+  missing_series_resistor: "%{ref}에 직렬 전류 제한 저항이 없습니다"
+  minimum_resistance: "%{led}은(는) 가변 저항 %{pot}만으로 전류를 제한합니다. 와이퍼가 끝에 닿으면 0 Ω이 될 수 있습니다"
+  rail_polarity_mismatch: "%{source}의 양극은 %{positive_rail}, 음극은 %{negative_rail}에 연결되어 레일 표시와 반대입니다"
+  reverse_polarity: "%{ref}의 양극 전위가 음극보다 낮습니다"
+  power_pin: "%{pin}이(가) 유효한 전원에 연결되지 않았습니다"
+  supply_range: "%{ref}의 %{power}/%{ground} 전압은 %{voltage} V입니다 (정격 %{minimum}–%{maximum} V)"
+  common_ground: "여러 전원이 공통 접지를 사용하지 않습니다"
+  voltage_domain: "%{pin}에 %{voltage} V가 걸립니다 (최대 %{maximum} V)"
+  i2c_address: "%{refs}이(가) 같은 I2C 버스에서 주소 %{address}를 사용합니다"
+  i2c_pullup_missing: "%{refs}의 I2C %{line} 신호선에 풀업 저항이 없습니다"
+  missing_decoupling_capacitor: "%{ref}의 %{power}와(과) %{ground} 사이에 콘덴서가 없습니다"
+  missing_base_resistor: "%{driver}이(가) 직렬 저항 없이 %{base}을(를) 구동합니다"
+  missing_flyback_diode: "%{ref}의 %{positive}와(과) %{negative} 사이에 역방향 플라이백 다이오드가 없습니다"
+  supply_overload: "%{supply}의 공급 전류는 %{current} mA입니다 (한도 %{limit} mA)"
+  gpio_overcurrent: "%{pin}에 %{current} mA가 흐릅니다 (한도 %{limit} mA)"
+  wire_color: "%{wire}의 색상 %{color}이(가) 예상 색상 %{expected}와(과) 다릅니다"
+  label_conflict: "같은 네트에 다른 라벨이 있음: %{labels}"
+  unknown_expectation: "연결 선언에 알 수 없는 참조가 있음: %{refs}"
+  unknown_state: "알 수 없는 회로 상태: %{state}"
+  measurement_unavailable: "%{ref}의 %{kind}을(를) 확인할 수 없음: %{reason}"
+  measurement_mismatch: "%{ref}의 %{kind}은(는) %{range} %{unit}이어야 하지만 %{value} %{unit}입니다"
+  expected_connected: "%{refs}은(는) 연결되어야 합니다"
+  expected_isolated: "%{refs}은(는) 서로 분리되어야 합니다"
+  undeclared_pins: "선언한 네트에 선언되지 않은 핀이 있음: %{pins}"
+  expected_net_name: "네트 이름은 %{expected}이어야 하지만 %{actual}입니다. net :%{expected}, at: ...로 라벨을 추가하세요"
+  expected_one_net: "%{refs}은(는) 같은 네트에 있어야 합니다"
+  unknown_disable: "lint_disable에 알 수 없는 규칙이 있음: %{rule}"
+  disable_reason: "%{rule}의 lint_disable에는 이유가 필요합니다"
+  redundant_disable: "%{rule}의 lint_disable은(는) 어떤 진단도 숨기지 않습니다"
