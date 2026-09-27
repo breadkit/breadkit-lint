@@ -151,6 +151,15 @@ Layout/BodyOverlap:
     board :half
     led :D1, anode: 'a10', cathode: 'a11'
     led :D2, anode: 'b13', cathode: 'b14'
+Layout/WireOverIC:
+  offense: |
+    board :half
+    ic :U1, :ne555, at: 'e10'
+    wire 'a11', 'j11'
+  no_offense: |
+    board :half
+    ic :U1, :ne555, at: 'e10'
+    wire 'a9', 'j9'
 Layout/NoFreeHole:
   offense: |
     board :half

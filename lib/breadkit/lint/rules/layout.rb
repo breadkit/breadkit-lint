@@ -75,6 +75,50 @@ module Breadkit
         end
       end
 
+      def wire_over_ic(circuit, rule, _state)
+        circuit.components.values.flat_map do |component|
+          bounds = dip_body_bounds(component, circuit.board)
+          next [] unless bounds
+          circuit.wires.filter_map do |wire|
+            next unless wire.electrical != false && wire.route == "straight"
+            from = circuit.board.hole(wire.from)
+            to = circuit.board.hole(wire.to)
+            next unless from && to
+            next unless segment_crosses_rect?(from, to, bounds)
+            offense(rule.id, translate("wire_over_ic", "#{wire.id} crosses #{component.ref} body",
+                                       wire: wire.id, ic: component.ref), wire.location,
+                    targets: { components: [component.ref], wires: [wire.id] })
+          end
+        end
+      end
+
+      def dip_body_bounds(component, board)
+        return unless component.part.placement == "dip" && component.part.data.dig("render", "shape") == "dip"
+        holes = component.pins.values.filter_map { |pin| board.hole(pin.hole_id) if pin.hole_id }
+        return unless holes.length == component.part.pins.length && holes.all? { |hole| hole.kind == :terminal }
+        xs, ys = holes.map(&:x), holes.map(&:y).uniq.sort
+        return unless ys.length == 2 && (ys.last - ys.first - 3).abs < 1e-6
+        rows = holes.group_by(&:y).values.map { |row| row.map(&:x).sort }
+        return unless rows[0] == rows[1] && rows[0].length * 2 == holes.length
+        [xs.min - 0.4, ys.first + 0.25, xs.max - xs.min + 0.8, ys.last - ys.first - 0.5]
+      end
+
+      def segment_crosses_rect?(from, to, bounds)
+        left, top, width, height = bounds
+        ranges = [[left + 1e-6, left + width - 1e-6, from.x, to.x],
+                  [top + 1e-6, top + height - 1e-6, from.y, to.y]]
+        entry, exit = 0.0, 1.0
+        ranges.each do |minimum, maximum, start, finish|
+          delta = finish - start
+          return false if delta.abs < 1e-9 && !(start > minimum && start < maximum)
+          next if delta.abs < 1e-9
+          first, last = [(minimum - start) / delta, (maximum - start) / delta].minmax
+          entry = [entry, first].max
+          exit = [exit, last].min
+        end
+        entry < exit - 1e-9
+      end
+
       def physical_body(component, board)
         shape = component.part.data.dig("render", "shape")
         if shape == "module" && component.respond_to?(:body_bounds)

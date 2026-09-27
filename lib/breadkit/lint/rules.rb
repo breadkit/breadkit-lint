@@ -153,6 +153,12 @@ module Breadkit
           def check(context) = emit(context, :body_overlap)
         end
 
+        class WireOverIC < BuiltinRule
+          rule "Layout/WireOverIC", severity: :info, description: "A straight jumper crosses a DIP IC body"
+
+          def check(context) = emit(context, :wire_over_ic)
+        end
+
         class NoFreeHole < DiagnosticRule
           rule "Layout/NoFreeHole", severity: :error, description: "No free hole is available"
 

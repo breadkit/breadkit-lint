@@ -25,6 +25,7 @@ Layout/InvalidPlacement: {Enabled: true, Severity: error}
 Layout/HoleConflict: {Enabled: true, Severity: error}
 Layout/HoleCovered: {Enabled: true, Severity: error}
 Layout/BodyOverlap: {Enabled: true, Severity: error}
+Layout/WireOverIC: {Enabled: true, Severity: info}
 Layout/NoFreeHole: {Enabled: true, Severity: error}
 Layout/SplitNetLabel: {Enabled: true, Severity: error}
 Layout/PinsInSameStrip: {Enabled: true, Severity: error}
