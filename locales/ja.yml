@@ -126,6 +126,7 @@ messages:
   split_rail: "%{rail} の使用中の区間に電源がありません。%{bridge} を橋渡ししてください"
   missing_series_resistor: "%{ref} に直列の電流制限抵抗がありません"
   minimum_resistance: "%{led} は可変抵抗 %{pot} だけで電流を制限しています。ワイパーが端に達すると 0 Ω になり得ます"
+  rail_polarity_mismatch: "%{source} の正極が %{positive_rail}、負極が %{negative_rail} に接続され、レールの極性表示と逆です"
   reverse_polarity: "%{ref} の正極の電位が負極より低くなっています"
   power_pin: "%{pin} が有効な電源に接続されていません"
   supply_range: "%{ref} の %{power}/%{ground} 間は %{voltage} V です（定格 %{minimum}〜%{maximum} V）"

@@ -229,6 +229,13 @@ module Breadkit
           def check(context) = emit(context, :minimum_resistances)
         end
 
+        class RailPolarityMismatch < BuiltinRule
+          rule "Electrical/RailPolarityMismatch", severity: :warning,
+            description: "A source's positive and negative terminals drive oppositely marked rails"
+
+          def check(context) = emit(context, :rail_polarity_mismatch)
+        end
+
         class ReversePolarity < BuiltinRule
           rule "Electrical/ReversePolarity", severity: :error, description: "A polarized part is connected backwards", state_sensitive: true
 

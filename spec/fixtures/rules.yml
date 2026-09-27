@@ -278,6 +278,13 @@ Electrical/MinimumResistance:
     wire 'b6', 'b8'
     wire 'b9', 'b10'
     wire 'b11', 'B-'
+Electrical/RailPolarityMismatch:
+  offense: |
+    board :half
+    supply :USB, voltage: 5, plus: 'B-1', minus: 'B+1'
+  no_offense: |
+    board :half
+    supply :USB, voltage: 5, plus: 'B+1', minus: 'B-1'
 Electrical/ReversePolarity:
   offense: |
     board :half

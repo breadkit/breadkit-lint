@@ -128,6 +128,33 @@ module Breadkit
         end
       end
 
+      def rail_polarity_mismatch(circuit, rule, _state)
+        return [] if circuit.board.respond_to?(:boards)
+        circuit.voltage_sources.filter_map do |source|
+          next if source.isolated
+          positive_net = circuit.net_of(source.plus)
+          negative_net = circuit.net_of(source.minus)
+          next unless positive_net && negative_net && positive_net != negative_net
+          positive_rails = polarized_rails(circuit, positive_net)
+          negative_rails = polarized_rails(circuit, negative_net)
+          next unless positive_rails.map(&:first).uniq == ["-"] && negative_rails.map(&:first).uniq == ["+"]
+          wrong_positive, wrong_negative = positive_rails.first.last, negative_rails.first.last
+          offense(rule.id, translate("rail_polarity_mismatch",
+                                     "#{source.name} positive terminal is on #{wrong_positive.rail} and negative terminal is on #{wrong_negative.rail}",
+                                     source: source.name, positive_rail: wrong_positive.rail, negative_rail: wrong_negative.rail),
+                  source.location,
+                  targets: { holes: [wrong_positive.id, wrong_negative.id], nets: [positive_net.name, negative_net.name] })
+        end
+      end
+
+      def polarized_rails(circuit, net)
+        net.holes.filter_map do |id|
+          hole = circuit.board.hole(id)
+          polarity = hole&.rail && circuit.board.rail_polarity(hole.rail)
+          [polarity, hole] if polarity
+        end
+      end
+
       def missing_series_resistors(circuit, rule, state)
         circuit.components.values.filter_map do |component|
           next unless Array(component.part.data["flags"]).include?("needs_series_resistor")
