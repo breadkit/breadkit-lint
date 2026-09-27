@@ -1,0 +1,7 @@
+require "guard/breadkit"
+
+guard :breadkit, files: ["circuits"] do
+  watch(%r{^circuits/.*\.bk\.(?:rb|ya?ml|toml|json)$})
+  watch(%r{^parts/.*\.ya?ml$})
+  watch(".bklint.yml")
+end

@@ -211,6 +211,23 @@ staged contents of changed `.bk.rb` files and blocks a commit when bklint
 fails. Declarative YAML and TOML files are not included because `--stdin`
 currently accepts Ruby DSL only.
 
+If your project already uses Guard, add the `guard` gem and this optional
+plugin to its `Guardfile`:
+
+```ruby
+require "guard/breadkit"
+
+guard :breadkit, files: ["circuits"] do
+  watch(%r{^circuits/.*\.bk\.(?:rb|ya?ml|toml|json)$})
+  watch(%r{^parts/.*\.ya?ml$})
+  watch(".bklint.yml")
+end
+```
+
+Changed circuits are linted directly. Changes to part definitions or the lint
+configuration rerun all paths listed in `files`. Set `args: ["--format", "github"]`
+to pass additional bklint options.
+
 ## Command reference
 
 `bklint [options] [FILES...]` accepts `.bk.rb`, `.bk.yml`, `.bk.yaml`, `.bk.toml`, and Breadkit IR `.json` files.
