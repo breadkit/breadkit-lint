@@ -128,15 +128,25 @@ module Breadkit
       end
 
       def excluded?(path)
+        matches_path?(excludes, path)
+      end
+
+      def rule_applies?(rule, path)
+        include_patterns = data.dig(rule.id, "Include")
+        (include_patterns.nil? || matches_path?(Array(include_patterns), path)) &&
+          !matches_path?(Array(data.dig(rule.id, "Exclude")), path)
+      end
+
+      private
+
+      def matches_path?(patterns, path)
         absolute = File.expand_path(path)
         relative = Pathname.new(absolute).relative_path_from(Pathname.new(@config_dir)).to_s
-        excludes.any? do |pattern|
+        patterns.any? do |pattern|
           File.fnmatch?(pattern, relative, File::FNM_PATHNAME | File::FNM_EXTGLOB) ||
             File.fnmatch?(pattern, absolute, File::FNM_PATHNAME | File::FNM_EXTGLOB)
         end
       end
-
-      private
 
       def merge_file(path)
         @data = deep_merge(@data, load_config(path, []))
@@ -169,6 +179,11 @@ module Breadkit
         raise Error, "invalid switch state mode: #{switch_states}" if switch_states && !%w[none single all].include?(switch_states.to_s)
         raise Error, "invalid new rules mode: #{new_rules}" if new_rules && !%w[pending enable disable].include?(new_rules.to_s)
         Registry.all.each do |rule|
+          %w[Include Exclude].each do |key|
+            patterns = data.dig(rule.id, key)
+            next if patterns.nil? || patterns.is_a?(String) || (patterns.is_a?(Array) && patterns.all? { |pattern| pattern.is_a?(String) })
+            raise Error, "invalid #{rule.id} #{key} patterns"
+          end
           severity_value = data.dig(rule.id, "Severity")
           next unless severity_value && !%w[error warning info].include?(severity_value.to_s.downcase)
           raise Error, "invalid severity for #{rule.id}: #{severity_value}"
@@ -201,9 +216,9 @@ module Breadkit
               document.part_paths.concat(@config.extra_parts)
               Breadkit::Resolver.new.call(document)
             end
-            offenses = inspect_circuit(circuit, only, except)
+            offenses = inspect_circuit(circuit, path, only, except)
             skipped = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
-            { path: path, offenses: @checks.suppress(offenses, circuit.lint_disables, circuit, only: only, except: except, skipped: skipped),
+            { path: path, offenses: @checks.suppress(offenses, circuit.lint_disables, circuit, path: path, only: only, except: except, skipped: skipped),
               skipped: skipped }
           rescue StandardError, ScriptError, SystemStackError => e
             location = e.respond_to?(:location) && e.location
@@ -229,14 +244,14 @@ module Breadkit
 
       private
 
-      def inspect_circuit(circuit, only, except)
+      def inspect_circuit(circuit, path, only, except)
         offenses = []
         broken_layout = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
         states = circuit.states(@config.switch_states)
         scoped_expectations = circuit.expectations.any? { |item| item["when"] || item[:when] }
         intent_states = scoped_expectations ? circuit.states("all") : states
         Registry.all.each do |rule|
-          next unless @config.enabled?(rule) && selected?(rule.id, only, except)
+          next unless @config.enabled?(rule) && @config.rule_applies?(rule, path) && selected?(rule.id, only, except)
           next if broken_layout && rule.id.start_with?("Electrical/", "Intent/")
           relevant_states = if rule.id.start_with?("Intent/") && scoped_expectations
             intent_states

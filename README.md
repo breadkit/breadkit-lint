@@ -75,6 +75,8 @@ Create `.bklint.yml` next to the circuit:
 ```yaml
 Electrical/FloatingPin:
   Severity: error
+  Include: ['circuits/**/*.bk.rb']
+  Exclude: ['circuits/legacy/**/*.bk.rb']
 
 Style/WireColor:
   Enabled: true
@@ -84,8 +86,10 @@ Style/WireColor:
 
 The [default configuration](config/default.yml) lists built-in rules and their
 settings. Use `inherit_from` to share settings and `use_parts` to load custom
-part definitions. You can also set the failure level, switch states,
-exclusions, and custom rule files. Use `lint_disable` in a circuit to suppress
+part definitions. Rule `Include` and `Exclude` patterns match paths relative to
+the configuration file; `Exclude` wins when both match. `AllRules.Exclude`
+skips an entire file. You can also set the failure level, switch states, and
+custom rule files. Use `lint_disable` in a circuit to suppress
 a rule for a specific part, pin, or wire. Unknown rule IDs are errors; set
 `AllRules.RequireDisableReason` to require a `reason:` on suppressions.
 `AllRules.NewRules` controls whether new rules start enabled or pending. Pair

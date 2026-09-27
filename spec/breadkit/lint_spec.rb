@@ -64,6 +64,68 @@ RSpec.describe Breadkit::Lint::Engine do
     end
   end
 
+  it "applies rule Include and Exclude patterns relative to the config file" do
+    Dir.mktmpdir do |directory|
+      FileUtils.mkdir_p(File.join(directory, "circuits"))
+      FileUtils.mkdir_p(File.join(directory, "generated"))
+      paths = %w[circuits/check.bk.rb circuits/skip.bk.rb generated/other.bk.rb].map do |name|
+        File.join(directory, name).tap do |path|
+          File.write(path, "board :mini\nresistor :R1, '330', pins: %w[a1 b1]\n")
+        end
+      end
+      config_path = File.join(directory, ".bklint.yml")
+      File.write(config_path, "Layout/PinsInSameStrip:\n  Include: ['circuits/**/*.bk.rb']\n  Exclude: ['circuits/skip.bk.rb']\n")
+
+      results = described_class.new(config: Breadkit::Lint::Config.new(config_path))
+                               .run(paths, only: ["Layout/PinsInSameStrip"])
+      expect(results.map { |result| result[:offenses].map(&:rule) }).to eq([["Layout/PinsInSameStrip"], [], []])
+    end
+  end
+
+  it "does not flag a disable as redundant when its rule is excluded for that file" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "ignored.bk.rb")
+      File.write(path, "board :mini\nresistor :R1, '330', pins: %w[a1 b1]\nlint_disable 'Layout/PinsInSameStrip'\n")
+      config_path = File.join(directory, ".bklint.yml")
+      File.write(config_path, "Layout/PinsInSameStrip:\n  Exclude: ['*.bk.rb']\n")
+
+      result = described_class.new(config: Breadkit::Lint::Config.new(config_path)).run([path]).first
+      expect(result[:offenses].map(&:rule)).not_to include("Lint/RedundantDisable")
+    end
+  end
+
+  it "applies file filters to unknown-disable diagnostics" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "ignored.bk.rb")
+      File.write(path, "board :mini\nlint_disable 'Missing/Rule'\n")
+      config_path = File.join(directory, ".bklint.yml")
+      File.write(config_path, "Lint/UnknownRuleInDisable:\n  Exclude: ['*.bk.rb']\n")
+
+      result = described_class.new(config: Breadkit::Lint::Config.new(config_path)).run([path]).first
+      expect(result[:offenses].map(&:rule)).not_to include("Lint/UnknownRuleInDisable")
+    end
+  end
+
+  it "applies file filters to redundant-disable diagnostics" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "ignored.bk.rb")
+      File.write(path, "board :mini\nlint_disable 'Electrical/FloatingPin'\n")
+      config_path = File.join(directory, ".bklint.yml")
+      File.write(config_path, "Lint/RedundantDisable:\n  Exclude: ['*.bk.rb']\n")
+
+      result = described_class.new(config: Breadkit::Lint::Config.new(config_path)).run([path]).first
+      expect(result[:offenses].map(&:rule)).not_to include("Lint/RedundantDisable")
+    end
+  end
+
+  it "rejects non-string rule file patterns during configuration loading" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, ".bklint.yml")
+      File.write(path, "Layout/PinsInSameStrip:\n  Include: [42]\n")
+      expect { Breadkit::Lint::Config.new(path) }.to raise_error(Breadkit::Lint::Error, /Layout\/PinsInSameStrip.*Include/)
+    end
+  end
+
   it "reports unknown intent nets through the configured rule ID" do
     Dir.mktmpdir do |directory|
       path = File.join(directory, "unknown.bk.rb")

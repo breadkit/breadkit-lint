@@ -59,7 +59,7 @@ module Breadkit
                     location: location, targets: targets, state: state)
       end
 
-      def suppress(offenses, disables, circuit, only: nil, except: nil, skipped: false)
+      def suppress(offenses, disables, circuit, path:, only: nil, except: nil, skipped: false)
         invalid_disables = []
         invalid = disables.filter_map do |disable|
           rule_id = disable[:rule] || disable["rule"]
@@ -74,7 +74,7 @@ module Breadkit
           invalid_disables << disable
           if unknown
             rule = Rules::Lint::UnknownRuleInDisable
-            next if !@config.enabled?(rule) || (only && !only.include?(rule.id)) || except&.include?(rule.id)
+            next if !@config.enabled?(rule) || !@config.rule_applies?(rule, path) || (only && !only.include?(rule.id)) || except&.include?(rule.id)
           end
           offense(unknown ? "Lint/UnknownRuleInDisable" : "Config/InvalidDisable", message,
                   location_from(disable[:location] || disable["location"]))
@@ -95,11 +95,11 @@ module Breadkit
           next unless redundant_selected
           rule_id = disable[:rule] || disable["rule"]
           rule = Registry.all.find { |item| item.id == rule_id }
-          next if used.include?(disable) || !rule || !@config.enabled?(rule)
+          next if used.include?(disable) || !rule || !@config.enabled?(rule) || !@config.rule_applies?(rule, path)
           next if only && !only.include?(rule_id)
           next if except&.include?(rule_id)
           next if skipped && rule_id.start_with?("Electrical/", "Intent/")
-          next unless @config.enabled?(Rules::Lint::RedundantDisable)
+          next unless @config.enabled?(Rules::Lint::RedundantDisable) && @config.rule_applies?(Rules::Lint::RedundantDisable, path)
           offense("Lint/RedundantDisable", translate("redundant_disable", "lint_disable for #{rule_id} suppresses no offense", rule: rule_id),
                   location_from(disable[:location] || disable["location"]))
         end
