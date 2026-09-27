@@ -18,7 +18,7 @@
         <nav aria-label="Main navigation" class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted">
           <a class="rounded-sm hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-copper" href="https://breadkit.github.io/breadkit/">Breadkit</a>
           <a class="rounded-sm hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-copper" href="https://breadkit.github.io/breadkit/guide/">Guide</a>
-          <a class="rounded-sm hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-copper" href="https://breadkit.github.io/breadkit/guide/dsl/">Reference</a>
+          <a class="rounded-sm hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-copper" href="./rules/">Rules</a>
           <a class="rounded-sm hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-copper" href="https://breadkit.github.io/breadkit-render/">Render</a>
           <a class="rounded-sm hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-copper" href="https://github.com/breadkit/breadkit-lint">GitHub</a>
         </nav>
@@ -33,7 +33,7 @@
           <p class="mt-6 max-w-lg text-pretty text-lg leading-8 text-muted">Analyze breadboard holes and component connections to find placement errors, shorts, floating pins, and mismatches with your design intent.</p>
           <div class="mt-8 flex flex-wrap gap-x-6 gap-y-4">
             <a class="rounded-sm bg-copper px-5 py-3 font-semibold text-ink hover:bg-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-copper" href="#example">See a finding</a>
-            <a class="rounded-sm py-3 font-medium text-paper underline decoration-line underline-offset-4 hover:decoration-copper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-copper" href="https://github.com/breadkit/breadkit-lint/tree/main/docs/rules">Browse rules</a>
+            <a class="rounded-sm py-3 font-medium text-paper underline decoration-line underline-offset-4 hover:decoration-copper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-copper" href="./rules/">Browse rules</a>
           </div>
           <div class="mt-10 rounded-lg border border-line bg-board p-5">
             <p class="mb-3 text-sm text-muted">Published 0.1.0</p>
@@ -51,9 +51,10 @@ supply :USB, voltage: 5.0,
 wire "a10", "B+"
 wire "b10", "B-"</code></pre>
             <div class="my-6 border-t border-line"></div>
-            <p class="mb-3 text-sm text-muted">From the bklint report</p>
+            <p class="mb-3 text-sm text-muted">Excerpt from the bklint report</p>
             <pre class="overflow-x-auto font-mono text-sm leading-7 text-paper"><code>E: [Electrical/ShortCircuit]
-inconsistent voltage constraints near USB.+</code></pre>
+USB.- (0.0 V) and USB.+ (5.0 V)
+conflict on USB+ (path: B-1 → … → B+1)</code></pre>
           </div>
           <figcaption class="border-t border-line px-5 py-4 text-pretty text-sm leading-6 text-muted">a10 and b10 share a conductive strip, so the positive and negative rails are shorted.</figcaption>
         </figure>

@@ -3,10 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "build": "mkdir -p _site && cp -R site/. _site/ && tailwindcss -i site/styles.css -o _site/assets/site.css --minify"
+    "build": "mkdir -p _site && cp -R site/. _site/ && node scripts/build-rule-pages.mjs && tailwindcss -i site/styles.css -o _site/assets/site.css --minify && node scripts/check-rule-pages.mjs"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.3",
+    "markdown-it": "^15.0.2",
     "tailwindcss": "4.3.3"
   }
 }

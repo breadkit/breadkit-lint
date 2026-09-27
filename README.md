@@ -83,7 +83,7 @@ or browse the [project site](https://breadkit.github.io/breadkit-lint/).
 
 Run `bklint --list-rules` to see every rule and
 `bklint --explain Electrical/ShortCircuit` for guidance. The complete
-[rule reference](docs/rules) includes examples.
+[rule reference](https://breadkit.github.io/breadkit-lint/rules/) includes examples.
 
 ## Configuration
 

@@ -8,12 +8,18 @@ on:
       - "package.json"
       - "package-lock.json"
       - "site/**"
+      - "docs/rules/**"
+      - "scripts/build-rule-pages.mjs"
+      - "scripts/check-rule-pages.mjs"
   pull_request:
     paths:
       - ".github/workflows/pages.yml"
       - "package.json"
       - "package-lock.json"
       - "site/**"
+      - "docs/rules/**"
+      - "scripts/build-rule-pages.mjs"
+      - "scripts/check-rule-pages.mjs"
   workflow_dispatch:
 
 permissions:
