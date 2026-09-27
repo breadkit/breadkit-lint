@@ -223,6 +223,13 @@ module Breadkit
           def check(context) = emit(context, :floating_inputs)
         end
 
+        class MissingPullResistor < BuiltinRule
+          rule "Electrical/MissingPullResistor", severity: :info,
+            description: "A supply-switched input has no modeled pull resistor"
+
+          def check(context) = emit(context, :missing_pull_resistors)
+        end
+
         class DanglingWire < BuiltinRule
           rule "Electrical/DanglingWire", severity: :warning, description: "A wire end has no other connection"
 

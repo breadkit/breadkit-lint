@@ -27,6 +27,7 @@ rules:
   Electrical/ShortCircuit: Power constraints produce inconsistent voltages.
   Electrical/ShortedComponent: A two-pin component is bypassed.
   Electrical/FloatingPin: A component pin has no external connection.
+  Electrical/MissingPullResistor: A supply-switched input has no modeled pull resistor.
   Electrical/DanglingWire: A wire end has no other connection.
   Electrical/SplitRail: A used segment of a split rail has no supply.
   Electrical/MissingSeriesResistor: An LED has an unprotected path across a supply.

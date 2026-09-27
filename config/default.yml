@@ -36,6 +36,7 @@ Electrical/ShortCircuit: {Enabled: true, Severity: error}
 Electrical/ShortedComponent: {Enabled: true, Severity: warning}
 Electrical/FloatingPin: {Enabled: true, Severity: warning}
 Electrical/FloatingInput: {Enabled: true, Severity: info}
+Electrical/MissingPullResistor: {Enabled: true, Severity: info}
 Electrical/DanglingWire: {Enabled: true, Severity: warning}
 Electrical/SplitRail: {Enabled: true, Severity: warning}
 Electrical/MissingSeriesResistor: {Enabled: true, Severity: error}

@@ -31,6 +31,7 @@ rules:
   Electrical/ShortedComponent: 2端子部品が迂回されています。
   Electrical/FloatingPin: 部品ピンが外部に接続されていません。
   Electrical/FloatingInput: 入力ネットに駆動源やプル抵抗が定義されていません。
+  Electrical/MissingPullResistor: 電源へ切り替える入力にプル抵抗がありません。
   Electrical/DanglingWire: ワイヤの端が他の要素に接続されていません。
   Electrical/SplitRail: 分断された電源レールの一部に電源がありません。
   Electrical/MissingSeriesResistor: LED に電流制限抵抗がありません。
@@ -88,6 +89,7 @@ guidance:
   Electrical/ShortedComponent: 部品の両端が別々のネットにつながるように配置してください。
   Electrical/FloatingPin: 使用するピンを接続し、未使用なら unused で明示してください。
   Electrical/FloatingInput: 必要に応じてプルアップ、プルダウン、または出力ピンに接続してください。
+  Electrical/MissingPullResistor: スイッチを開いたときに入力が浮かないよう、電源端子へ固定抵抗で接続してください。
   Electrical/DanglingWire: ワイヤの両端を部品、電源、または別のワイヤにつないでください。
   Electrical/SplitRail: 表示された2つの穴をワイヤで橋渡ししてください。
   Electrical/MissingSeriesResistor: LED と電源または GPIO の間に電流制限抵抗を直列に入れてください。
@@ -152,6 +154,7 @@ messages:
   unplaced_pin: "%{pin} がボードの穴に配置されていません"
   floating_pin: "%{pin} が外部に接続されていません"
   floating_input: "%{pin} にモデル化された駆動源またはプル抵抗がありません"
+  missing_pull_resistor: "%{switch} を開くと %{pin} が浮く可能性があります。プル抵抗を追加してください"
   dangling_wire: "%{wire} の端が接続されていません"
   split_rail: "%{rail} の使用中の区間に電源がありません。%{bridge} を橋渡ししてください"
   missing_series_resistor: "%{ref} に直列の電流制限抵抗がありません"

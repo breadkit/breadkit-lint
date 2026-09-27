@@ -81,6 +81,45 @@ module Breadkit
         end
       end
 
+      def missing_pull_resistors(circuit, rule, state)
+        switches = supply_switch_input_nets(circuit, state)
+        return [] if switches.empty?
+        anchored = anchored_input_nets(circuit, state)
+        circuit.components.values.flat_map do |component|
+          component.pins.values.filter_map do |pin|
+            next unless pin.role == "input" && pin.hole_id
+            next if component.unused.include?(pin.name) || component.unused.include?(pin.number)
+            reference = "#{component.ref}.#{pin.name}"
+            net = circuit.net_of(reference, state)
+            switch = net && switches[net.name]
+            next unless switch && !anchored[net.name]
+            message = translate("missing_pull_resistor", "#{reference} can float when #{switch.ref} is open; add a pull resistor",
+                                pin: reference, switch: switch.ref)
+            offense(rule.id, message, component.location,
+                    targets: { components: [component.ref, switch.ref], pins: [reference], nets: [net.name] })
+          end
+        end
+      end
+
+      def supply_switch_input_nets(circuit, state)
+        supplies = circuit.voltage_sources.flat_map do |source|
+          [source.plus, source.minus].filter_map { |terminal| circuit.net_of(terminal, state)&.name }
+        end
+        return {} if supplies.empty?
+
+        circuit.components.values.each_with_object({}) do |component, found|
+          Array(component.part.data["switch"]).each do |pair|
+            pins = pair.map { |reference| component.pin(reference) }
+            next unless pins.all?
+            nets = pins.map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
+            next unless nets.all? && nets.uniq.length == 2
+            nets.each_with_index do |net, index|
+              found[net] ||= component if !supplies.include?(net) && supplies.include?(nets[1 - index])
+            end
+          end
+        end
+      end
+
       def anchored_input_nets(circuit, state)
         anchored = {}
         circuit.voltage_sources.each do |source|

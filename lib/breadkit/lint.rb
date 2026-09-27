@@ -278,6 +278,8 @@ module Breadkit
             offenses.concat(checked)
           end
         end
+        pull_pins = offenses.select { |item| item.rule == "Electrical/MissingPullResistor" }.flat_map { |item| item.targets.fetch(:pins, []) }
+        offenses.reject! { |item| item.rule == "Electrical/FloatingInput" && item.state.nil? && (item.targets.fetch(:pins, []) & pull_pins).any? }
         baseline = offenses.select { |item| item.state.nil? }.map { |item| [item.rule, item.message, item.location&.line] }
         offenses.reject { |item| item.state && baseline.include?([item.rule, item.message, item.location&.line]) }
                 .uniq { |item| [item.rule, item.message, item.location&.line, item.state] }

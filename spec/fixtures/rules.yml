@@ -258,6 +258,21 @@ Electrical/FloatingInput:
     supply :USB, voltage: 5, plus: 'B+1', minus: 'B-1'
     ic :U1, '74hc08', at: 'e10'
     wire 'a10', 'B+2'
+Electrical/MissingPullResistor:
+  offense: |
+    board :half
+    supply :USB, voltage: 5, plus: 'B+1', minus: 'B-1'
+    ic :U1, '74hc08', at: 'e10'
+    part :SW1, :slide_switch_spst, pins: %w[a10 a12]
+    wire 'b12', 'B+2'
+  no_offense: |
+    board :half
+    supply :USB, voltage: 5, plus: 'B+1', minus: 'B-1'
+    ic :U1, '74hc08', at: 'e10'
+    part :SW1, :slide_switch_spst, pins: %w[a10 a12]
+    wire 'b12', 'B+2'
+    resistor :R1, '10k', pins: %w[b10 b13]
+    wire 'a13', 'B-2'
 Electrical/DanglingWire:
   offense: |
     board :half
