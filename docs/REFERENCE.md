@@ -1,66 +1,29 @@
 # breadkit-lint reference
 
-## Quick start
+Start with the [README](../README.md) for installation and a first lint run.
+For individual checks, use the [rule reference](https://breadkit.github.io/breadkit-lint/rules/).
 
-Install the published gems with Ruby 3.3 or newer:
+## Inputs and results
 
-```sh
-gem install breadkit-lint
-bklint circuit.bk.rb
-```
+`bklint [options] [FILES...]` accepts Ruby DSL (`.bk.rb`), declarative YAML
+and TOML (`.bk.yml`, `.bk.yaml`, `.bk.toml`), and Breadkit JSON IR. It scans
+directories recursively. With no file argument, it scans the current directory.
+Named multi-board circuits and IR v2 are supported; board holes use qualified
+IDs such as `B1.a10`.
 
-The features documented below track this repository's main branch. A published
-gem may lag behind main; check its version and Breadkit core dependency before
-using these examples. To run the latest source, check out both repositories as
-siblings:
+The nearest `.bklint.yml` configures each file unless `--config` is given.
+Exit status is `0` when no finding reaches the failure level, `1` for
+findings, and `2` for invalid input or configuration. Ruby DSL circuits and
+configuration `require` entries execute code; inspect only trusted files.
+JSON IR is data-only.
 
-```sh
-git clone https://github.com/breadkit/breadkit.git
-git clone https://github.com/breadkit/breadkit-lint.git
-cd breadkit-lint
-bundle install
-bundle exec bklint ../breadkit/examples/01_led_button.bk.rb
-```
+## Rules and configuration
 
-From the source checkout, focus on one rule or write a machine-readable report:
+Run `bklint --list-rules` to discover IDs and
+`bklint --explain Electrical/ShortCircuit` for a rule's guidance. The
+[default configuration](../config/default.yml) lists every rule and setting.
 
-```sh
-bundle exec bklint circuit.bk.rb --only Electrical/ShortCircuit
-bundle exec bklint circuit.bk.rb --format json --out lint.json
-bundle exec bklint circuit.bk.rb --format sarif --out lint.sarif
-bundle exec bklint circuit.bk.rb --format markdown --out lint.md
-bundle exec bklint circuit.bk.rb --format rdjson --out lint.rdjson
-bundle exec bklint circuit.bk.rb --teach
-bundle exec bklint circuit.bk.rb --fix-check
-bundle exec bklint circuit.bk.rb --fix
-cat circuit.bk.rb | bundle exec bklint --stdin circuit.bk.rb
-```
-
-JSON and SARIF findings include a short fix suggestion and link to the
-[published rule reference](https://breadkit.github.io/breadkit-lint/rules/).
-For an LED directly across a supply, the missing series resistor rule also
-suggests an E12 value when the LED definition declares its forward voltage and
-maximum current. The value is an estimate; verify component tolerances.
-
-Try the [shared circuit examples](https://github.com/breadkit/breadkit/tree/main/examples)
-or browse the [project site](https://breadkit.github.io/breadkit-lint/).
-
-## What it checks
-
-| Area | Example |
-| --- | --- |
-| [Layout](rules/Layout/HoleConflict.md) | Two parts occupy the same hole, or a pin is left off the board. |
-| [Electrical](rules/Electrical/ShortCircuit.md) | A short circuit, floating pin, reversed polarity, or missing ground. |
-| [Intent](rules/Intent/ConnectionMismatch.md) | The resolved circuit does not match an expected connection. |
-| [Style](rules/Style/WireColor.md) | Wire colors do not match their power or ground role. |
-
-Run `bklint --list-rules` to see every rule and
-`bklint --explain Electrical/ShortCircuit` for guidance. The complete
-[rule reference](https://breadkit.github.io/breadkit-lint/rules/) includes examples.
-
-## Configuration
-
-Create `.bklint.yml` next to the circuit:
+Create `.bklint.yml` beside a circuit to override only what you need:
 
 ```yaml
 Electrical/FloatingPin:
@@ -70,35 +33,21 @@ Electrical/FloatingPin:
 
 Style/WireColor:
   Enabled: true
-  PositiveColors: [red, orange]
-  GroundColors: [black, blue]
 ```
 
-The [default configuration](../config/default.yml) lists built-in rules and their
-settings. Use `inherit_from` to share settings and `use_parts` to load custom
-part definitions. Rule `Include` and `Exclude` patterns match paths relative to
-the configuration file; `Exclude` wins when both match. `AllRules.Exclude`
-skips an entire file. You can also set the failure level, switch states, and
-custom rule files. Use `lint_disable` in a circuit to suppress
-a rule for a specific part, pin, or wire. Unknown rule IDs are errors; set
-`AllRules.RequireDisableReason` to require a `reason:` on suppressions.
-`AllRules.NewRules` controls whether new rules start enabled or pending. Pair
-`bklint --format json` with `bkrender --annotations` to show offenses on a
-diagram.
-Use `expect(when: "SW1") { connected "SW1.1", "SW1.3" }` in a circuit to
-check a connection when that switch is closed.
-Named expectations evaluate only their named switch combination; they do not
-consume the exhaustive state budget.
-Use `expect_voltage "VCC", 3.0..3.6` and `expect_current "R1", 0.001..0.02`
-to check calculated DC ranges. Current uses amperes and is compared by
-magnitude. Add a ground label for absolute voltage checks; unsupported DC
-models report `Intent/MeasurementUnavailable`.
-Set `current_limit: 0.02` on a `supply` to check a 20 mA supply against
-modeled DC loads with `Electrical/SupplyOverload`.
+`Include` and `Exclude` match paths relative to the config file; `Exclude`
+wins. `AllRules.Exclude` skips entire files. Use `inherit_from` for shared
+settings and `use_parts` for custom definitions. Unknown rule IDs are errors.
+A circuit can use `lint_disable` with an optional target and reason;
+`AllRules.RequireDisableReason` makes reasons mandatory.
 
-To adopt lint in a project with existing findings, generate a baseline once.
-The saved entries omit line numbers, so moving code does not bring known
-findings back. New findings still affect the exit status.
+Connection expectations may name a switch state. `expect_voltage` and
+`expect_current` check supported DC ranges; unknown operating points produce
+`Intent/MeasurementUnavailable`. See the
+[core DSL reference](https://github.com/breadkit/breadkit/blob/main/docs/dsl.md)
+for declaration syntax.
+
+To adopt lint with existing findings:
 
 ```sh
 bklint --generate-baseline .bklint-baseline.json
@@ -106,16 +55,34 @@ bklint --baseline .bklint-baseline.json
 bklint --diff origin/main --format github
 ```
 
-The [lint JSON schema](https://breadkit.github.io/breadkit-lint/schemas/lint-v1.json)
-describes the report format for integrations.
+Baseline entries omit line numbers, so moving known findings does not make
+them new. The [lint JSON schema](https://breadkit.github.io/breadkit-lint/schemas/lint-v1.json)
+describes machine-readable output.
+
+## CLI options
+
+| Option | Use |
+| --- | --- |
+| `--format FORMAT` | `text`, `json`, `github`, `sarif`, `markdown`, `junit`, `checkstyle`, or `rdjson`. |
+| `--out PATH` | Write the report to a file. |
+| `--only RULES`, `--except RULES` | Select rule IDs. |
+| `--fail-level LEVEL` | Fail on `error`, `warning` (default), or `info`. |
+| `--switch-states MODE` | Check `none`, `single` (default), or `all` switch states. |
+| `--state-budget COUNT` | Limit exhaustive states (default 256); report incomplete analysis when exceeded. |
+| `--fix-check`, `--fix` | Preview or apply unambiguous Ruby DSL edits. |
+| `--watch` | Rerun when circuit, part, or config files change. |
+| `--stdin PATH` | Read a Ruby, YAML, or TOML circuit from standard input. |
+| `--teach`, `--locale LOCALE` | Show short explanations or select `en`, `ja`, `zh`, or `ko` messages. |
+
+Use `bklint --help` for all flags. Fixing currently covers one-character
+wire-color typos and standalone unused suppressions; ambiguous edits and
+declarative/JSON files are left unchanged. Fix modes cannot be combined with
+stdin, diff, baseline, or `--out`.
 
 ## GitHub Action
 
-The repository root is a composite Action. It installs the current lint source
-and a pinned Breadkit core source checkout. The pinned core revision lives in
-`scripts/action-run.sh`; update it alongside compatibility checks. Pass one
-circuit file or a directory of circuits. A push workflow can upload SARIF to
-GitHub code scanning:
+The repository root is a composite Action. It installs this source and a
+pinned compatible Breadkit core revision. This push workflow uploads SARIF:
 
 ```yaml
 name: Circuit lint
@@ -135,40 +102,16 @@ jobs:
           path: circuits
 ```
 
-`upload-sarif` defaults to `true`. The Action uploads the report even when a
-lint finding fails the job. Set `fail-level` to `error`, `warning` (default), or
-`info`. Pin the Action to a commit SHA when you need a reproducible workflow.
+Pin the Action to a commit SHA for reproducible runs. `upload-sarif` defaults
+to `true`; the report is uploaded even when findings fail the job. For
+untrusted pull requests, run on `pull_request` with `contents: read`, no
+secrets, and `upload-sarif: "false"` to emit check annotations. Do not run
+proposed Ruby DSL files with a write token or `pull_request_target`.
+The Action does not post PR comments.
 
-For pull request annotations, use a separate read-only workflow. Set
-`upload-sarif: "false"` to emit GitHub Check annotations without a write token:
+## Local integrations
 
-```yaml
-name: Circuit PR lint
-on: pull_request
-permissions:
-  contents: read
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: breadkit/breadkit-lint@main
-        with:
-          path: circuits
-          upload-sarif: "false"
-```
-
-Ruby DSL circuits and `.bklint.yml` `require` entries can execute code. Keep
-the PR workflow on `pull_request` with read-only permissions and no secrets;
-do not use `pull_request_target` to run proposed circuit files. The Action
-does not post PR comments. To attach an annotated render to the PR review,
-follow the [split workflow guide](ACTION_PR_REVIEW.md). It keeps the
-renderer in the read-only job and posts an artifact link from a separate,
-trusted job. GitHub artifacts are not stable inline image URLs.
-
-In a Rakefile, define a lint task with selected files and CLI options:
+A Rakefile can lint selected files:
 
 ```ruby
 require "breadkit/lint/rake_task"
@@ -179,69 +122,8 @@ Breadkit::RakeTask.new(:circuits) do |task|
 end
 ```
 
-For a local pre-commit check, copy [scripts/pre-commit](../scripts/pre-commit) to
-your project's `.git/hooks/pre-commit` and make it executable. It lints the
-staged contents of changed `.bk.rb`, `.bk.yml`, `.bk.yaml`, and `.bk.toml`
-files and blocks a commit when bklint fails. It reads each file from Git's
-index, so unstaged working-copy changes do not affect the check.
-
-If your project already uses Guard, add the `guard` gem and this optional
-plugin to its `Guardfile`:
-
-```ruby
-require "guard/breadkit"
-
-guard :breadkit, files: ["circuits"] do
-  watch(%r{^circuits/.*\.bk\.(?:rb|ya?ml|toml|json)$})
-  watch(%r{^parts/.*\.ya?ml$})
-  watch(".bklint.yml")
-end
-```
-
-Changed circuits are linted directly. Changes to part definitions or the lint
-configuration rerun all paths listed in `files`. Set `args: ["--format", "github"]`
-to pass additional bklint options.
-
-## Command reference
-
-`bklint [options] [FILES...]` accepts `.bk.rb`, `.bk.yml`, `.bk.yaml`, `.bk.toml`, and Breadkit IR `.json` files.
-Directories are scanned recursively. With no files, it scans visible inputs in
-the current directory and skips `node_modules`. Each file uses the nearest
-`.bklint.yml` unless you pass `--config`.
-
-| Option | Description |
-| --- | --- |
-| `-f, --format FORMAT` | `text` (default), `json`, `github`, `sarif`, `markdown`, `junit`, `checkstyle`, or `rdjson`. |
-| `-o, --out PATH` | Write output to a file. |
-| `-c, --config PATH` | Load a specific configuration. |
-| `--stdin PATH` | Lint Ruby DSL or declarative YAML/TOML from standard input using PATH for diagnostics and relative part files. |
-| `--generate-baseline PATH` | Save current nonfatal findings and exit successfully. |
-| `--baseline PATH` | Hide findings listed in a generated baseline. |
-| `--diff REF` | Report findings added since a local Git revision, using its archived circuit and part files. |
-| `--watch` | Rerun lint when circuit, part, or configuration files change; press Ctrl-C to stop. |
-| `--fix-check` / `--fix-dry-run` | Preview safe Ruby DSL source edits without writing; exit `1` when an edit is available. |
-| `--fix` | Apply safe Ruby DSL source edits, then lint the updated files. |
-| `--teach` | Add short rule explanations to text output. |
-| `--fail-level LEVEL` | `error`, `warning` (default), or `info`. |
-| `--only RULES` / `--except RULES` | Select or skip comma-separated rule IDs. |
-| `--switch-states MODE` | Evaluate `none`, `single` (default), or `all` switch states. |
-| `--state-budget COUNT` | Limit exhaustive switch combinations (default: 256); report an error instead of silently skipping states when the limit is exceeded. Also available as `AllRules.StateBudget` in `.bklint.yml`. |
-| `--timeout SECONDS` | Limit DSL evaluation time per circuit (default: 10). |
-| `--list-rules` / `--explain RULE` | Discover rules and read guidance. |
-| `--locale LOCALE` | Select `en`, `ja`, `zh`, or `ko` messages and rule descriptions. |
-
-Exit status is `0` when no offense reaches the failure level, `1` when one
-does, and `2` for invalid input, configuration, or command usage. Use
-`--format github` for GitHub Actions annotations.
-
-Source fixing currently handles a uniquely identifiable one-character typo in
-a named wire color and an unused `lint_disable` that occupies its whole line.
-Ambiguous colors, comments on suppression lines, malformed Ruby, and
-declarative/JSON inputs are left unchanged. Fix modes cannot be combined with
-stdin, diff, baseline, or `--out`. Ruby DSL reports include source columns when
-the location can be identified unambiguously.
-
-## Input safety
-
-Breadkit DSL files execute Ruby code, and configuration `require` entries
-execute Ruby files. Inspect only trusted files. Use JSON IR for data-only input.
+The [pre-commit hook](../scripts/pre-commit) reads staged circuit files from
+Git's index. An optional Guard plugin is available as
+`require "guard/breadkit"`; configure watched circuits in your Guardfile.
+Use `bklint --format json` with `bkrender --annotations` to draw findings
+on a diagram.

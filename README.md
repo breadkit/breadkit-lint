@@ -55,7 +55,7 @@ contains the full list.
 
 - [Configuration, CLI options, and integrations](docs/REFERENCE.md)
 - [Default configuration](config/default.yml) and [lint JSON schema](https://breadkit.github.io/breadkit-lint/schemas/lint-v1.json)
-- [Multi-board circuits](docs/MULTI_BOARD.md) and [pull request review setup](docs/ACTION_PR_REVIEW.md)
+- [Core circuit DSL](https://github.com/breadkit/breadkit/blob/main/docs/dsl.md) for named boards and connection expectations
 
 Ruby DSL files and configuration `require` entries can execute code. Inspect
 only trusted files; use JSON IR for data-only input.
