@@ -1,0 +1,42 @@
+name: Circuit review comment
+
+on:
+  workflow_run:
+    workflows: [Circuit review]
+    types: [completed]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  comment:
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.pull_requests[0].number != null &&
+      github.event.workflow_run.pull_requests[1].number == null
+    runs-on: ubuntu-latest
+    steps:
+      - name: Attach the reviewed image to its pull request
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          REVIEW_RUN: ${{ github.event.workflow_run.id }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          set -euo pipefail
+          [[ "$PR_NUMBER" =~ ^[0-9]+$ ]] || exit 0
+          directory="$RUNNER_TEMP/breadkit-reviewed-image"
+          mkdir -p "$directory"
+          if ! gh run download "$REVIEW_RUN" -R "$REPOSITORY" --name breadkit-annotated --dir "$directory"; then
+            exit 0
+          fi
+          image="$directory/annotated.png"
+          [[ -f "$image" && ! -L "$image" ]] || exit 0
+          [[ "$(file -b --mime-type "$image")" == "image/png" ]] || exit 0
+          bytes="$(stat -c %s "$image")"
+          (( bytes >= 8 && bytes <= 20000000 )) || exit 0
+          gh issue comment "$PR_NUMBER" -R "$REPOSITORY" --body "Breadkit circuit review" \
+            --attach "$image#Annotated breadboard circuit"

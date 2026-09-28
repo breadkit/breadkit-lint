@@ -58,10 +58,10 @@ RSpec.describe "worst-case current checks" do
     Dir.mktmpdir do |directory|
       part = File.join(directory, "led.yml")
       File.write(part, <<~YAML)
-        id: led
-        override: true
+        id: rated_led
         category: diode
         placement: leads
+        flags: [needs_series_resistor]
         pins:
           - {num: 1, name: anode}
           - {num: 2, name: cathode}
@@ -74,7 +74,7 @@ RSpec.describe "worst-case current checks" do
         use_parts #{part.inspect}
         supply :BAT, voltage: 3.0..4.2, plus: 'B+1', minus: 'B-1'
         resistor :R1, '100 5%', pins: %w[a10 a11]
-        led :D1, anode: 'a12', cathode: 'a13'
+        part :D1, :rated_led, pins: {anode: 'a12', cathode: 'a13'}
         wire 'b10', 'B+2'
         wire 'b11', 'b12'
         wire 'b13', 'B-2'
@@ -83,6 +83,21 @@ RSpec.describe "worst-case current checks" do
       expect(found.map(&:rule)).to eq(["Electrical/LedOvercurrent"])
       expect(found.first.message).to include("endpoint")
     end
+  end
+
+  it "checks the built-in datasheet-rated LED model" do
+    source = <<~RUBY
+      board :half
+      supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+      resistor :R1, '100', pins: %w[a10 a11]
+      part :D1, :kingbright_wp7113id, pins: {anode: 'a12', cathode: 'a13'}
+      wire 'b10', 'B+2'
+      wire 'b11', 'b12'
+      wire 'b13', 'B-2'
+    RUBY
+    found = lint(source, only: ["Electrical/LedOvercurrent"])
+    expect(found.map(&:rule)).to eq(["Electrical/LedOvercurrent"])
+    expect(found.first.message).to include("30.0 mA")
   end
 
   it "warns when too many uncertain values prevent a complete bound" do

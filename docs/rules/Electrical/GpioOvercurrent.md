@@ -15,4 +15,4 @@ provides:
 
 Connecting a 100 Ω resistor across `OUT` and `GND` draws 50 mA, which exceeds the 10 mA limit. Increase the load resistance or use a suitable driver.
 
-Ordinary GPIO pins without an explicit output state, unrated pins, and circuits whose DC analysis is unsupported are skipped. The check includes source and sink current and reports each rated pin separately.
+Ordinary GPIO pins without an explicit output state, unrated pins, and circuits whose DC analysis is unsupported are skipped. The check includes source and sink current, declared source voltage ranges, and resistor tolerances, and reports each rated pin separately. Diode circuits use endpoint estimates; `Electrical/DcBoundsIncomplete` warns when a passing check does not establish safety across the full range.

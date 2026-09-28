@@ -27,6 +27,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install PNG renderer
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
       - uses: ./ # zizmor: ignore[self-repository] actionlint rejects $/ for root actions
         with:
           path: spec/fixtures/action/basic.bk.rb
@@ -40,3 +42,15 @@ jobs:
         env:
           RESULT: ${{ steps.rated_output.outcome }}
         run: test "$RESULT" = failure
+      - id: annotated
+        uses: ./ # zizmor: ignore[self-repository] actionlint rejects $/ for root actions
+        with:
+          path: spec/fixtures/action/basic.bk.rb
+          upload-sarif: "false"
+          annotated-image: "true"
+      - name: Check annotated PNG
+        env:
+          IMAGE: ${{ steps.annotated.outputs.image-file }}
+        run: |
+          test -s "$IMAGE"
+          test "$(file -b --mime-type "$IMAGE")" = image/png

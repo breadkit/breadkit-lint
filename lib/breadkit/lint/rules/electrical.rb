@@ -322,7 +322,7 @@ module Breadkit
       def minimum_resistances(circuit, rule, state)
         pots = circuit.components.values.select { |component| component.part.id == "pot" }
         circuit.components.values.filter_map do |led|
-          next unless led.part.id == "led" && pots.any?
+          next unless led_part?(led.part) && pots.any?
           polarity = led.part.data["polarity"] || {}
           high = circuit.net_of("#{led.ref}.#{polarity['positive']}", state)&.name
           low = circuit.net_of("#{led.ref}.#{polarity['negative']}", state)&.name
@@ -660,7 +660,7 @@ module Breadkit
       end
 
       def led_overcurrent(circuit, rule, state)
-        rated = circuit.components.values.select { |component| component.part.id == "led" && component.part.data["max_forward_current"] }
+        rated = circuit.components.values.select { |component| led_part?(component.part) && component.part.data["max_forward_current"] }
         return [] if rated.empty?
 
         analysis = bounded_dc_analysis(circuit, state)
@@ -742,9 +742,13 @@ module Breadkit
         end
       end
 
+      def led_part?(part)
+        part.id == "led" || (part.data["category"] == "diode" && Array(part.data["flags"]).include?("needs_series_resistor"))
+      end
+
       def dc_bounds_incomplete(circuit, rule, state)
         rated = circuit.supplies.find(&:current_limit) || circuit.components.values.find do |component|
-          (component.part.id == "led" && component.part.data["max_forward_current"]) ||
+          (led_part?(component.part) && component.part.data["max_forward_current"]) ||
             (component.part.id == "resistor" && component.value && Breadkit::Value.power_rating(component.value)) ||
             Array(component.part.data["provides"]).any? do |source|
               %w[positive negative].any? do |terminal|

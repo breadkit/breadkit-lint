@@ -10,10 +10,16 @@ inputs:
   fail-level:
     description: Lowest finding severity that fails the job (error, warning, or info)
     default: warning
+  annotated-image:
+    description: Render an annotated PNG for one circuit file (requires a PNG backend)
+    default: "false"
 outputs:
   sarif-file:
     description: Generated SARIF file path when upload-sarif is true
     value: ${{ steps.lint.outputs['sarif-file'] }}
+  image-file:
+    description: Generated annotated PNG path when annotated-image is true
+    value: ${{ steps.lint.outputs['image-file'] }}
 runs:
   using: composite
   steps:
@@ -27,7 +33,17 @@ runs:
         INPUT_PATH: ${{ inputs.path }}
         INPUT_UPLOAD_SARIF: ${{ inputs['upload-sarif'] }}
         INPUT_FAIL_LEVEL: ${{ inputs['fail-level'] }}
+        INPUT_ANNOTATED_IMAGE: ${{ inputs['annotated-image'] }}
       run: bash "$GITHUB_ACTION_PATH/scripts/action-run.sh"
+    - name: Upload annotated image
+      if: ${{ inputs['annotated-image'] == 'true' && steps.lint.outputs['image-file'] != '' }}
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: breadkit-annotated
+        path: ${{ steps.lint.outputs['image-file'] }}
+        if-no-files-found: error
+        include-hidden-files: true
+        retention-days: 1
     - name: Upload SARIF
       if: ${{ inputs['upload-sarif'] == 'true' && steps.lint.outputs['sarif-file'] != '' }}
       uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1

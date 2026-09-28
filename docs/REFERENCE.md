@@ -50,9 +50,10 @@ Connection expectations may name a switch state. `expect_voltage` and
 `Intent/MeasurementUnavailable`. See the
 [core DSL reference](https://github.com/breadkit/breadkit/blob/main/docs/dsl.md)
 for declaration syntax.
-LED current, GPIO current, and supply-load estimates use nominal component
-values. Supply ranges and resistor tolerances are not propagated through those
-DC current estimates.
+LED current, GPIO current, supply load, and resistor power checks evaluate the
+declared source endpoints and resistor tolerance bounds. Linear resistor
+circuits get complete bounds. Diode circuits get endpoint estimates; when those
+or other bounds are incomplete, `Electrical/DcBoundsIncomplete` says so.
 
 To adopt lint with existing findings:
 
@@ -78,6 +79,7 @@ describes machine-readable output.
 | `--state-budget COUNT` | Limit exhaustive states (default 256); report incomplete analysis when exceeded. |
 | `--fix-check`, `--fix` | Preview or apply unambiguous Ruby DSL edits. |
 | `--watch` | Rerun when circuit, part, or config files change. |
+| `--jobs COUNT` | Inspect independent files with up to COUNT workers (maximum 32); report order stays stable. |
 | `--stdin PATH` | Read a Ruby, YAML, or TOML circuit from standard input. |
 | `--teach`, `--locale LOCALE` | Show short explanations or select `en`, `ja`, `zh`, or `ko` messages. |
 
@@ -113,9 +115,16 @@ jobs:
 Pin the Action to a commit SHA for reproducible runs. `upload-sarif` defaults
 to `true`; the report is uploaded even when findings fail the job. For
 untrusted pull requests, run on `pull_request` with `contents: read`, no
-secrets, and `upload-sarif: "false"` to emit check annotations. Do not run
-proposed Ruby DSL files with a write token or `pull_request_target`.
-The Action does not post PR comments.
+secrets, and `upload-sarif: "false"` to emit check annotations. Set
+`annotated-image: "true"` for one circuit file to upload an annotated PNG
+artifact. Copy the [read-only review workflow](../examples/github-actions/circuit-review.yml)
+and [comment workflow](../examples/github-actions/circuit-review-comment.yml)
+into your repository's `.github/workflows` directory to attach that image to
+its pull request. The comment workflow consumes only a validated PNG artifact;
+it never checks out or executes the proposed circuit. It skips runs without
+one pull request in GitHub's trusted workflow metadata, which can include some
+fork runs. Do not run proposed Ruby DSL files with a write token or
+`pull_request_target`.
 
 ## Local integrations
 

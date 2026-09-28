@@ -1,0 +1,25 @@
+name: Circuit review
+
+on:
+  pull_request:
+    paths:
+      - "circuits/**"
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install PNG renderer
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
+      - name: Lint and render circuit
+        uses: breadkit/breadkit-lint@main # Pin to a commit SHA in your repository.
+        with:
+          path: circuits/example.bk.rb # Replace with one circuit file.
+          upload-sarif: "false"
+          annotated-image: "true"
