@@ -52,6 +52,7 @@ rules:
   Electrical/MissingBaseResistor: 出力ピンとトランジスタのベース間に直列抵抗がありません。
   Electrical/MissingFlybackDiode: 誘導負荷の両端に逆向きのフライバックダイオードがありません。
   Electrical/SupplyOverload: 電源の供給電流が指定した上限を超えています。
+  Electrical/DcBoundsIncomplete: Worst-case DC current or power bounds are incomplete.
   Electrical/NetLabelConflict: 同じネットに異なる名前が付いています。
   Intent/ConnectionMismatch: 宣言した接続と実際の配線が異なります。
   Intent/UnknownNet: 宣言で参照したネットが見つかりません。
@@ -111,6 +112,7 @@ guidance:
   Electrical/MissingBaseResistor: 出力ピンとトランジスタのベースの間に直列抵抗を追加してください。
   Electrical/MissingFlybackDiode: 誘導負荷の両端に逆向きのダイオードを接続してください。
   Electrical/SupplyOverload: 電源の許容電流を確認し、負荷を減らすか適切な電源を使用してください。
+  Electrical/DcBoundsIncomplete: Check the circuit with a dedicated simulator before relying on component ratings.
   Electrical/NetLabelConflict: 同じネットに付いた異なるラベルを確認してください。
   Intent/ConnectionMismatch: expect の接続宣言と実際のワイヤ、ネットラベルを一致させてください。
   Intent/UnknownNet: expect で参照したネット名またはピン名を確認してください。

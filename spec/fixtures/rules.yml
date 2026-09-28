@@ -615,6 +615,19 @@ Electrical/SupplyOverload:
     board :mini
     supply :BAT, voltage: 5, plus: 'b1', minus: 'b5', current_limit: 0.01
     resistor :R1, '1k', pins: %w[a1 a5]
+Electrical/DcBoundsIncomplete:
+  offense: |
+    board :half
+    supply :BAT, voltage: 3.0..4.2, plus: 'B+1', minus: 'B-1', current_limit: 0.04
+    10.times do |index|
+      resistor "R#{index}", '100 5%', pins: ["a#{index * 2 + 1}", "a#{index * 2 + 2}"]
+    end
+  no_offense: |
+    board :half
+    supply :BAT, voltage: 5, plus: 'B+1', minus: 'B-1', current_limit: 0.04
+    resistor :R1, '100', pins: %w[a10 a11]
+    wire 'b10', 'B+2'
+    wire 'b11', 'B-2'
 Intent/ConnectionMismatch:
   offense: |
     board :half

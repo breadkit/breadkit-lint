@@ -43,6 +43,7 @@ rules:
   Electrical/MissingBaseResistor: A declared output drives a transistor base without a series resistor.
   Electrical/MissingFlybackDiode: An explicitly inductive load has no reverse flyback diode.
   Electrical/SupplyOverload: A modeled load exceeds its supply current limit.
+  Electrical/DcBoundsIncomplete: Worst-case DC current or power bounds are incomplete.
   Electrical/GpioOvercurrent: A modeled output current exceeds a pin's declared limit.
   Electrical/NetLabelConflict: Different labels name one net.
   Intent/ConnectionMismatch: Wiring differs from declared expectations.
@@ -103,6 +104,7 @@ guidance:
   Electrical/MissingBaseResistor: Add a series resistor between the output and transistor base.
   Electrical/MissingFlybackDiode: Connect a reverse-biased diode across the inductive load.
   Electrical/SupplyOverload: Reduce the load or use a supply with sufficient current capacity.
+  Electrical/DcBoundsIncomplete: Check the circuit with a dedicated simulator before relying on component ratings.
   Electrical/NetLabelConflict: Resolve the conflicting labels on the same net.
   Intent/ConnectionMismatch: Align the expect declaration with actual wires and net labels.
   Intent/UnknownNet: Check the net or pin name used by the expect declaration.

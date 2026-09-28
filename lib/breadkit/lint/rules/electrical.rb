@@ -625,17 +625,23 @@ module Breadkit
 
       def resistor_power_ratings(circuit, rule, state)
         ranges, domains = potential_ranges(circuit, state)
+        analysis = nil
         circuit.components.values.filter_map do |component|
           next unless component.part.id == "resistor" && component.value
           rating = Breadkit::Value.power_rating(component.value)
           next unless rating
-          voltage = rated_voltage(circuit, component, state, ranges, domains)
-          next unless voltage
-          minimum = Breadkit::Value.parse(component.value) * (1.0 - (Breadkit::Value.tolerance(component.value) || 0.0))
-          next unless minimum.positive?
-          watts = voltage**2 / minimum
+          analysis ||= bounded_dc_analysis(circuit, state)
+          watts = analysis.respond_to?(:power_ranges) && analysis.power_ranges&.dig(component.ref, 1)
+          unless watts
+            voltage = rated_voltage(circuit, component, state, ranges, domains)
+            next unless voltage
+            minimum = Breadkit::Value.parse(component.value) * (1.0 - (Breadkit::Value.tolerance(component.value) || 0.0))
+            next unless minimum.positive?
+            watts = voltage**2 / minimum
+          end
           next unless watts > rating
-          offense(rule.id, "#{component.ref} may dissipate #{watts.round(3)} W; rated for #{rating} W",
+          qualifier = analysis.respond_to?(:bounds_status) && analysis.bounds_status == :endpoint_only ? " (endpoint estimate)" : ""
+          offense(rule.id, "#{component.ref} may dissipate #{format('%.4g', watts)} W#{qualifier}; rated for #{rating} W",
                   component.location, targets: { components: [component.ref] }, state: state.name)
         end
       end
@@ -657,14 +663,16 @@ module Breadkit
         rated = circuit.components.values.select { |component| component.part.id == "led" && component.part.data["max_forward_current"] }
         return [] if rated.empty?
 
-        analysis = circuit.dc_analysis(state)
+        analysis = bounded_dc_analysis(circuit, state)
         return [] unless analysis.success?
 
         rated.filter_map do |component|
           limit = component.part.data["max_forward_current"]
-          current = analysis.currents[component.ref]
+          current = analysis.respond_to?(:current_ranges) && analysis.current_ranges&.dig(component.ref, 1)
+          current ||= analysis.currents[component.ref]
           next unless current && current > limit
-          offense(rule.id, "#{component.ref} may carry #{(current * 1000).round(2)} mA; maximum is #{(limit * 1000).round(2)} mA",
+          qualifier = analysis.respond_to?(:bounds_status) && analysis.bounds_status == :endpoint_only ? " (endpoint estimate)" : ""
+          offense(rule.id, "#{component.ref} may carry #{(current * 1000).round(2)} mA#{qualifier}; maximum is #{(limit * 1000).round(2)} mA",
                   component.location, targets: { components: [component.ref] }, state: state.name)
         end
       end
@@ -682,16 +690,20 @@ module Breadkit
         end
         return [] if rated.empty?
 
-        analysis = circuit.dc_analysis(state)
+        analysis = bounded_dc_analysis(circuit, state)
         return [] unless analysis.success?
 
         rated.filter_map do |component, source, pin, limit|
-          current = analysis.currents["#{component.ref}.#{source.fetch('positive')}"]
-          next unless current && current.abs > limit * (1 + 1e-9)
-          actual_ma, limit_ma = [current.abs, limit].map { |value| (value * 1000).round(2) }
+          source_name = "#{component.ref}.#{source.fetch('positive')}"
+          range = analysis.respond_to?(:current_ranges) && analysis.current_ranges&.[](source_name)
+          current = range ? range.map(&:abs).max : analysis.currents[source_name]&.abs
+          next unless current && current > limit * (1 + 1e-9)
+          actual_ma, limit_ma = [current, limit].map { |value| (value * 1000).round(2) }
           reference = "#{component.ref}.#{pin.name}"
-          message = translate("gpio_overcurrent", "#{reference} carries #{actual_ma} mA; maximum is #{limit_ma} mA",
+          qualifier = analysis.respond_to?(:bounds_status) && analysis.bounds_status == :endpoint_only ? " (endpoint estimate)" : ""
+          message = translate("gpio_overcurrent", "#{reference} carries #{actual_ma} mA#{qualifier}; maximum is #{limit_ma} mA",
                               pin: reference, current: actual_ma, limit: limit_ma)
+          message += qualifier if qualifier != "" && !message.include?(qualifier)
           net = circuit.net_of(reference, state)
           offense(rule.id, message, component.location,
                   targets: { components: [component.ref], pins: [reference], nets: [net&.name].compact }, state: state.name)
@@ -702,20 +714,61 @@ module Breadkit
         rated = circuit.supplies.select(&:current_limit)
         return [] if rated.empty?
 
-        analysis = circuit.dc_analysis(state)
+        analysis = bounded_dc_analysis(circuit, state)
         return [] unless analysis.success?
 
         rated.filter_map do |supply|
           limit = supply.current_limit
-          delivered = -analysis.currents.fetch(supply.name, 0.0)
+          range = analysis.respond_to?(:current_ranges) && analysis.current_ranges&.[](supply.name)
+          delivered = range ? -range.first : -analysis.currents.fetch(supply.name, 0.0)
           next unless delivered > limit * (1 + 1e-9)
 
           actual_ma, limit_ma = [delivered, limit].map { |value| (value * 1000).round(2) }
-          message = translate("supply_overload", "#{supply.name} supplies #{actual_ma} mA; limit is #{limit_ma} mA",
+          qualifier = analysis.respond_to?(:bounds_status) && analysis.bounds_status == :endpoint_only ? " (endpoint estimate)" : ""
+          message = translate("supply_overload", "#{supply.name} supplies #{actual_ma} mA#{qualifier}; limit is #{limit_ma} mA",
                               supply: supply.name, current: actual_ma, limit: limit_ma)
+          message += qualifier if qualifier != "" && !message.include?(qualifier)
           nets = [supply.plus, supply.minus].filter_map { |terminal| circuit.net_of(terminal, state)&.name }
           offense(rule.id, message, supply.location, targets: { nets: nets, holes: [supply.plus, supply.minus] }, state: state.name)
         end
+      end
+
+      def bounded_dc_analysis(circuit, state)
+        @bounded_dc_analysis ||= {}
+        @bounded_dc_analysis[[circuit, state]] ||= if circuit.method(:dc_analysis).parameters.any? { |kind, name| kind == :key && name == :worst_case }
+          circuit.dc_analysis(state, worst_case: true)
+        else
+          circuit.dc_analysis(state)
+        end
+      end
+
+      def dc_bounds_incomplete(circuit, rule, state)
+        rated = circuit.supplies.find(&:current_limit) || circuit.components.values.find do |component|
+          (component.part.id == "led" && component.part.data["max_forward_current"]) ||
+            (component.part.id == "resistor" && component.value && Breadkit::Value.power_rating(component.value)) ||
+            Array(component.part.data["provides"]).any? do |source|
+              %w[positive negative].any? do |terminal|
+                pin = component.pin(source.fetch(terminal))
+                pin && component.part.pin(pin.number)&.fetch("max_current", nil)
+              end
+            end
+        end
+        return [] unless rated
+
+        analysis = bounded_dc_analysis(circuit, state)
+        status = analysis.respond_to?(:bounds_status) ? analysis.bounds_status : :unavailable
+        return [] if status == :ok
+        if status == :unavailable
+          uncertain_source = circuit.voltage_sources.any? { |source| source.voltage_range && source.voltage_range.uniq.length > 1 }
+          uncertain_resistor = circuit.components.values.any? do |component|
+            component.part.id == "resistor" && component.value && Breadkit::Value.tolerance(component.value).to_f.positive?
+          end
+          return [] unless uncertain_source || uncertain_resistor || !analysis.success?
+        end
+
+        detail = status == :endpoint_only ? "diode switching can put an extreme between sampled endpoints" : status.to_s.tr("_", " ")
+        message = "worst-case DC bounds are incomplete: #{detail}; a passing current or power check does not establish safety"
+        [offense(rule.id, message, rated.location, state: state.name)]
       end
 
       def rated_voltage(circuit, component, state, ranges, domains)

@@ -52,6 +52,7 @@ rules:
   Electrical/MissingBaseResistor: 输出引脚与晶体管基极之间缺少串联电阻。
   Electrical/MissingFlybackDiode: 感性负载两端缺少反向续流二极管。
   Electrical/SupplyOverload: 电源供给电流超过规定上限。
+  Electrical/DcBoundsIncomplete: Worst-case DC current or power bounds are incomplete.
   Electrical/NetLabelConflict: 同一网络被赋予不同标签。
   Intent/ConnectionMismatch: 实际接线与声明的连接意图不符。
   Intent/UnknownNet: 连接声明引用了未知网络。
@@ -111,6 +112,7 @@ guidance:
   Electrical/MissingBaseResistor: 在输出引脚与晶体管基极之间串联电阻。
   Electrical/MissingFlybackDiode: 在感性负载两端反向并联二极管。
   Electrical/SupplyOverload: 减少负载，或选用供电能力足够的电源。
+  Electrical/DcBoundsIncomplete: Check the circuit with a dedicated simulator before relying on component ratings.
   Electrical/NetLabelConflict: 解决同一网络上的标签冲突。
   Intent/ConnectionMismatch: 使 expect 声明与实际导线及网络标签一致。
   Intent/UnknownNet: 核对 expect 声明中的网络或引脚名称。

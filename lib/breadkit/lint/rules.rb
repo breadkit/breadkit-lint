@@ -334,6 +334,13 @@ module Breadkit
           def check(context) = emit(context, :supply_overloads)
         end
 
+        class DcBoundsIncomplete < BuiltinRule
+          rule "Electrical/DcBoundsIncomplete", severity: :info,
+            description: "Worst-case DC current or power bounds are incomplete", state_sensitive: true
+
+          def check(context) = emit(context, :dc_bounds_incomplete)
+        end
+
         class I2CAddressConflict < BuiltinRule
           rule "Electrical/I2CAddressConflict", severity: :error,
             description: "I2C devices on one bus use the same address", state_sensitive: true
