@@ -46,6 +46,9 @@ Connection expectations may name a switch state. `expect_voltage` and
 `Intent/MeasurementUnavailable`. See the
 [core DSL reference](https://github.com/breadkit/breadkit/blob/main/docs/dsl.md)
 for declaration syntax.
+LED current, GPIO current, and supply-load estimates use nominal component
+values. Supply ranges and resistor tolerances are not propagated through those
+DC current estimates.
 
 To adopt lint with existing findings:
 
