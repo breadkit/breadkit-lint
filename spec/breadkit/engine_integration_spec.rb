@@ -5,6 +5,13 @@ require "fileutils"
 require "stringio"
 
 RSpec.describe "lint engine integration" do
+  it "checks an already-resolved circuit without reading its source path" do
+    document = Breadkit::DSL.load_file("virtual.bk.rb", source: "board :half\nled :D1, anode: 'a10', cathode: 'a11'\n")
+    circuit = Breadkit::Resolver.new.call(document)
+    result = Breadkit::Lint::Engine.new.run_circuit(circuit, path: "missing.bk.rb", only: ["Electrical/FloatingPin"])
+    expect(result[:path]).to eq("missing.bk.rb")
+    expect(result[:offenses].map(&:rule)).to include("Electrical/FloatingPin")
+  end
   def inspect_source(source, only: nil, locale: "en")
     Dir.mktmpdir do |directory|
       path = File.join(directory, "circuit.bk.rb")

@@ -257,11 +257,7 @@ module Breadkit
               document.part_paths.concat(@config.extra_parts)
               Breadkit::Resolver.new.call(document)
             end
-            offenses = inspect_circuit(circuit, path, only, except)
-            skipped = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
-            disables = circuit.lint_disables + inline_disables(path, source)
-            result = { path: path, offenses: @checks.suppress(offenses, disables, circuit, path: path, only: only, except: except, skipped: skipped),
-                       skipped: skipped }
+            result = result_for_circuit(circuit, path, only, except, inline_disables(path, source))
             result[:circuit] = circuit if include_circuit
             result
           rescue StandardError, ScriptError, SystemStackError => e
@@ -277,6 +273,10 @@ module Breadkit
         end
       end
 
+      def run_circuit(circuit, path:, only: nil, except: nil)
+        result_for_circuit(circuit, path, only, except, [])
+      end
+
       def fail?(files, threshold = @config.fail_level)
         minimum = LEVELS.fetch(threshold.to_s, 1)
         files.any? { |file| file[:offenses].any? { |item| LEVELS.fetch(item.severity, 2) >= minimum } }
@@ -287,6 +287,13 @@ module Breadkit
       end
 
       private
+
+      def result_for_circuit(circuit, path, only, except, extra_disables)
+        offenses = inspect_circuit(circuit, path, only, except)
+        skipped = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
+        { path: path, offenses: @checks.suppress(offenses, circuit.lint_disables + extra_disables, circuit,
+                                                path: path, only: only, except: except, skipped: skipped), skipped: skipped }
+      end
 
       def inline_disables(path, source)
         return [] unless path.end_with?(".bk.rb")
