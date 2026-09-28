@@ -124,4 +124,33 @@ RSpec.describe "Ruby source fixes" do
       expect(File.read(path)).to include("color: :blue")
     end
   end
+
+  it "adds an unambiguous net label required by an expectation" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "circuit.bk.rb")
+      source = "board :half\nresistor :R1, '330', pins: %w[a10 a11]\nexpect do\n  net :INPUT, 'R1.1'\nend\n"
+      File.write(path, source)
+
+      _stdout, stderr, status = run_lint("--fix-check", "--only", "Intent/ConnectionMismatch", path)
+      expect(status.exitstatus).to eq(1)
+      expect(stderr).to include("would add net label")
+      expect(File.read(path)).to eq(source)
+
+      _stdout, stderr, status = run_lint("--fix", "--only", "Intent/ConnectionMismatch", path)
+      expect(status.exitstatus).to eq(0), stderr
+      expect(File.read(path)).to eq(source + "net :INPUT, at: 'R1.1'\n")
+    end
+  end
+
+  it "moves a conflicting literal wire endpoint to a free hole in the same strip" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "circuit.bk.rb")
+      source = "board :half\nresistor :R1, '330', pins: %w[a10 a11]\nwire 'a10', 'B+1'\n"
+      File.write(path, source)
+
+      _stdout, stderr, status = run_lint("--fix", "--only", "Layout/HoleConflict", path)
+      expect(status.exitstatus).to eq(0), stderr
+      expect(File.read(path)).to match(/wire '[b-e]10', 'B\+1'/)
+    end
+  end
 end

@@ -81,8 +81,9 @@ describes machine-readable output.
 | `--stdin PATH` | Read a Ruby, YAML, or TOML circuit from standard input. |
 | `--teach`, `--locale LOCALE` | Show short explanations or select `en`, `ja`, `zh`, or `ko` messages. |
 
-Use `bklint --help` for all flags. Fixing currently covers one-character
-wire-color typos and standalone unused suppressions; ambiguous edits and
+Use `bklint --help` for all flags. Fixing covers one-character wire-color typos,
+standalone unused suppressions, missing labels on a single known net, and
+literal wire endpoints with a free hole on the same strip. Ambiguous edits and
 declarative/JSON files are left unchanged. Fix modes cannot be combined with
 stdin, diff, baseline, or `--out`.
 

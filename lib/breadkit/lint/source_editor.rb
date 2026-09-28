@@ -9,9 +9,10 @@ module Breadkit
     class SourceEditor
       Edit = Struct.new(:start, :finish, :replacement, :description, :line, keyword_init: true)
 
-      def initialize(path, source: nil)
+      def initialize(path, source: nil, circuit: nil)
         @path = path
         @source = source || File.binread(path)
+        @circuit = circuit
         parsed = Prism.parse(@source)
         @valid = parsed.errors.empty?
         @calls = []
@@ -36,10 +37,13 @@ module Breadkit
       def plan(offenses)
         return [] unless @valid
 
+        @occupied = occupied_holes if @circuit
         offenses.filter_map do |offense|
           case offense.rule
           when "Layout/InvalidColor" then color_edit(offense)
           when "Lint/RedundantDisable" then disable_edit(offense)
+          when "Intent/ConnectionMismatch" then label_edit(offense)
+          when "Layout/HoleConflict" then wire_hole_edit(offense)
           end
         end.uniq { |edit| [edit.start, edit.finish, edit.replacement] }.sort_by(&:start)
       end
@@ -132,6 +136,69 @@ module Breadkit
 
         Edit.new(start: line_start, finish: line_end, replacement: "",
                  description: "remove unused lint_disable", line: offense.location.line)
+      end
+
+      def label_edit(offense)
+        return unless @circuit && !@source.match?(/^__END__\s*$/)
+        return unless Array(offense.targets[:components]).empty? && Array(offense.targets[:nets]).one?
+        call = call_for(offense, :net)
+        args = call&.arguments&.arguments
+        return unless args&.length == 2 && args[0].is_a?(Prism::SymbolNode) && args[1].is_a?(Prism::StringNode)
+
+        name, reference = args[0].value.to_s, args[1].unescaped
+        net = @circuit.net_of(reference)
+        return unless net && net.labels.empty? && net.name != name
+        return if @circuit.labels.any? { |label| label.name == name }
+        return unless @calls.count { |node| node.name == :net && node.arguments&.arguments&.first&.location&.slice == args[0].location.slice } == 1
+
+        newline = @source.include?("\r\n") ? "\r\n" : "\n"
+        prefix = @source.end_with?("\n") ? "" : newline
+        declaration = "net #{args[0].location.slice}, at: #{args[1].location.slice}"
+        Edit.new(start: @source.bytesize, finish: @source.bytesize, replacement: "#{prefix}#{declaration}#{newline}",
+                 description: "add net label #{name}", line: offense.location.line)
+      end
+
+      def wire_hole_edit(offense)
+        return unless @circuit && Array(offense.targets[:wires]).one? && Array(offense.targets[:holes]).one?
+        call = call_for(offense, :wire)
+        args = call&.arguments&.arguments
+        return unless args && args.length >= 2
+
+        current = offense.targets[:holes].first
+        endpoints = args.first(2).select { |node| node.is_a?(Prism::StringNode) && node.unescaped == current }
+        return unless endpoints.one?
+
+        origin = @circuit.board.hole(current)
+        return unless origin && !@circuit.board.solder_pad?(current)
+        candidates = Array(@circuit.board.strip(current)).filter_map { |id| @circuit.board.hole(id) }
+                          .reject { |hole| @occupied[hole.id] }
+        replacement = candidates.min_by { |hole| [(hole.x - origin.x)**2 + (hole.y - origin.y)**2, hole.id] }
+        return unless replacement
+
+        node = endpoints.first
+        original = node.location.slice
+        quote = original[0]
+        return unless %w[' "].include?(quote) && original[-1] == quote
+
+        @occupied[replacement.id] = true
+        Edit.new(start: node.location.start_offset, finish: node.location.end_offset,
+                 replacement: "#{quote}#{replacement.id}#{quote}",
+                 description: "move wire endpoint #{current} to #{replacement.id}", line: offense.location.line)
+      end
+
+      def occupied_holes
+        occupied = {}
+        @circuit.components.each_value do |component|
+          component.pins.each_value { |pin| occupied[pin.hole_id] = true if pin.hole_id }
+        end
+        @circuit.supplies.each do |supply|
+          [supply.plus, supply.minus].each { |id| occupied[id] = true if @circuit.board.hole(id) }
+        end
+        @circuit.wires.each do |wire|
+          next unless wire.electrical
+          [wire.from, wire.to].each { |id| occupied[id] = true if @circuit.board.hole(id) }
+        end
+        occupied
       end
     end
   end

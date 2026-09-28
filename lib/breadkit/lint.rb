@@ -240,7 +240,7 @@ module Breadkit
         @checks = Checks.new(@config, messages)
       end
 
-      def run(paths, only: nil, except: nil, timeout: 10, source: nil)
+      def run(paths, only: nil, except: nil, timeout: 10, source: nil, include_circuit: false)
         Array(paths).filter_map do |path|
           next if excluded?(path)
           begin
@@ -260,8 +260,10 @@ module Breadkit
             offenses = inspect_circuit(circuit, path, only, except)
             skipped = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
             disables = circuit.lint_disables + inline_disables(path, source)
-            { path: path, offenses: @checks.suppress(offenses, disables, circuit, path: path, only: only, except: except, skipped: skipped),
-              skipped: skipped }
+            result = { path: path, offenses: @checks.suppress(offenses, disables, circuit, path: path, only: only, except: except, skipped: skipped),
+                       skipped: skipped }
+            result[:circuit] = circuit if include_circuit
+            result
           rescue StandardError, ScriptError, SystemStackError => e
             location = e.respond_to?(:location) && e.location
             location ||= begin
@@ -635,7 +637,8 @@ module Breadkit
             config.data["AllRules"]["SwitchStates"] = options[:switch_states] if options[:switch_states]
             config.data["AllRules"]["StateBudget"] = options[:state_budget] if options[:state_budget]
             Engine.new(config: config, locale: locale).run([path], only: options[:only], except: options[:except],
-                                                           timeout: options[:timeout] || 10, source: source)
+                                                           timeout: options[:timeout] || 10, source: source,
+                                                           include_circuit: options[:fix] || options[:fix_check])
           end
         end
         results = inspect_files.call
@@ -644,7 +647,7 @@ module Breadkit
             path = file[:path]
             next if file[:offenses].empty?
             next unless path.end_with?(".bk.rb") && (source || File.file?(path))
-            editor = SourceEditor.new(path, source: source)
+            editor = SourceEditor.new(path, source: source, circuit: file[:circuit])
             editor.annotate(file[:offenses])
             [file, editor]
           end
