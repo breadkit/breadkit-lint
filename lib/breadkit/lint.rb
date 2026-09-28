@@ -588,6 +588,7 @@ module Breadkit
           opts.on("--switch-states MODE", %w[none single all]) { |value| options[:switch_states] = value }
           opts.on("--state-budget COUNT", Integer) { |value| options[:state_budget] = value }
           opts.on("--timeout SECONDS", Float) { |value| options[:timeout] = value }
+          opts.on("--jobs COUNT", Integer) { |value| options[:jobs] = value }
           opts.on("--stdin PATH") { |value| options[:stdin] = value }
           opts.on("--baseline PATH") { |value| options[:baseline] = value }
           opts.on("--generate-baseline PATH") { |value| options[:generate_baseline] = value }
@@ -604,6 +605,7 @@ module Breadkit
         end
         parser.parse!(argv)
         raise Error, "timeout must be positive" if options[:timeout] && !options[:timeout].positive?
+        raise Error, "jobs must be positive" if options[:jobs] && !options[:jobs].positive?
         raise Error, "state budget must be a positive integer" if options[:state_budget] && !options[:state_budget].positive?
         raise Error, "--teach requires --format text" if options[:teach] && options[:format] != "text"
         locale = options[:locale] || locale_from_environment
@@ -629,24 +631,44 @@ module Breadkit
         end
         source = $stdin.read if options[:stdin]
         configs = {}
-        inspect_files = lambda do
-          files.flat_map do |path|
-            config_path = options[:config] || nearest_config(path)
-            unless configs.key?(config_path)
-              configs[config_path] = Config.new(config_path)
-              configs[config_path].unknown_rules.each do |rule|
-                suggestion = DidYouMean::SpellChecker.new(dictionary: Registry.all.map(&:id)).correct(rule).first
-                warn "bklint: unknown rule #{rule.inspect}#{suggestion ? "; did you mean #{suggestion.inspect}?" : ""}"
-              end
+        tasks = files.each_with_index.map do |path, index|
+          config_path = options[:config] || nearest_config(path)
+          unless configs.key?(config_path)
+            configs[config_path] = Config.new(config_path)
+            configs[config_path].unknown_rules.each do |rule|
+              suggestion = DidYouMean::SpellChecker.new(dictionary: Registry.all.map(&:id)).correct(rule).first
+              warn "bklint: unknown rule #{rule.inspect}#{suggestion ? "; did you mean #{suggestion.inspect}?" : ""}"
             end
-            config = configs[config_path]
-            config.data["AllRules"] ||= {}
-            config.data["AllRules"]["SwitchStates"] = options[:switch_states] if options[:switch_states]
-            config.data["AllRules"]["StateBudget"] = options[:state_budget] if options[:state_budget]
+          end
+          config = configs[config_path]
+          config.data["AllRules"] ||= {}
+          config.data["AllRules"]["SwitchStates"] = options[:switch_states] if options[:switch_states]
+          config.data["AllRules"]["StateBudget"] = options[:state_budget] if options[:state_budget]
+          [index, path, config]
+        end
+        inspect_files = lambda do
+          check = lambda do |path, config|
             Engine.new(config: config, locale: locale).run([path], only: options[:only], except: options[:except],
                                                            timeout: options[:timeout] || 10, source: source,
                                                            include_circuit: options[:fix] || options[:fix_check])
           end
+          workers = [options[:jobs] || 1, tasks.length].min
+          next tasks.flat_map { |_index, path, config| check.call(path, config) } if workers <= 1
+
+          queue = Queue.new
+          tasks.each { |task| queue << task }
+          workers.times { queue << nil }
+          ordered = Array.new(tasks.length)
+          threads = Array.new(workers) do
+            Thread.new do
+              while (task = queue.pop)
+                index, path, config = task
+                ordered[index] = check.call(path, config).first
+              end
+            end
+          end
+          threads.each(&:value)
+          ordered.compact
         end
         results = inspect_files.call
         annotate = lambda do |items|
