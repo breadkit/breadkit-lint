@@ -86,7 +86,10 @@ module Breadkit
             rule = disable[:rule] || disable["rule"]
             target = disable[:on] || disable["on"]
             line = disable[:line] || disable["line"]
-            rule == item.rule && (!line || item.location&.line == line) &&
+            directive_path = location_from(disable[:location] || disable["location"])&.path
+            same_source = !line || (directive_path && item.location&.path &&
+              File.expand_path(directive_path) == File.expand_path(item.location.path))
+            rule == item.rule && same_source && (!line || item.location&.line == line) &&
               (!target || item.targets.values.flatten.include?(canonical_pin(circuit, target)))
           end
           used << match if match

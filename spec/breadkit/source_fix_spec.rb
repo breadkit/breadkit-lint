@@ -153,4 +153,40 @@ RSpec.describe "Ruby source fixes" do
       expect(File.read(path)).to match(/wire '[b-e]10', 'B\+1'/)
     end
   end
+
+  it "does not add a label anchored to an automatic net name" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "circuit.bk.rb")
+      source = "board :half\nresistor :R1, '330', pins: %w[a10 a11]\nexpect do\n  net :INPUT, 'N1'\nend\n"
+      File.write(path, source)
+
+      _stdout, _stderr, status = run_lint("--fix", "--only", "Intent/ConnectionMismatch", path)
+      expect(status.exitstatus).to eq(1)
+      expect(File.read(path)).to eq(source)
+    end
+  end
+
+  it "does not add conflicting labels to one net" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "circuit.bk.rb")
+      source = "board :half\nresistor :R1, '330', pins: %w[a10 a11]\nexpect do\n  net :INPUT, 'R1.1'\n  net :OUTPUT, 'R1.1'\nend\n"
+      File.write(path, source)
+
+      _stdout, _stderr, status = run_lint("--fix", "--only", "Intent/ConnectionMismatch", path)
+      expect(status.exitstatus).to eq(1)
+      expect(File.read(path)).to eq(source)
+    end
+  end
+
+  it "does not rewrite a wire call executed more than once" do
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "circuit.bk.rb")
+      source = "board :half\nresistor :R1, '330', pins: %w[a10 a11]\n2.times do\n  wire 'a10', 'B+1'\nend\n"
+      File.write(path, source)
+
+      _stdout, _stderr, status = run_lint("--fix", "--only", "Layout/HoleConflict", path)
+      expect(status.exitstatus).to eq(1)
+      expect(File.read(path)).to eq(source)
+    end
+  end
 end

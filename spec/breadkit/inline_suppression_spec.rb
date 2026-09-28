@@ -30,4 +30,16 @@ RSpec.describe "inline rule suppression" do
     unused = circuit + "# bklint:disable-next-line Electrical/FloatingPin\nputs :ok\n"
     expect(inspect_source(unused).map(&:rule)).to include("Lint/RedundantDisable")
   end
+
+  it "does not suppress a finding from an included file at the same line" do
+    Dir.mktmpdir do |directory|
+      main = File.join(directory, "main.bk.rb")
+      child = File.join(directory, "child.bk.rb")
+      File.write(main, "board :half\ninclude 'child.bk.rb'\n# bklint:disable Electrical/FloatingPin\n")
+      File.write(child, "# child\n# line two\nled :D1, anode: 'a10', cathode: 'a11'\n")
+
+      findings = Breadkit::Lint::Engine.new.run([main]).first[:offenses]
+      expect(findings.map(&:rule)).to include("Electrical/FloatingPin", "Lint/RedundantDisable")
+    end
+  end
 end

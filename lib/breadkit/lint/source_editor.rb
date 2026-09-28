@@ -38,7 +38,7 @@ module Breadkit
         return [] unless @valid
 
         @occupied = occupied_holes if @circuit
-        offenses.filter_map do |offense|
+        edits = offenses.filter_map do |offense|
           case offense.rule
           when "Layout/InvalidColor" then color_edit(offense)
           when "Lint/RedundantDisable" then disable_edit(offense)
@@ -46,6 +46,9 @@ module Breadkit
           when "Layout/HoleConflict" then wire_hole_edit(offense)
           end
         end.uniq { |edit| [edit.start, edit.finish, edit.replacement] }.sort_by(&:start)
+        edits.each_with_object([]) do |edit, safe|
+          safe << edit unless safe.any? { |prior| edit.start < prior.finish && prior.start < edit.finish }
+        end
       end
 
       def apply(edits)
@@ -146,9 +149,19 @@ module Breadkit
         return unless args&.length == 2 && args[0].is_a?(Prism::SymbolNode) && args[1].is_a?(Prism::StringNode)
 
         name, reference = args[0].value.to_s, args[1].unescaped
+        return unless physical_anchor?(reference)
         net = @circuit.net_of(reference)
         return unless net && net.labels.empty? && net.name != name
         return if @circuit.labels.any? { |label| label.name == name }
+        expected_names = @circuit.expectations.flat_map do |expectation|
+          Array(expectation["entries"] || expectation[:entries]).filter_map do |entry|
+            next unless (entry["kind"] || entry[:kind]) == "net"
+            refs = Array(entry["refs"] || entry[:refs])
+            names = refs.filter_map { |ref| @circuit.net_of(ref)&.name }.uniq
+            entry["name"] || entry[:name] if names == [net.name]
+          end
+        end.uniq
+        return unless expected_names == [name]
         return unless @calls.count { |node| node.name == :net && node.arguments&.arguments&.first&.location&.slice == args[0].location.slice } == 1
 
         newline = @source.include?("\r\n") ? "\r\n" : "\n"
@@ -158,11 +171,23 @@ module Breadkit
                  description: "add net label #{name}", line: offense.location.line)
       end
 
+      def physical_anchor?(reference)
+        return true if @circuit.board.hole(reference)
+
+        ref, pin = reference.split(".", 2)
+        pin && @circuit.components[ref]&.pin(pin)&.hole_id
+      end
+
       def wire_hole_edit(offense)
         return unless @circuit && Array(offense.targets[:wires]).one? && Array(offense.targets[:holes]).one?
         call = call_for(offense, :wire)
         args = call&.arguments&.arguments
         return unless args && args.length >= 2
+        source_wires = @circuit.wires.select do |wire|
+          wire.location&.line == call.location.start_line && wire.location.path &&
+            File.expand_path(wire.location.path) == File.expand_path(@path)
+        end
+        return unless source_wires.one? && source_wires.first.id == offense.targets[:wires].first
 
         current = offense.targets[:holes].first
         endpoints = args.first(2).select { |node| node.is_a?(Prism::StringNode) && node.unescaped == current }
