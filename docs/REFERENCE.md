@@ -40,6 +40,10 @@ wins. `AllRules.Exclude` skips entire files. Use `inherit_from` for shared
 settings and `use_parts` for custom definitions. Unknown rule IDs are errors.
 A circuit can use `lint_disable` with an optional target and reason;
 `AllRules.RequireDisableReason` makes reasons mandatory.
+In Ruby DSL files, `# bklint:disable Electrical/FloatingPin -- deliberate open pin`
+suppresses a finding on the same line. Use `# bklint:disable-next-line RULE`
+immediately before a declaration to suppress its next-line findings. Comments
+are scoped to one line; `-- reason` satisfies `RequireDisableReason`.
 
 Connection expectations may name a switch state. `expect_voltage` and
 `expect_current` check supported DC ranges; unknown operating points produce

@@ -85,7 +85,9 @@ module Breadkit
           match = valid.find do |disable|
             rule = disable[:rule] || disable["rule"]
             target = disable[:on] || disable["on"]
-            rule == item.rule && (!target || item.targets.values.flatten.include?(canonical_pin(circuit, target)))
+            line = disable[:line] || disable["line"]
+            rule == item.rule && (!line || item.location&.line == line) &&
+              (!target || item.targets.values.flatten.include?(canonical_pin(circuit, target)))
           end
           used << match if match
           !!match

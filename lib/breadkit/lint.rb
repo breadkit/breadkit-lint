@@ -10,6 +10,7 @@ require "find"
 require "open3"
 require "tmpdir"
 require "fileutils"
+require "prism"
 require_relative "lint/version"
 
 module Breadkit
@@ -258,7 +259,8 @@ module Breadkit
             end
             offenses = inspect_circuit(circuit, path, only, except)
             skipped = circuit.diagnostics.any? { |item| BLOCKING_DIAGNOSTICS.include?(item.code) }
-            { path: path, offenses: @checks.suppress(offenses, circuit.lint_disables, circuit, path: path, only: only, except: except, skipped: skipped),
+            disables = circuit.lint_disables + inline_disables(path, source)
+            { path: path, offenses: @checks.suppress(offenses, disables, circuit, path: path, only: only, except: except, skipped: skipped),
               skipped: skipped }
           rescue StandardError, ScriptError, SystemStackError => e
             location = e.respond_to?(:location) && e.location
@@ -283,6 +285,20 @@ module Breadkit
       end
 
       private
+
+      def inline_disables(path, source)
+        return [] unless path.end_with?(".bk.rb")
+
+        ruby = source || File.read(path, encoding: "UTF-8")
+        Prism.parse(ruby).comments.filter_map do |comment|
+          match = comment.location.slice.match(/\A#\s*bklint:disable(-next-line)?\s+([\w-]+\/[\w-]+)(?:\s+--\s*(.*))?\s*\z/)
+          next unless match
+
+          line = comment.location.start_line
+          { rule: match[2], reason: match[3], line: line + (match[1] ? 1 : 0),
+            location: Breadkit::SourceLocation.new(path: path, line: line) }
+        end
+      end
 
       def inspect_circuit(circuit, path, only, except)
         offenses = []
