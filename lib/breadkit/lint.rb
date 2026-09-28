@@ -606,6 +606,7 @@ module Breadkit
         parser.parse!(argv)
         raise Error, "timeout must be positive" if options[:timeout] && !options[:timeout].positive?
         raise Error, "jobs must be positive" if options[:jobs] && !options[:jobs].positive?
+        raise Error, "jobs must be at most 32" if options[:jobs] && options[:jobs] > 32
         raise Error, "state budget must be a positive integer" if options[:state_budget] && !options[:state_budget].positive?
         raise Error, "--teach requires --format text" if options[:teach] && options[:format] != "text"
         locale = options[:locale] || locale_from_environment

@@ -28,4 +28,11 @@ RSpec.describe "parallel circuit lint" do
     expect(status.exitstatus).to eq(2)
     expect(errors).to include("jobs must be positive")
   end
+
+  it "rejects a worker count above the bounded pool size" do
+    _output, errors, status = Open3.capture3(RbConfig.ruby, "-I#{File.expand_path('../../lib', __dir__)}",
+                                              File.expand_path("../../exe/bklint", __dir__), "--jobs", "33")
+    expect(status.exitstatus).to eq(2)
+    expect(errors).to include("jobs must be at most 32")
+  end
 end
