@@ -566,6 +566,7 @@ module Breadkit
 
         values = circuit.potentials(state).values
         domains = supply_domains(circuit, state)
+        analysis = bounded_dc_analysis(circuit, state)
         components.flat_map do |component|
           rated = component.part.data["supply_range"]
           next [] unless rated
@@ -574,14 +575,20 @@ module Breadkit
           powers.product(grounds).filter_map do |power, ground|
             high = circuit.net_of("#{component.ref}.#{power.name}", state)
             low = circuit.net_of("#{component.ref}.#{ground.name}", state)
-            next unless high && low && values.key?(high.name) && values.key?(low.name)
-            next unless domains[high.name] && domains[high.name] == domains[low.name]
-            nominal = values[high.name] - values[low.name]
-            actual = direct_source_range(circuit, state, high.name, low.name) || [nominal, nominal]
+            next unless high && low
+            paired = paired_voltage_range(analysis, high.name, low.name)
+            actual = paired
+            unless actual
+              next unless values.key?(high.name) && values.key?(low.name)
+              next unless domains[high.name] && domains[high.name] == domains[low.name]
+              nominal = values[high.name] - values[low.name]
+              actual = direct_source_range(circuit, state, high.name, low.name) || [nominal, nominal]
+            end
             next if actual[0] >= rated[0].to_f && actual[1] <= rated[1].to_f
             voltage = actual[0] == actual[1] ? actual[0].round(3).to_s : "#{actual[0]}..#{actual[1]}"
             message = translate("supply_range", "#{component.ref} #{power.name}/#{ground.name} supply is #{voltage} V; expected #{rated[0]}..#{rated[1]} V",
                                 ref: component.ref, power: power.name, ground: ground.name, voltage: voltage, minimum: rated[0], maximum: rated[1])
+            message += endpoint_qualifier(analysis) if paired
             offense(rule.id, message, component.location,
                     targets: { components: [component.ref], pins: ["#{component.ref}.#{power.name}", "#{component.ref}.#{ground.name}"],
                                nets: [high.name, low.name] }, state: state.name)
@@ -601,7 +608,12 @@ module Breadkit
       end
 
       def voltage_domain_mismatches(circuit, rule, state)
+        return [] unless circuit.components.values.any? do |component|
+          component.pins.values.any? { |pin| component.part.pin(pin.number)&.fetch("max_voltage", nil) }
+        end
+
         ranges, domains = potential_ranges(circuit, state)
+        analysis = bounded_dc_analysis(circuit, state)
         circuit.components.values.flat_map do |component|
           ground_names = component.pins.values.select { |pin| pin.role == "ground" }
                                   .filter_map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
@@ -609,13 +621,19 @@ module Breadkit
             limit = component.part.pin(pin.number)&.fetch("max_voltage", nil)
             next unless limit && !ground_names.empty?
             net = circuit.net_of("#{component.ref}.#{pin.name}", state)
-            next unless net && ranges.key?(net.name)
-            ground = ground_names.find { |name| ranges.key?(name) && domains[name] == domains[net.name] }
+            next unless net
+            ground = ground_names.find do |name|
+              paired_voltage_range(analysis, net.name, name) ||
+                (ranges.key?(net.name) && ranges.key?(name) && domains[name] == domains[net.name])
+            end
             next unless ground
-            voltage = direct_source_range(circuit, state, net.name, ground)&.last || (ranges[net.name][1] - ranges[ground][0])
+            paired = paired_voltage_range(analysis, net.name, ground)
+            voltage = paired&.last ||
+                      direct_source_range(circuit, state, net.name, ground)&.last || (ranges[net.name][1] - ranges[ground][0])
             next unless voltage > limit.to_f
             message = translate("voltage_domain", "#{component.ref}.#{pin.name} can see up to #{voltage.round(3)} V; maximum is #{limit} V",
                                 pin: "#{component.ref}.#{pin.name}", voltage: voltage.round(3), maximum: limit)
+            message += endpoint_qualifier(analysis) if paired
             offense(rule.id, message, component.location,
                     targets: { components: [component.ref], pins: ["#{component.ref}.#{pin.name}"], nets: [net.name] },
                     state: state.name)
@@ -658,6 +676,12 @@ module Breadkit
           next unless voltage && voltage > rating
           message = translate("capacitor_voltage_rating", "#{component.ref} may see #{voltage.round(3)} V; rated for #{rating} V",
                               ref: component.ref, voltage: voltage.round(3), rating: rating)
+          analysis = bounded_dc_analysis(circuit, state)
+          pins = component.pins.values
+          if pins.length == 2
+            left, right = pins.map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
+            message += endpoint_qualifier(analysis) if left && right && paired_voltage_range(analysis, left, right)
+          end
           offense(rule.id, message,
                   component.location, targets: { components: [component.ref] }, state: state.name)
         end
@@ -749,6 +773,10 @@ module Breadkit
         end
       end
 
+      def paired_voltage_range(analysis, high_name, low_name)
+        analysis.voltage_difference_range(high_name, low_name) if analysis.success? && analysis.respond_to?(:voltage_difference_range)
+      end
+
       def led_part?(part)
         part.id == "led" || (part.data["category"] == "diode" && Array(part.data["flags"]).include?("needs_series_resistor"))
       end
@@ -761,7 +789,10 @@ module Breadkit
       def dc_bounds_incomplete(circuit, rule, state)
         rated = circuit.supplies.find(&:current_limit) || circuit.components.values.find do |component|
           (led_part?(component.part) && component.part.data["max_forward_current"]) ||
-            (component.part.id == "resistor" && component.value && Breadkit::Value.power_rating(component.value)) ||
+            (%w[resistor electrolytic].include?(component.part.id) && component.value &&
+              (Breadkit::Value.power_rating(component.value) || Breadkit::Value.voltage_rating(component.value))) ||
+            component.part.data["supply_range"] ||
+            component.pins.values.any? { |pin| component.part.pin(pin.number)&.fetch("max_voltage", nil) } ||
             Array(component.part.data["provides"]).any? do |source|
               %w[positive negative].any? do |terminal|
                 pin = component.pin(source.fetch(terminal))
@@ -784,7 +815,7 @@ module Breadkit
 
         detail = status == :endpoint_only ? "diode switching can put an extreme between sampled endpoints" : status.to_s.tr("_", " ")
         detail = translate("dc_bounds_reason_#{status}", detail)
-        message = translate("dc_bounds_incomplete", "worst-case DC bounds are incomplete: #{detail}; a passing current or power check does not establish safety",
+        message = translate("dc_bounds_incomplete", "worst-case DC bounds are incomplete: #{detail}; a passing current, power, or voltage check does not establish safety",
                             reason: detail)
         [offense(rule.id, message, rated.location, state: state.name)]
       end
@@ -793,7 +824,10 @@ module Breadkit
         pins = component.pins.values
         return unless pins.length == 2
         left, right = pins.map { |pin| circuit.net_of("#{component.ref}.#{pin.name}", state)&.name }
-        return unless left && right && ranges[left] && ranges[right] && domains[left] && domains[left] == domains[right]
+        return unless left && right
+        paired = paired_voltage_range(bounded_dc_analysis(circuit, state), left, right)
+        return paired.map(&:abs).max if paired
+        return unless ranges[left] && ranges[right] && domains[left] && domains[left] == domains[right]
         direct = direct_source_range(circuit, state, left, right) || direct_source_range(circuit, state, right, left)
         return direct.map(&:abs).max if direct
         [(ranges[left][0] - ranges[right][1]).abs, (ranges[left][1] - ranges[right][0]).abs].max

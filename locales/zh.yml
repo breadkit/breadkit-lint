@@ -181,7 +181,7 @@ messages:
   capacitor_voltage_rating: "%{ref} 可能承受 %{voltage} V（额定 %{rating} V）"
   led_overcurrent: "%{ref} 的电流可能达到 %{current} mA%{qualifier}（上限 %{limit} mA）"
   endpoint_qualifier: "（端点估计）"
-  dc_bounds_incomplete: "无法确定直流最坏情况界限：%{reason}。没有告警也不能证明电流或功率安全"
+  dc_bounds_incomplete: "无法确定直流最坏情况界限：%{reason}。没有告警也不能证明电流、功率或电压安全"
   dc_bounds_reason_endpoint_only: "二极管状态切换可能使极值出现在采样端点之间"
   dc_bounds_reason_too_complex: "组合数量过多"
   dc_bounds_reason_indeterminate: "分析结果不确定"

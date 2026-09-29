@@ -50,10 +50,13 @@ Connection expectations may name a switch state. `expect_voltage` and
 `Intent/MeasurementUnavailable`. See the
 [core DSL reference](https://github.com/breadkit/breadkit/blob/main/docs/dsl.md)
 for declaration syntax.
-LED current, GPIO current, supply load, and resistor power checks evaluate the
-declared source endpoints and resistor tolerance bounds. Linear resistor
-circuits get complete bounds. Diode circuits get endpoint estimates; when those
-or other bounds are incomplete, `Electrical/DcBoundsIncomplete` says so.
+LED current, GPIO current, supply load, resistor power, supply voltage, signal
+voltage, and capacitor voltage checks evaluate declared source endpoints and
+resistor tolerance bounds when the DC model supports the circuit. Voltage checks
+use paired node differences so common voltage swings do not create false
+violations. Linear resistor circuits get complete bounds. Diode circuits get
+endpoint estimates; when those or other bounds are incomplete,
+`Electrical/DcBoundsIncomplete` says so.
 
 To adopt lint with existing findings:
 

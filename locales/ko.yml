@@ -181,7 +181,7 @@ messages:
   capacitor_voltage_rating: "%{ref}에 %{voltage} V가 걸릴 수 있습니다 (정격 %{rating} V)"
   led_overcurrent: "%{ref}에 %{current} mA%{qualifier}가 흐를 수 있습니다 (최대 %{limit} mA)"
   endpoint_qualifier: " (끝점 추정)"
-  dc_bounds_incomplete: "최악 조건의 직류 범위를 확정할 수 없습니다: %{reason}. 경고가 없어도 전류나 전력이 안전하다고 단정할 수 없습니다"
+  dc_bounds_incomplete: "최악 조건의 직류 범위를 확정할 수 없습니다: %{reason}. 경고가 없어도 전류, 전력 또는 전압이 안전하다고 단정할 수 없습니다"
   dc_bounds_reason_endpoint_only: "다이오드 상태 전환으로 극값이 표본 끝점 사이에서 발생할 수 있습니다"
   dc_bounds_reason_too_complex: "조합이 너무 많습니다"
   dc_bounds_reason_indeterminate: "분석 결과가 확정되지 않았습니다"

@@ -8,4 +8,4 @@ ic :U1, "NE555", at: "e20" # NE555 requires at least 4.5 V
 ```
 
 Use a valid supply voltage or a part rated for the circuit voltage.
-For a voltage range, both endpoints are checked when the part is connected directly to one source. Resistor networks use the nominal solved potential.
+When DC bounds are available, the check uses the paired voltage difference across the power and ground pins at each source and resistor tolerance scenario. This includes resistor networks. Direct source endpoints remain checkable when the full DC model is unavailable. Diode circuits use endpoint estimates; `Electrical/DcBoundsIncomplete` warns when a passing check does not establish safety across the full range.

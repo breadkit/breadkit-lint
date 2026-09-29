@@ -49,6 +49,12 @@ RSpec.describe "unrated component checks" do
     expect(checks.power_pins(circuit, Breadkit::Lint::Rules::Electrical::PowerPinUnconnected, state)).to be_empty
   end
 
+  it "skips DC analysis when no pin declares a voltage limit" do
+    allow(circuit).to receive(:voltage_sources).and_return([])
+    expect(circuit).not_to receive(:dc_analysis)
+    expect(checks.voltage_domain_mismatches(circuit, Breadkit::Lint::Rules::Electrical::VoltageDomainMismatch, state)).to be_empty
+  end
+
   it "skips DC analysis when no LED current rating is present" do
     expect(circuit).not_to receive(:dc_analysis)
     expect(checks.led_overcurrent(circuit, Breadkit::Lint::Rules::Electrical::LedOvercurrent, state)).to be_empty

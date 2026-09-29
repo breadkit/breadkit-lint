@@ -181,7 +181,7 @@ messages:
   capacitor_voltage_rating: "%{ref} に %{voltage} V がかかる可能性があります（定格 %{rating} V）"
   led_overcurrent: "%{ref} に %{current} mA%{qualifier} が流れる可能性があります（上限 %{limit} mA）"
   endpoint_qualifier: "（端点での推定）"
-  dc_bounds_incomplete: "DC の最悪条件を確定できません: %{reason}。指摘がなくても電流や電力が安全とは限りません"
+  dc_bounds_incomplete: "DC の最悪条件を確定できません: %{reason}。指摘がなくても電流・電力・電圧が安全とは限りません"
   dc_bounds_reason_endpoint_only: "ダイオードの状態切り替えで端点間に極値が生じる可能性があります"
   dc_bounds_reason_too_complex: "組み合わせが多すぎます"
   dc_bounds_reason_indeterminate: "解析結果が不定です"

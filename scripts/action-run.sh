@@ -18,7 +18,7 @@ esac
 
 # Pin the tested core revision until its next gem release includes bounded DC
 # analysis and model-specific LED ratings.
-core_sha=6bddd1be7ea3461792c4ebf02bbbe0e6e09eba11
+core_sha=41149c921d4424f8b8b9cd2c853735790a6ce88e
 core_dir="${BREADKIT_ACTION_CORE_DIR:-$(mktemp -d "$RUNNER_TEMP/breadkit-core.XXXXXX")}"
 if [[ -z "${BREADKIT_ACTION_CORE_DIR:-}" ]]; then
   git init --quiet "$core_dir"
