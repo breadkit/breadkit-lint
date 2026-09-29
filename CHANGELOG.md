@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Analysis and diagnostics
+
+- Check supported current, power, and voltage ratings across supply ranges and resistor tolerances; report incomplete bounds when the DC model cannot certify them.
+- Recognize model-specific rated LEDs and localize the new electrical diagnostics.
+- Support line-scoped suppression comments and safe fixes for unambiguous missing labels and occupied wire endpoints.
+
+### Workflow
+
+- Add bounded `--jobs` parallel inspection with deterministic report order.
+- Extend the GitHub Action to generate an annotated PNG and provide a permission-separated pull request comment example.
+
 ## 0.2.0 — 2026-09-28
 
 ### Electrical and layout checks
