@@ -640,8 +640,10 @@ module Breadkit
             watts = voltage**2 / minimum
           end
           next unless watts > rating
-          qualifier = analysis.respond_to?(:bounds_status) && analysis.bounds_status == :endpoint_only ? " (endpoint estimate)" : ""
-          offense(rule.id, "#{component.ref} may dissipate #{format('%.4g', watts)} W#{qualifier}; rated for #{rating} W",
+          qualifier = endpoint_qualifier(analysis)
+          message = translate("resistor_power_rating", "#{component.ref} may dissipate #{format('%.4g', watts)} W#{qualifier}; rated for #{rating} W",
+                              ref: component.ref, watts: format("%.4g", watts), qualifier: qualifier, rating: rating)
+          offense(rule.id, message,
                   component.location, targets: { components: [component.ref] }, state: state.name)
         end
       end
@@ -654,7 +656,9 @@ module Breadkit
           next unless rating
           voltage = rated_voltage(circuit, component, state, ranges, domains)
           next unless voltage && voltage > rating
-          offense(rule.id, "#{component.ref} may see #{voltage.round(3)} V; rated for #{rating} V",
+          message = translate("capacitor_voltage_rating", "#{component.ref} may see #{voltage.round(3)} V; rated for #{rating} V",
+                              ref: component.ref, voltage: voltage.round(3), rating: rating)
+          offense(rule.id, message,
                   component.location, targets: { components: [component.ref] }, state: state.name)
         end
       end
@@ -671,8 +675,11 @@ module Breadkit
           current = analysis.respond_to?(:current_ranges) && analysis.current_ranges&.dig(component.ref, 1)
           current ||= analysis.currents[component.ref]
           next unless current && current > limit
-          qualifier = analysis.respond_to?(:bounds_status) && analysis.bounds_status == :endpoint_only ? " (endpoint estimate)" : ""
-          offense(rule.id, "#{component.ref} may carry #{(current * 1000).round(2)} mA#{qualifier}; maximum is #{(limit * 1000).round(2)} mA",
+          qualifier = endpoint_qualifier(analysis)
+          actual_ma, limit_ma = [current, limit].map { |value| (value * 1000).round(2) }
+          message = translate("led_overcurrent", "#{component.ref} may carry #{actual_ma} mA#{qualifier}; maximum is #{limit_ma} mA",
+                              ref: component.ref, current: actual_ma, qualifier: qualifier, limit: limit_ma)
+          offense(rule.id, message,
                   component.location, targets: { components: [component.ref] }, state: state.name)
         end
       end
@@ -700,7 +707,7 @@ module Breadkit
           next unless current && current > limit * (1 + 1e-9)
           actual_ma, limit_ma = [current, limit].map { |value| (value * 1000).round(2) }
           reference = "#{component.ref}.#{pin.name}"
-          qualifier = analysis.respond_to?(:bounds_status) && analysis.bounds_status == :endpoint_only ? " (endpoint estimate)" : ""
+          qualifier = endpoint_qualifier(analysis)
           message = translate("gpio_overcurrent", "#{reference} carries #{actual_ma} mA#{qualifier}; maximum is #{limit_ma} mA",
                               pin: reference, current: actual_ma, limit: limit_ma)
           message += qualifier if qualifier != "" && !message.include?(qualifier)
@@ -724,7 +731,7 @@ module Breadkit
           next unless delivered > limit * (1 + 1e-9)
 
           actual_ma, limit_ma = [delivered, limit].map { |value| (value * 1000).round(2) }
-          qualifier = analysis.respond_to?(:bounds_status) && analysis.bounds_status == :endpoint_only ? " (endpoint estimate)" : ""
+          qualifier = endpoint_qualifier(analysis)
           message = translate("supply_overload", "#{supply.name} supplies #{actual_ma} mA#{qualifier}; limit is #{limit_ma} mA",
                               supply: supply.name, current: actual_ma, limit: limit_ma)
           message += qualifier if qualifier != "" && !message.include?(qualifier)
@@ -744,6 +751,11 @@ module Breadkit
 
       def led_part?(part)
         part.id == "led" || (part.data["category"] == "diode" && Array(part.data["flags"]).include?("needs_series_resistor"))
+      end
+
+      def endpoint_qualifier(analysis)
+        return "" unless analysis.respond_to?(:bounds_status) && analysis.bounds_status == :endpoint_only
+        translate("endpoint_qualifier", " (endpoint estimate)")
       end
 
       def dc_bounds_incomplete(circuit, rule, state)
@@ -771,7 +783,9 @@ module Breadkit
         end
 
         detail = status == :endpoint_only ? "diode switching can put an extreme between sampled endpoints" : status.to_s.tr("_", " ")
-        message = "worst-case DC bounds are incomplete: #{detail}; a passing current or power check does not establish safety"
+        detail = translate("dc_bounds_reason_#{status}", detail)
+        message = translate("dc_bounds_incomplete", "worst-case DC bounds are incomplete: #{detail}; a passing current or power check does not establish safety",
+                            reason: detail)
         [offense(rule.id, message, rated.location, state: state.name)]
       end
 

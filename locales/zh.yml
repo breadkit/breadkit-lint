@@ -112,7 +112,7 @@ guidance:
   Electrical/MissingBaseResistor: 在输出引脚与晶体管基极之间串联电阻。
   Electrical/MissingFlybackDiode: 在感性负载两端反向并联二极管。
   Electrical/SupplyOverload: 减少负载，或选用供电能力足够的电源。
-  Electrical/DcBoundsIncomplete: Check the circuit with a dedicated simulator before relying on component ratings.
+  Electrical/DcBoundsIncomplete: 判断元件额定值前，请使用专用电路仿真器检查。
   Electrical/NetLabelConflict: 解决同一网络上的标签冲突。
   Intent/ConnectionMismatch: 使 expect 声明与实际导线及网络标签一致。
   Intent/UnknownNet: 核对 expect 声明中的网络或引脚名称。
@@ -177,6 +177,15 @@ messages:
   missing_flyback_diode: "%{ref} 的 %{positive} 与 %{negative} 之间缺少反向续流二极管"
   supply_overload: "%{supply} 的供电电流为 %{current} mA（上限 %{limit} mA）"
   gpio_overcurrent: "%{pin} 的电流为 %{current} mA（上限 %{limit} mA）"
+  resistor_power_rating: "%{ref} 可能耗散 %{watts} W%{qualifier}（额定 %{rating} W）"
+  capacitor_voltage_rating: "%{ref} 可能承受 %{voltage} V（额定 %{rating} V）"
+  led_overcurrent: "%{ref} 的电流可能达到 %{current} mA%{qualifier}（上限 %{limit} mA）"
+  endpoint_qualifier: "（端点估计）"
+  dc_bounds_incomplete: "无法确定直流最坏情况界限：%{reason}。没有告警也不能证明电流或功率安全"
+  dc_bounds_reason_endpoint_only: "二极管状态切换可能使极值出现在采样端点之间"
+  dc_bounds_reason_too_complex: "组合数量过多"
+  dc_bounds_reason_indeterminate: "分析结果不确定"
+  dc_bounds_reason_unavailable: "无法使用范围分析"
   wire_color: "%{wire} 的颜色 %{color} 不符合预期颜色 %{expected}"
   label_conflict: "同一网络有不同标签：%{labels}"
   unknown_expectation: "连接声明引用了未知对象：%{refs}"

@@ -112,7 +112,7 @@ guidance:
   Electrical/MissingBaseResistor: 出力ピンとトランジスタのベースの間に直列抵抗を追加してください。
   Electrical/MissingFlybackDiode: 誘導負荷の両端に逆向きのダイオードを接続してください。
   Electrical/SupplyOverload: 電源の許容電流を確認し、負荷を減らすか適切な電源を使用してください。
-  Electrical/DcBoundsIncomplete: Check the circuit with a dedicated simulator before relying on component ratings.
+  Electrical/DcBoundsIncomplete: 部品の定格を判断する前に、専用の回路シミュレータで確認してください。
   Electrical/NetLabelConflict: 同じネットに付いた異なるラベルを確認してください。
   Intent/ConnectionMismatch: expect の接続宣言と実際のワイヤ、ネットラベルを一致させてください。
   Intent/UnknownNet: expect で参照したネット名またはピン名を確認してください。
@@ -177,6 +177,15 @@ messages:
   missing_flyback_diode: "%{ref} の %{positive} と %{negative} の間に逆向きのフライバックダイオードがありません"
   supply_overload: "%{supply} の供給電流は %{current} mA です（上限 %{limit} mA）"
   gpio_overcurrent: "%{pin} に %{current} mA が流れています（上限 %{limit} mA）"
+  resistor_power_rating: "%{ref} は %{watts} W%{qualifier} を消費する可能性があります（定格 %{rating} W）"
+  capacitor_voltage_rating: "%{ref} に %{voltage} V がかかる可能性があります（定格 %{rating} V）"
+  led_overcurrent: "%{ref} に %{current} mA%{qualifier} が流れる可能性があります（上限 %{limit} mA）"
+  endpoint_qualifier: "（端点での推定）"
+  dc_bounds_incomplete: "DC の最悪条件を確定できません: %{reason}。指摘がなくても電流や電力が安全とは限りません"
+  dc_bounds_reason_endpoint_only: "ダイオードの状態切り替えで端点間に極値が生じる可能性があります"
+  dc_bounds_reason_too_complex: "組み合わせが多すぎます"
+  dc_bounds_reason_indeterminate: "解析結果が不定です"
+  dc_bounds_reason_unavailable: "範囲解析を利用できません"
   wire_color: "%{wire} の色 %{color} は想定色 %{expected} と異なります"
   label_conflict: "同じネットに異なるラベルがあります: %{labels}"
   unknown_expectation: "接続宣言に不明な参照があります: %{refs}"

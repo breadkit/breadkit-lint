@@ -50,4 +50,47 @@ RSpec.describe "Chinese and Korean locales" do
     expect(Breadkit::Lint::Formatter.new.text(files, locale: "zh")).to include("检查了 1 个文件", "跳过电气与意图检查", "SW1 状态")
     expect(Breadkit::Lint::Formatter.new.text(files, locale: "ko")).to include("파일 1개 검사", "전기 및 의도 검사 생략", "SW1 상태")
   end
+
+  it "localizes rated current and incomplete-bound findings" do
+    source = <<~RUBY
+      board :half
+      supply :P, voltage: 4.8..5.5, plus: 'B+1', minus: 'B-1'
+      resistor :R1, '100 5%', pins: %w[a10 a11]
+      part :D1, :kingbright_wp7113id, pins: {anode: 'a12', cathode: 'a13'}
+      wire 'b10', 'B+2'
+      wire 'b11', 'b12'
+      wire 'b13', 'B-2'
+    RUBY
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "rated.bk.rb")
+      File.write(path, source)
+      { "ja" => /[ぁ-んァ-ン一-龯]/, "zh" => /[一-龯]/, "ko" => /[가-힣]/ }.each do |locale, script|
+        findings = Breadkit::Lint::Engine.new(locale: locale).run([path], only: %w[Electrical/LedOvercurrent Electrical/DcBoundsIncomplete])
+        expect(findings.first[:offenses].map(&:rule)).to contain_exactly("Electrical/LedOvercurrent", "Electrical/DcBoundsIncomplete")
+        findings.first[:offenses].each { |offense| expect(offense.message).to match(script) }
+      end
+    end
+  end
+
+  it "localizes resistor and capacitor rating findings" do
+    source = <<~RUBY
+      board :half
+      supply :P, voltage: 5, plus: 'B+1', minus: 'B-1'
+      resistor :R1, '10 1/4W', pins: %w[a10 a11]
+      electrolytic :C1, '10u 3V', plus: 'a20', minus: 'a21'
+      wire 'b10', 'B+'
+      wire 'b11', 'B-'
+      wire 'b20', 'B+'
+      wire 'b21', 'B-'
+    RUBY
+    Dir.mktmpdir do |directory|
+      path = File.join(directory, "rated.bk.rb")
+      File.write(path, source)
+      { "ja" => /[ぁ-んァ-ン一-龯]/, "zh" => /[一-龯]/, "ko" => /[가-힣]/ }.each do |locale, script|
+        findings = Breadkit::Lint::Engine.new(locale: locale).run([path], only: %w[Electrical/ResistorPowerRating Electrical/CapacitorVoltageRating])
+        expect(findings.first[:offenses].map(&:rule)).to contain_exactly("Electrical/ResistorPowerRating", "Electrical/CapacitorVoltageRating")
+        findings.first[:offenses].each { |offense| expect(offense.message).to match(script) }
+      end
+    end
+  end
 end

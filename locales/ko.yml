@@ -112,7 +112,7 @@ guidance:
   Electrical/MissingBaseResistor: 출력 핀과 트랜지스터 베이스 사이에 저항을 직렬로 넣으세요.
   Electrical/MissingFlybackDiode: 유도성 부하 양단에 역방향 다이오드를 연결하세요.
   Electrical/SupplyOverload: 부하를 줄이거나 충분한 전류를 공급하는 전원을 사용하세요.
-  Electrical/DcBoundsIncomplete: Check the circuit with a dedicated simulator before relying on component ratings.
+  Electrical/DcBoundsIncomplete: 부품 정격을 판단하기 전에 전용 회로 시뮬레이터로 확인하세요.
   Electrical/NetLabelConflict: 같은 네트에 붙은 라벨의 충돌을 해결하세요.
   Intent/ConnectionMismatch: expect 선언을 실제 전선과 네트 라벨에 맞추세요.
   Intent/UnknownNet: expect 선언에 사용한 네트 또는 핀 이름을 확인하세요.
@@ -177,6 +177,15 @@ messages:
   missing_flyback_diode: "%{ref}의 %{positive}와(과) %{negative} 사이에 역방향 플라이백 다이오드가 없습니다"
   supply_overload: "%{supply}의 공급 전류는 %{current} mA입니다 (한도 %{limit} mA)"
   gpio_overcurrent: "%{pin}에 %{current} mA가 흐릅니다 (한도 %{limit} mA)"
+  resistor_power_rating: "%{ref}에서 %{watts} W%{qualifier}가 소모될 수 있습니다 (정격 %{rating} W)"
+  capacitor_voltage_rating: "%{ref}에 %{voltage} V가 걸릴 수 있습니다 (정격 %{rating} V)"
+  led_overcurrent: "%{ref}에 %{current} mA%{qualifier}가 흐를 수 있습니다 (최대 %{limit} mA)"
+  endpoint_qualifier: " (끝점 추정)"
+  dc_bounds_incomplete: "최악 조건의 직류 범위를 확정할 수 없습니다: %{reason}. 경고가 없어도 전류나 전력이 안전하다고 단정할 수 없습니다"
+  dc_bounds_reason_endpoint_only: "다이오드 상태 전환으로 극값이 표본 끝점 사이에서 발생할 수 있습니다"
+  dc_bounds_reason_too_complex: "조합이 너무 많습니다"
+  dc_bounds_reason_indeterminate: "분석 결과가 확정되지 않았습니다"
+  dc_bounds_reason_unavailable: "범위 분석을 사용할 수 없습니다"
   wire_color: "%{wire}의 색상 %{color}이(가) 예상 색상 %{expected}와(과) 다릅니다"
   label_conflict: "같은 네트에 다른 라벨이 있음: %{labels}"
   unknown_expectation: "연결 선언에 알 수 없는 참조가 있음: %{refs}"
