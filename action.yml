@@ -37,7 +37,7 @@ runs:
       run: bash "$GITHUB_ACTION_PATH/scripts/action-run.sh"
     - name: Upload annotated image
       if: ${{ inputs['annotated-image'] == 'true' && steps.lint.outputs['image-file'] != '' }}
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: breadkit-annotated
         path: ${{ steps.lint.outputs['image-file'] }}
